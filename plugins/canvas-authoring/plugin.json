@@ -2,5 +2,5 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "canvas-authoring",
   "version": "0.1.0",
-  "description": "Scaffold and customize standalone Copilot canvas apps with @microsoft/canvas-toolkit."
+  "description": "A @microsoft/canvas-toolkit companion to the GitHub Copilot app's installed create-canvas skill."
 }

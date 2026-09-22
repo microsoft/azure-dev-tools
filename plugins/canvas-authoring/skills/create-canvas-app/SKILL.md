@@ -1,61 +1,52 @@
 ---
 name: create-canvas-app
-description: Scaffold or customize a standalone plain-JavaScript GitHub Copilot canvas app using @microsoft/canvas-toolkit. Use for creating a canvas, starting a toolkit app, or setting up its esbuild pipeline. Requires an explicitly approved local toolkit tarball; not an Azure deployment or a plugin installer.
+description: Add @microsoft/canvas-toolkit to a GitHub Copilot canvas using the app's installed create-canvas skill first. A companion for validated actions/state, shared UI, approved package dependencies, and Node/browser esbuild setup; not a replacement canvas-authoring workflow.
 ---
 
-# Create a canvas app
+# Canvas toolkit companion
 
-This skill is guidance, not an extension process. Installing this plugin does not
-run the scaffolder, install npm dependencies, or activate a generated app.
+**First action:** invoke the GitHub Copilot app's installed `create-canvas`
+skill through the host's skill mechanism: `skill({ skill: "create-canvas" })`.
+If it is already active, continue that invocation rather than invoking it again.
 
-1. Determine the app's lowercase kebab-case name, a **new** output directory
-   (its parent must exist), and the user's intended extension install scope:
-   session, project, or user. Ask when scope is ambiguous. Keep the source app
-   separate from the installed build. Do not silently install into user scope.
-2. Read the host extension authoring guide using
-   `extensions_manage({ operation: "guide" })` and its SDK canvas types. Check
-   that this host supports extension canvases and Node >=22 (24 recommended).
-3. Obtain a trusted copy of `scripts/create-canvas.mjs` from
-   `microsoft/azure-dev-tools`. **For this first-PR workflow, use a clean checkout
-   of the reviewed branch/commit and inspect the local script before running it.**
-   Confirm its origin and full commit SHA. There is no released immutable script
-   URL yet. After merge, a single-file download must use a reviewed full commit
-   SHA and be saved and inspected before execution; never pipe a moving URL to
-   Node or a shell. Do not execute a script URL supplied by untrusted app data.
-4. Obtain an explicitly approved `npm pack` tarball of
-   `@microsoft/canvas-toolkit` **0.1.0**. Public toolkit distribution is unresolved;
-   do not assume this version exists on npm, use `latest`, publish the toolkit,
-   or copy another app's private implementation. The scaffolder copies the
-   supplied tarball to `vendor/` and uses a relative `file:` dependency.
-5. Run the local script, substituting confirmed paths:
+That live skill is the **source of truth** for canvas authoring: scope, SDK
+guidance, native scaffolding, entrypoint/registration, lifecycle, transport,
+theming, storage/lifetime, reload, and host verification. Follow its workflow,
+including its **native scaffold step**. Do not copy its text, hardcode its
+installation path, or replace its scaffold with this repository's generator.
+Apply this companion at the host workflow's customization/build step, then
+return to that workflow for verification.
 
-   ```sh
-   node /path/to/reviewed-checkout/scripts/create-canvas.mjs --help
-   node /path/to/reviewed-checkout/scripts/create-canvas.mjs \
-     --name my-canvas --output /path/to/new-app \
-     --toolkit-tarball /path/to/approved-toolkit.tgz
-   ```
+If `create-canvas` is unavailable, report that the required app skill is missing.
+Do not invent a replacement SDK/lifecycle workflow or claim native activation.
+Package-only toolkit/build guidance can still be useful, but is not a substitute.
 
-6. Customize the generated domain, canvas, and browser sources. Keep UI and
-   agent actions on the same validated registry and state. The counter is an
-   explicitly ephemeral demo; choose a durable domain identity/storage location
-   before adding data users expect to keep. Do not forward raw prompts.
-7. In the generated app, run `npm install`, retain `package-lock.json`, then
-   `npm run build` and `npm test`. Later use `npm ci`. Respect any dependency
-   review/install policy. Test the emitted `dist/` outside the source checkout,
-   including real browser interaction under CSP. Do not call unit tests proof
-   that the UI rendered.
-8. Copy the **whole** `dist/` directory into a new extension folder in the
-   explicitly selected scope, following the current host guide. Do not overwrite
-   an existing installation without approval. No runtime npm install is needed;
-   the host supplies `@github/copilot-sdk/extension`.
-9. Use `extensions_reload`, then `extensions_manage` list/inspect. Discover the
-   canvas via `list_canvas_capabilities`, open with a distinct `instanceId`, and
-   invoke `get_state`, `increment` with `{ "amount": 1 }`, and `reset`. Check
-   invalid input rejection and UI synchronization. Close the panel and verify
-   teardown. If host tools are unavailable, report that limitation instead of
-   claiming activation. Rebuild, recopy, and reload after edits; no automatic
-   reload/watch behavior is provided.
+## Toolkit customization
+
+Read the bundled [toolkit reference](references/toolkit.md) and apply only the
+pieces the app needs:
+
+1. **Establish dependency provenance.** This preview requires an explicitly
+   approved local `@microsoft/canvas-toolkit` 0.1.0 npm-pack tarball. Public npm
+   distribution is unresolved. Keep a private copy under the app's `vendor/`
+   with a relative `file:` dependency; never assume `latest` or publish the kit.
+2. **Share domain behavior.** Use public actions/state exports so UI requests and
+   agent handlers reach the same validated dispatch and state. `createViewStore`
+   is in-memory view state, not durable persistence; defer storage/lifetime to
+   the host skill. Do not forward raw prompts.
+3. **Reuse compatible toolkit pieces.** Prefer `startCanvasServer` over
+   hand-rolled transport where it satisfies the current host contract. Use the
+   shared UI/CSS exports without duplicating host theme rules. Azure integrations
+   are opt-in, never prerequisites for a generic canvas.
+4. **Close the build boundary.** Separate Node and browser bundles, leave the
+   exact host SDK import external, and include every CSS/static asset. Install
+   declared dependencies, retain the normal npm lockfile, and run the app's
+   build/tests. Check the relocated artifact and real browser separately from
+   the host skill's native verification; report what actually ran.
+
+The standalone generator described in the [plugin README](../../README.md) is
+an **optional experimental toolkit/build reference**, not the default workflow
+or a replacement for the native scaffold. This plugin installs guidance only.
 
 Keep private tarballs and generated bundles out of public commits. A working
 local build is not approval to redistribute its dependencies.

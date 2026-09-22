@@ -4,7 +4,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { gunzipSync } from "node:zlib";
 
-const HELP = `Create a standalone Copilot canvas app (Node >=22).
+const HELP = `Create an optional experimental toolkit/build example (Node >=22).
+
+For canvas authoring, invoke the GitHub Copilot app's installed create-canvas
+skill first. It is the source of truth; this example does not replace its
+native scaffold or define the current host runtime contract.
 
 Usage:
   node create-canvas.mjs --name my-canvas --output /existing/parent/new-app \\
@@ -479,6 +483,13 @@ test("built canvas shares UI/agent state and closes its servers", async t => {
 `,
     "README.md": String.raw`# __CANVAS_NAME__
 
+This is an optional experimental toolkit/build example, not the default canvas
+authoring workflow. First invoke the GitHub Copilot app's installed create-canvas
+skill through the host skill mechanism. It is the source of truth: follow its
+native scaffold and use this example only as a toolkit/build reference during
+customization, not as a replacement skeleton. If that skill is unavailable,
+report the missing prerequisite; package/build checks are not native activation.
+
 An ephemeral counter shared by the browser and agent in one Copilot provider
 process. Browser reload preserves the count; provider restart resets it. All
 panels share it. This is a demo, not durable document storage.
@@ -498,26 +509,23 @@ relative file dependency keeps builds independent of the scaffolder, plugin,
 and toolkit checkout. To transfer the source app privately, include vendor/.
 Never commit/publish a private tarball or bundle without distribution approval.
 
-## Install the build
+## Use with the host workflow
 
-Choose session, project, or user scope explicitly. Follow the host's current
-extension guide. Copy the ENTIRE dist/ folder into a NEW extension directory,
-with extension.mjs at its root. For example, for an explicitly chosen project
-scope, copy it to <project>/.github/extensions/__CANVAS_NAME__/.
+The installed create-canvas skill owns scope, SDK guidance, native scaffolding,
+registration, lifecycle, transport/theming, storage/lifetime, and host verification.
+Return to its live workflow for activation; the wiring here is a reference
+example and must not override that guidance.
 
-The runtime artifact contains bundled toolkit code and browser assets, with no
+The whole dist/ artifact contains bundled toolkit code and browser assets, with no
 runtime npm installation or source checkout dependency. The canvas-capable host
 provides @github/copilot-sdk/extension; do not install or bundle that SDK.
 
-Reload extensions, inspect discovery/logs, then discover capabilities for canvas
-__CANVAS_NAME__. Open it with a distinct instanceId such as demo-1 and input {}.
-Invoke get_state with {}, increment with {"amount":1}, or reset with {}.
-The UI buttons call the same validated actions. Close the panel to stop its
-server. Provider shutdown closes all servers and SSE connections.
+This demo exposes get_state with {}, increment with {"amount":1}, and reset
+with {}. Its UI buttons call the same validated actions.
 
-After editing: rebuild, recopy to the approved scope, and reload. There is no
-watch command or automatic host reload. npm test requires npm run build first;
-it covers domain and emitted-server behavior, not real browser rendering.
+There is no watch command or automatic host reload. npm test requires npm run
+build first; it covers domain and emitted-server behavior, not real browser
+rendering or native-host activation.
 
 ## Customize
 
@@ -529,11 +537,18 @@ it covers domain and emitted-server behavior, not real browser rendering.
 
 New static assets need both a build copy and an allowlisted server route. Do
 not relax script CSP or add inline handlers to fix asset-loading mistakes.
-For durable data, choose an owning domain ID and storage location before
-replacing the demo. Never key durable data by a panel's instanceId alone.
+The toolkit state helper is not durable persistence; follow the host skill's
+storage/lifetime guidance before replacing the demo.
 No Azure access, telemetry, prompt forwarding, or cloud mutations are included.
 `,
     "AGENTS.md": String.raw`# App development
+
+First invoke the GitHub Copilot app's installed create-canvas skill through the
+host skill mechanism (or continue it if already active). It is the source of
+truth for canvas apps, including native scaffolding and host verification.
+This optional experimental generator supplies a toolkit/build reference only;
+do not substitute its skeleton for the live skill's workflow. If the skill is
+missing, report the prerequisite and do not claim native activation.
 
 Read README.md. Use Node >=22. After source changes run npm run build and npm test.
 UI and agent actions must use the same domain schemas, dispatch, and state.

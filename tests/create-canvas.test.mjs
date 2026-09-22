@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, readdir, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, readdir, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -52,7 +52,10 @@ test("help runs with only the downloaded file and creates nothing", async t => {
     const downloaded = path.join(root, "standalone.mjs");
     await writeFile(downloaded, await readFile(script));
     const before = await inventory(root);
-    assert.match(execFileSync(process.execPath, [downloaded, "--help"], { cwd: root, encoding: "utf8" }), /No install, login/);
+    const help = execFileSync(process.execPath, [downloaded, "--help"], { cwd: root, encoding: "utf8" });
+    assert.match(help, /No install, login/);
+    assert.match(help, /optional experimental toolkit\/build example/);
+    assert.match(help, /create-canvas\nskill first/);
     assert.deepEqual(await inventory(root), before);
     assert.match(execFileSync(process.execPath, [downloaded, ...args()], { cwd: root, encoding: "utf8" }), /Created/);
     assert.equal(JSON.parse(await readFile(path.join(root, "app/package.json"))).name, "my-canvas");
@@ -79,6 +82,14 @@ test("deterministic portable output and build contract", async t => {
     }
     assert.match(await readFile(path.join(first, "scripts/build.mjs"), "utf8"), /external: \[host, "\.\/canvas\.mjs"\]/);
     assert.match(await readFile(path.join(first, "src/browser/app.mjs"), "utf8"), /@microsoft\/canvas-toolkit\/ui\/styles\.css/);
+    for (const file of ["README.md", "AGENTS.md"]) {
+        const guidance = await readFile(path.join(first, file), "utf8");
+        assert.match(guidance, /First invoke the GitHub Copilot app's installed create-canvas/);
+        assert.match(guidance, /source of\s+truth/);
+        assert.match(guidance, /optional experimental/i);
+        assert.match(guidance, /native scaffold/);
+        assert.match(guidance, /missing prerequisite|skill is\s+missing/);
+    }
 });
 
 test("rejects malformed options and hostile names without creating output", async t => {
@@ -147,9 +158,57 @@ test("skills-only Agent Plugins manifest and discovery layout", async () => {
     assert.equal(manifest.$schema, "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json");
     assert.equal(manifest.name, "canvas-authoring");
     assert.equal(manifest.version, "0.1.0");
+    assert.match(manifest.description, /companion.*installed create-canvas skill/);
     const skill = await readFile(new URL("skills/create-canvas-app/SKILL.md", plugin), "utf8");
     assert.match(skill, /^---\nname: create-canvas-app\ndescription: .+\n---/);
     assert.doesNotMatch(skill, /curl.+\|\s*(sh|bash|node)/);
+});
+
+test("companion invokes the installed host skill first without a parallel lifecycle", async () => {
+    const skill = await readFile(new URL("../plugins/canvas-authoring/skills/create-canvas-app/SKILL.md", import.meta.url), "utf8");
+    const body = skill.replace(/^---\n[\s\S]*?\n---\n/, "").trim();
+    assert.match(body, /^# Canvas toolkit companion\n\n\*\*First action:\*\* invoke/);
+    assert.match(body, /skill\(\{ skill: "create-canvas" \}\)/);
+    assert.match(body, /already active/);
+    assert.match(body, /source of truth/);
+    assert.match(body, /including its \*\*native scaffold step\*\*/);
+    assert.match(body, /customization\/build step/);
+    assert.match(body, /return to that workflow for verification/);
+    assert.match(body, /unavailable, report that the required app skill is missing/);
+    assert.match(body, /optional experimental toolkit\/build reference/);
+    assert.match(body, /not the default workflow/);
+    assert.doesNotMatch(body, /extensions_manage|extensions_reload|open_canvas|invoke_canvas_action|joinSession|createCanvas\(/);
+    assert.doesNotMatch(body, /node .*create-canvas\.mjs|\/Users\/|\/Applications\/|\.github\/extensions\//);
+});
+
+test("plugin-local references ship independently and contain toolkit-only examples", async t => {
+    const { root } = await fixture(t);
+    const plugin = path.join(root, "installed-plugin");
+    await cp(new URL("../plugins/canvas-authoring/", import.meta.url), plugin, { recursive: true });
+    const pluginRoot = await realpath(plugin);
+    for (const file of Object.keys(await inventory(plugin)).filter(file => file.endsWith(".md"))) {
+        const content = await readFile(path.join(plugin, file), "utf8");
+        assert.doesNotMatch(content, /\/Users\/|\/Applications\//);
+        for (const [, href] of content.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {
+            if (/^(https?:|#)/.test(href)) continue;
+            const resolved = await realpath(path.resolve(plugin, path.dirname(file), href.split("#")[0]));
+            assert.ok(resolved.startsWith(pluginRoot + path.sep), file + " links outside the installed plugin: " + href);
+        }
+        for (const [, language, code] of content.matchAll(/```(js|json)\n([\s\S]*?)```/g)) {
+            if (language === "json") JSON.parse(code);
+            else execFileSync(process.execPath, ["--check", "--input-type=module"], { input: code });
+        }
+    }
+    const reference = await readFile(path.join(plugin, "skills/create-canvas-app/references/toolkit.md"), "utf8");
+    for (const exported of ["actions", "state", "server", "ui/styles.css"]) {
+        assert.ok(reference.includes("@microsoft/canvas-toolkit/" + exported));
+    }
+    assert.match(reference, /file:vendor\/canvas-toolkit\.tgz/);
+    assert.match(reference, /not\*\* public npm availability/);
+    assert.match(reference, /not durable persistence/);
+    assert.match(reference, /Azure auth\/subscription helpers are opt-in/);
+    assert.match(reference, /@github\/copilot-sdk\/extension` external/);
+    assert.doesNotMatch(reference, /extensions_manage|extensions_reload|open_canvas|invoke_canvas_action|joinSession|createCanvas\(/);
 });
 
 test("npm launcher uses Node plus CLI JS, including Windows paths with spaces", async t => {

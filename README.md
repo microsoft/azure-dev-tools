@@ -16,10 +16,13 @@ to install yet.
 ## Canvas authoring design preview
 
 [`plugins/canvas-authoring/`](plugins/canvas-authoring/) proposes a skills-only
-Copilot plugin and a standalone Node scaffolder for independently buildable
-canvas apps. It requires an explicitly approved local toolkit tarball; public
-toolkit distribution and release approval remain unresolved. No generated
-canvas or private toolkit payload is distributed here.
+toolkit companion to the GitHub Copilot app's installed `create-canvas` skill,
+the source of truth for canvas authoring. The companion invokes that skill first
+and supplements its customization/build step with toolkit integration guidance.
+A standalone generator remains an optional experimental build reference, not a
+replacement for the host's native scaffold. Toolkit use requires an explicitly
+approved local tarball; public distribution and release approval remain
+unresolved. No generated canvas or private toolkit payload is distributed here.
 
 ## Get involved
 
