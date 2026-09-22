@@ -13,6 +13,14 @@ through GitHub Copilot.
 These package locations are scaffolds only. No canvas packages are available
 to install yet.
 
+## Canvas authoring design preview
+
+[`plugins/canvas-authoring/`](plugins/canvas-authoring/) proposes a skills-only
+Copilot plugin and a standalone Node scaffolder for independently buildable
+canvas apps. It requires an explicitly approved local toolkit tarball; public
+toolkit distribution and release approval remain unresolved. No generated
+canvas or private toolkit payload is distributed here.
+
 ## Get involved
 
 Watch this repository for updates and see [CONTRIBUTING.md](CONTRIBUTING.md)
