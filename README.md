@@ -18,9 +18,10 @@ to install yet.
 [`plugins/canvas-authoring/`](plugins/canvas-authoring/) proposes a skills-only
 toolkit companion to the GitHub Copilot app's installed `create-canvas` skill,
 the source of truth for canvas authoring. The companion invokes that skill first
-and supplements its customization/build step with toolkit integration guidance.
-A standalone generator remains an optional experimental build reference, not a
-replacement for the host's native scaffold. Toolkit use requires an explicitly
+and runs bundled deterministic toolkit setup at its customization/build step.
+The command preserves the native entry and generates toolkit/build plumbing;
+one explicit host-owned adapter hookup is required and checked before readiness.
+It does not replace the host's native scaffold. Toolkit use requires an explicitly
 approved local tarball; public distribution and release approval remain
 unresolved. No generated canvas or private toolkit payload is distributed here.
 

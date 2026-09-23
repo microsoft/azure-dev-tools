@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { execFile, spawn } from "node:child_process";
 import { once } from "node:events";
-import { cp, mkdtemp, readFile, rm } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { register } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -9,20 +10,40 @@ import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import { scaffold } from "../scripts/create-canvas.mjs";
 import { npmCommand } from "./npm-command.mjs";
+import { hostEntry } from "./host-entry-fixture.mjs";
 
 const exec = promisify(execFile);
 const tarball = process.env.CANVAS_TOOLKIT_TARBALL;
 
 test("real toolkit install, tests, and relocated runtime artifact", { skip: !tarball, timeout: 180_000 }, async t => {
-    const root = await mkdtemp(path.join(tmpdir(), "canvas-real-test-"));
+    const root = await realpath(await mkdtemp(path.join(tmpdir(), "canvas-real-test-")));
     t.after(() => rm(root, { recursive: true, force: true }));
-    const source = await scaffold(["--name", "counter-demo", "--output", path.join(root, "source"), "--toolkit-tarball", tarball]);
+    const native = path.join(root, "native/extension.mjs");
+    await mkdir(path.dirname(native));
+    await writeFile(native, hostEntry("counter-demo"));
+    const source = await scaffold(["--name", "counter-demo", "--scaffold", native, "--output", path.join(root, "source"), "--toolkit-tarball", await realpath(tarball)]);
     const npm = await npmCommand();
     const env = { ...process.env };
     // Nested test runners must report their own failures and TAP output.
     delete env.NODE_TEST_CONTEXT;
-    for (const args of [["install", "--no-audit", "--no-fund"], ["ci", "--no-audit", "--no-fund"], ["run", "build"], ["test"]]) {
+    for (const args of [["install", "--no-audit", "--no-fund"], ["ci", "--no-audit", "--no-fund"]]) {
         const result = await exec(npm.file, [...npm.args, ...args], { cwd: source, env, timeout: 120_000 });
+        t.diagnostic(result.stdout.trim());
+    }
+    for (const entry of [hostEntry("counter-demo"), hostEntry("counter-demo", { unusedImport: true }),
+        hostEntry("counter-demo", { connected: true }).replace('id: "counter-demo"', 'id: "unexpected"'),
+        hostEntry("counter-demo", { connected: true }).replace("createCanvas(attachToolkit(native))", "attachToolkit(native)"),
+        hostEntry("counter-demo", { connected: true }).replace("const native = {", 'process.once("SIGINT", () => process.exit(0));\nconst native = {'),
+        hostEntry("counter-demo", { connected: true }) + '\nprocess.once("SIGTERM", () => process.exit(0));\n']) {
+        await writeFile(path.join(source, "src/extension.mjs"), entry);
+        await assert.rejects(exec(npm.file, [...npm.args, "run", "build"], { cwd: source, env, timeout: 30_000 }),
+            error => /Toolkit registration check failed/.test(error.stderr));
+        assert.equal(await readFile(path.join(source, "src/extension.mjs"), "utf8"), entry);
+        assert.equal(await readFile(native, "utf8"), hostEntry("counter-demo"));
+    }
+    await writeFile(path.join(source, "src/extension.mjs"), hostEntry("counter-demo", { connected: true }));
+    for (const args of [["run", "build"], ["run", "check"], ["test"]]) {
+        const result = await exec(npm.file, [...npm.args, ...args], { cwd: source, env, timeout: 30_000 });
         t.diagnostic(result.stdout.trim());
         if (args[0] === "test") assert.match(result.stdout, /# pass 2/);
     }
@@ -30,16 +51,28 @@ test("real toolkit install, tests, and relocated runtime artifact", { skip: !tar
     assert.equal(lock.packages[""].dependencies["@microsoft/canvas-toolkit"], "file:vendor/canvas-toolkit.tgz");
     const artifact = path.join(root, "isolated");
     await cp(path.join(source, "dist"), artifact, { recursive: true });
+    const seam = path.join(root, "seam");
+    await mkdir(seam);
+    for (const file of ["host-loader.mjs", "host-double.mjs"]) {
+        await cp(path.join(source, "scripts", file), path.join(seam, file));
+    }
     // Remove the app, vendor archive, and node_modules before importing the build.
     await rm(source, { recursive: true });
-    const { createApp } = await import(pathToFileURL(path.join(artifact, "canvas.mjs")));
-    const app = createApp();
+    register(pathToFileURL(path.join(seam, "host-loader.mjs")));
+    await import(pathToFileURL(path.join(artifact, "extension.mjs")));
+    const { registrations } = await import(pathToFileURL(path.join(seam, "host-double.mjs")));
+    const { app } = await import(pathToFileURL(path.join(artifact, "toolkit.mjs")));
+    assert.equal(registrations.length, 1);
+    assert.deepEqual(registrations[0].tools, []);
+    const definition = registrations[0].canvases[0];
+    assert.equal(definition.displayName, "Native title");
+    assert.equal(globalThis.nativeSession.sessionId, "toolkit-check");
     t.after(() => app.close());
-    const ctx = { instanceId: "isolated-panel", input: {} };
-    await assert.rejects(app.definition.open({ ...ctx, input: { unexpected: true } }), { code: "invalid_input" });
-    const { url } = await app.definition.open(ctx);
+    const ctx = { instanceId: "isolated-panel", input: {}, host: { capabilities: { "canvas-renderer": true } } };
+    await assert.rejects(definition.open({ ...ctx, input: { unexpected: true } }), { code: "invalid_input" });
+    const { url } = await definition.open(ctx);
     const origin = new URL(url).origin;
-    const invoke = (name, input) => app.definition.actions.find(action => action.name === name).handler({ ...ctx, input });
+    const invoke = (name, input) => definition.actions.find(action => action.name === name).handler({ ...ctx, input });
     const post = (input, originHeader = origin) => fetch(new URL("api/action", url), {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(originHeader ? { Origin: originHeader } : {}) },
@@ -73,9 +106,10 @@ test("real toolkit install, tests, and relocated runtime artifact", { skip: !tar
     await t.test("real browser UI, agent synchronization, and CSP", { skip: !process.env.CANVAS_BROWSER }, async () => {
         await browserCheck(process.env.CANVAS_BROWSER, root, url, invoke);
     });
-    await app.definition.onClose(ctx);
+    await definition.onClose(ctx);
+    assert.equal(globalThis.nativeCloseContext, ctx);
     await assert.rejects(fetch(url));
-    assert.throws(() => invoke("get_state", {}), /Open the canvas/);
+    await assert.rejects(invoke("get_state", {}), /Open the canvas/);
 });
 
 async function browserCheck(executable, root, url, invoke) {

@@ -4,6 +4,32 @@ Use at the installed `create-canvas` skill's customization/build step, after its
 native scaffold. The live host skill owns canvas authoring and verification;
 these are toolkit integration examples, not a second extension skeleton.
 
+## Deterministic setup and the host-owned adapter
+
+Run the bundled [setup command](../scripts/setup-toolkit.mjs) as directed in
+[SKILL.md](../SKILL.md). It generates all package/domain/server/UI/build/check
+files in a new source app and copies the native entry byte-for-byte. It never
+rewrites the original host scaffold. The one host-specific customization is
+an import plus wrapping the copied native declaration:
+
+```js
+import { attachToolkit } from "./toolkit.mjs";
+// Existing createCanvas(nativeOptions) becomes createCanvas(attachToolkit(nativeOptions)).
+// Keep the original nativeOptions and joinSession wiring.
+```
+
+The adapter replaces demo actions/open, forwards the full context, preserves
+native metadata, and chains native close after toolkit cleanup. Do not apply it
+over custom business callbacks. Conflicting shutdown listeners and incompatible
+registrations are explicit errors, not silently rewritten code.
+
+`npm run build` runs the generated readiness check. `npm run check` reruns it
+without rebuilding. The check executes the emitted host entry with a test-only
+SDK registration seam and exercises its actual toolkit action/open/close path;
+an unused import fails. This is trusted code execution, not a sandbox and not
+native-host acceptance. The seam stays outside `dist/`. Return to the installed
+host skill after this check rather than treating it as host activation.
+
 ## Dependency provenance
 
 This preview targets the inspected public exports of private
@@ -25,7 +51,8 @@ explicitly approved local npm-pack tarball, copy it into the app, and declare:
 }
 ```
 
-Merge these fields into the source app's package manifest, not the host SDK.
+The setup command creates this source app manifest; it does not merge existing
+package/lockfiles. For later host-guided customization, keep the same boundary.
 Do not install or bundle `@github/copilot-sdk/extension`. Keep the private
 tarball out of public commits; include it only in approved private source
 transfers so the relative dependency stays usable. Do not use absolute paths,

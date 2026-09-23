@@ -1,6 +1,6 @@
 ---
 name: create-canvas-app
-description: Add @microsoft/canvas-toolkit to a GitHub Copilot canvas using the app's installed create-canvas skill first. A companion for validated actions/state, shared UI, approved package dependencies, and Node/browser esbuild setup; not a replacement canvas-authoring workflow.
+description: Add @microsoft/canvas-toolkit to a GitHub Copilot canvas using the app's installed create-canvas skill first, then the bundled deterministic toolkit setup command. Generates actions/state/server/UI and esbuild plumbing; the native skill owns host wiring and verification.
 ---
 
 # Canvas toolkit companion
@@ -21,32 +21,66 @@ If `create-canvas` is unavailable, report that the required app skill is missing
 Do not invent a replacement SDK/lifecycle workflow or claim native activation.
 Package-only toolkit/build guidance can still be useful, but is not a substitute.
 
-## Toolkit customization
+## Deterministic toolkit setup at customization
 
-Read the bundled [toolkit reference](references/toolkit.md) and apply only the
-pieces the app needs:
+Read the bundled [toolkit reference](references/toolkit.md). Use the
+[setup command](scripts/setup-toolkit.mjs) at the host workflow's
+customization/build step, before adding custom business behavior:
 
-1. **Establish dependency provenance.** This preview requires an explicitly
+1. **Establish inputs.** This preview requires an explicitly
    approved local `@microsoft/canvas-toolkit` 0.1.0 npm-pack tarball. Public npm
-   distribution is unresolved. Keep a private copy under the app's `vendor/`
-   with a relative `file:` dependency; never assume `latest` or publish the kit.
-2. **Share domain behavior.** Use public actions/state exports so UI requests and
-   agent handlers reach the same validated dispatch and state. `createViewStore`
-   is in-memory view state, not durable persistence; defer storage/lifetime to
-   the host skill. Do not forward raw prompts.
-3. **Reuse compatible toolkit pieces.** Prefer `startCanvasServer` over
-   hand-rolled transport where it satisfies the current host contract. Use the
-   shared UI/CSS exports without duplicating host theme rules. Azure integrations
-   are opt-in, never prerequisites for a generic canvas.
-4. **Close the build boundary.** Separate Node and browser bundles, leave the
-   exact host SDK import external, and include every CSS/static asset. Install
-   declared dependencies, retain the normal npm lockfile, and run the app's
-   build/tests. Check the relocated artifact and real browser separately from
-   the host skill's native verification; report what actually ran.
+   distribution is unresolved; never assume `latest` or publish the kit. Use
+   the host-created `extension.mjs` from a directory containing only that file,
+   its canvas ID as the name, and a **new, separate source-app directory**.
+   Existing projects/package/lockfiles and symlink paths are refused, not merged.
+2. **Run the bundled script.** From this installed skill's directory, substituting
+   confirmed absolute paths (resolve OS path aliases before use):
 
-The standalone generator described in the [plugin README](../../README.md) is
-an **optional experimental toolkit/build reference**, not the default workflow
-or a replacement for the native scaffold. This plugin installs guidance only.
+   ```sh
+   node scripts/setup-toolkit.mjs --help
+   node scripts/setup-toolkit.mjs --name my-canvas \
+     --scaffold /path/to/native/my-canvas/extension.mjs \
+     --output /path/to/existing-parent/new-source-app \
+     --toolkit-tarball /path/to/approved-toolkit.tgz
+   ```
+
+   This uses only bundled code and Node built-ins, not a download/bootstrap.
+   It copies the native entry unchanged to `src/extension.mjs`, generates the
+   toolkit modules/assets/package/build/checks, and copies the tarball to a
+   relative `vendor/` dependency. Original scaffold files remain untouched.
+   All predictable validation happens before output creation. Reruns refuse
+   any existing destination, including identical output.
+3. **Connect the host declaration.** Follow the generated README: add
+   `import { attachToolkit } from "./toolkit.mjs";` to the copied entry and
+   wrap the existing options as `createCanvas(attachToolkit({ ... }))`.
+   Keep the native options and surrounding session wiring; forward host context
+   unchanged. The adapter replaces only demo actions/open and chains native
+   close after toolkit cleanup. The live host skill must review this hookup.
+   Custom actions/open or competing shutdown handlers need explicit integration,
+   not an automated rewrite. Do not use the setup command as a second provider.
+4. **Build and prove connection.** In the generated source app:
+
+   ```sh
+   npm install
+   npm run build
+   npm test
+   ```
+
+   Keep the lockfile; later use `npm ci`. Build runs `npm run check`'s registration
+   check against the **emitted host entry**, not merely a toolkit import. Missing
+   hookup, unused imports, incompatible registration, or conflicting shutdown
+   ownership fail readiness. This executes trusted source using a test SDK seam,
+   not native-host activation or a sandbox. Source generation alone is NOT READY.
+5. **Customize and return.** Modify shared domain actions/state and UI as needed;
+   use the reference for public APIs. `createViewStore` is not durable persistence;
+   defer storage/lifetime to the host skill. Azure integrations are opt-in, not
+   prerequisites. No raw prompt forwarding. Keep Node/browser bundles separate,
+   the host SDK external, and all assets in `dist/`. Check the relocated artifact
+   and real browser, then return to the live host skill for installation/verification
+   in the chosen scope. Do not copy source dependencies into the runtime artifact.
+
+The [plugin README](../../README.md) explains supported inputs and limitations.
+Installation only supplies the companion; it never executes setup automatically.
 
 Keep private tarballs and generated bundles out of public commits. A working
 local build is not approval to redistribute its dependencies.
