@@ -68,6 +68,8 @@ They do not require access to a source repository.
 | `@microsoft/canvas-toolkit/commands` | `createCommandLog`; server-side, DOM-free, redaction-safe command-activity record log |
 | `@microsoft/canvas-toolkit/ui/commands-log` | `createCommandsLog` (browser module); the read-only command-activity panel |
 | `@microsoft/canvas-toolkit/ui/commands-log.css` | Command-activity panel styles |
+| `@microsoft/canvas-toolkit/telemetry` | `createCanvasUsageMetrics`, `instrumentCanvasActions`, `instrumentActionDispatch`; explicit-off, bounded product-usage collection |
+| `@microsoft/canvas-toolkit/ui/telemetry` | `observeCanvasUsage`; trusted panel interactions from a static control allowlist |
 
 ## Canvas skeleton
 
@@ -115,6 +117,182 @@ and actions stand alone; the state store and session bridge are optional.
   server-side, the browser names one and passes validated params, and the
   prompt string is constructed out of the view's reach. The trigger comes from
   the click; the words come from the extension.
+
+## Product-usage telemetry
+
+The toolkit-owned client reconciles the Hosted Skills usage-metrics prototype
+(#58) with the toolkit extraction (#102). This capability
+records `canvas_opened`, `feature_invoked`, `feature_completed`, and
+`ui_interaction`. It is **not** customer Function App/Application Insights log
+querying. The existing metrics gateway, ADX resources, authentication policy,
+and dashboards remain separate consumer-owned infrastructure; this API does
+not deploy or change them.
+
+Collection defaults to **disabled**. The toolkit does not read environment
+variables, discover identity, infer consent, or automatically enable a transport.
+The owning application must honor host preferences and obtain an approved
+destination and collection policy before explicitly enabling it. Never reuse a
+customer's Application Insights connection for product-usage events.
+
+```js
+import {
+    createCanvasUsageMetrics, instrumentCanvasActions, instrumentActionDispatch,
+} from "@microsoft/canvas-toolkit/telemetry";
+
+const metrics = createCanvasUsageMetrics({
+    canvasId: "example",
+    canvasVersion: "1.0.0",
+    host: "copilot_app", // or "mcp_app"
+    releaseChannel: "development",
+    enabled: false,
+    // endpoint: "https://metrics.example.test/api/events", // your approved destination
+    actionUsage: {
+        refresh: {
+            featureId: "resources.refresh", featureArea: "discovery",
+            usageClass: "intentional", mutates: false,
+        },
+    },
+    controls: { refresh: "button" },
+});
+
+// SDK actions: wrappers validate registry coverage even when collection is off.
+const actions = instrumentCanvasActions([
+    { name: "refresh", handler: async () => ({ count: 0 }) },
+], metrics, { invocationSource: "model" });
+// For a toolkit defineActions registry, wrap its dispatch instead:
+// const dispatch = instrumentActionDispatch(registry.dispatch, metrics,
+//     { invocationSource: "panel" });
+metrics.trackCanvasOpened("model"); // defaults to "unknown"
+// await metrics.close({ flush: false }); // discard/cancel at owning lifecycle end
+```
+
+For authenticated HTTP collection, the application explicitly supplies its own
+endpoint, audience, opt-in decision, and token provider. The provider returns a
+token string or `{ accessToken: string }` and must honor the supplied signal:
+
+```js
+function createApplicationMetrics({ collectionAllowed, endpoint, audience, acquireToken }) {
+    return createCanvasUsageMetrics({
+        canvasId: "example", canvasVersion: "1.0.0",
+        enabled: collectionAllowed === true,
+        endpoint, // e.g. https://metrics.example.test/api/events; no credentials/query/fragment
+        audience, // e.g. api://your-collector, not a toolkit-selected Azure resource
+        getAccessToken: (requestedAudience, signal) => acquireToken(requestedAudience, signal),
+        actionUsage: {
+            refresh: {
+                featureId: "resources.refresh", featureArea: "discovery",
+                usageClass: "intentional", mutates: false,
+            },
+        },
+    });
+}
+```
+
+Token acquisition and fetch share one request deadline. Without `getAccessToken`,
+HTTP delivery has no Authorization header. No Azure CLI, environment-variable
+lookup, audience discovery, or default telemetry endpoint exists in the toolkit.
+Disabled collectors never invoke authentication, fetch, or custom transports.
+
+Alternate destinations can own serialization and authentication entirely:
+
+```js
+function createAlternateMetrics({ collectionAllowed, writeApprovedBatch }) {
+    return createCanvasUsageMetrics({
+        canvasId: "example", canvasVersion: "1.0.0",
+        enabled: collectionAllowed === true,
+        transport: async (events, { signal }) => {
+            await writeApprovedBatch({ schemaVersion: 1, events }, { signal });
+        },
+    });
+}
+```
+
+A custom `transport` replaces HTTP and token acquisition, requires no endpoint,
+and receives only immutable allowlisted events plus the cancellation signal.
+The toolkit still enforces opt-in, queue bounds, and deadlines. Hooks must honor
+cancellation to stop their own external work; the collector bounds its wait even
+if a hook ignores the signal.
+
+Use reviewed **code constants** for canvas/version, feature/action, and control
+registries. They are not a general properties bag: never derive them from user
+input, visible text, resource names/IDs, paths, URLs, commands, or errors.
+Registries are copied; unregistered action/control metadata and unknown runtime
+enums are rejected with safe diagnostics. Events project only the declared
+fields. There are no persistent user/device/session identifiers: opens and
+invocations measure observed events, not installs or unique users.
+
+`usageClass` distinguishes `intentional` actions from `automatic` background
+work; `excluded` actions produce no events. The wrappers preserve results and
+original exceptions, receivers and arguments. Resolved `ok: false` or
+`isError: true` results are `rejected`; `cancelled: true` or `canceled: true`
+takes precedence and is `cancelled`. Thrown `AbortError`s are `cancelled`; other
+exceptions are `failed`. Otherwise completion is `succeeded`. Failure codes are
+always respectively `action_rejected`, `action_cancelled`, `action_error`, or
+the empty string; raw errors are never included. Result accessors and throwing
+Proxy metadata traps are not allowed to replace the application's result.
+This measures dispatch completion, not eventual background-job success.
+Invocation source is set by the trusted adapter (`model`, `panel`,
+`system`, or `unknown`), never copied from input. Do not instrument the same
+dispatch twice. SDK action wrappers alone do not measure panel HTTP-route
+outcomes; wire those dispatch paths explicitly if required. SDK wrappers also
+accept `openedActions: ["open_canvas"]` and a trusted
+`invocationSource(context, action)` resolver; dispatch wrappers accept the same
+opened-action list and `invocationSource(name, ...args)`. Resolver and telemetry
+callback failures are isolated from the original handler.
+
+For the iframe, serve `canvas-ui/telemetry.mjs` from `canvasUiAssets` and call
+`observeCanvasUsage({ root: document, enabled, controls, send, onDiagnostic })`.
+`send` should POST only `{ interactionType, controlId, controlType }` to the
+canvas's protected same-origin route, which calls `metrics.trackUiInteraction`.
+Use `data-metric-id` or an `id` from the same reviewed control allowlist in both
+places. Only trusted `click`, committed `change`, and `submit` events on those
+controls are captured; `toggle` and programmatic events are excluded. No text,
+values, DOM content, or coordinates are read into events. Native buttons and
+elements with `role="button"` use control type `button`; forms use `other`.
+Call the returned `dispose()` before replacing an observer. The helper
+is self-contained for existing inline-renderer consumers; ordinary module
+consumers should serve it under their existing strict CSP.
+
+The Node transport posts `{ schemaVersion: 1, events: [...] }` to credential-free
+HTTPS, rejects query/fragment configuration, omits ambient credentials, and
+refuses redirects even with a bearer token. Every event includes `schemaVersion`,
+`canvasId`, `canvasVersion`, `host`, `releaseChannel`, `timestamp`, `eventId`,
+`eventName`, and `invocationSource`. Feature events add only the registered
+`featureId`, `featureArea`, `actionName`, `usageClass`, and `mutates`; completions
+add `outcome`, integer `durationMs` clamped to 0–3,600,000, and `failureCode`.
+UI interactions add only `interactionType`, `controlId`, and `controlType`.
+This is the deployed schema-v1 gateway envelope; that gateway independently
+requires registered canvas releases/features and batches of at most 20.
+
+Defaults: 20 events per batch, 100 queued events, 1-second flush interval, and
+10-second request/total-close deadlines. Overflow drops the oldest queued event;
+failed deliveries are dropped without retry or persistence. `flush()` delivers
+at most one batch (concurrent calls share it). `cancelPending()` aborts only this
+collector's active delivery; it does not disable this or other collectors.
+`close({ flush: false })` immediately stops accepting events, discards queued
+events, and cancels delivery; consumer adapters should use this lifecycle form.
+Explicit `close()` callers instead drain within the total deadline. Both return
+lifetime `{ delivered, dropped }` counts; timers do not keep the process alive.
+Keep client ownership explicit: do not close a shared client when only one of
+its panels closes, or reuse a closed client on reopen.
+
+`getStats()` exposes delivered/dropped/invalid, queued/in-flight counts, and
+closed state. `onDiagnostic({ code })` receives safe, deduplicated diagnostic
+codes; without a callback they are stderr warnings. Both Node and browser
+diagnostic callbacks may be synchronous or asynchronous. Throws and rejected
+promises produce a fixed warning without blocking actions, delivery, or UI
+interactions. No raw network or payload diagnostics are forwarded.
+
+Migration policy: the removed `@cloud-foundation/canvas-metrics` client no longer
+owns environment configuration. Its authenticated-envelope, cancellation,
+error-fidelity, privacy, and shutdown assertions now live in toolkit tests.
+Unlike that prototype, UI IDs must match an explicit static control registry,
+and `mutates` is registered metadata rather than action-result data. The
+prototype's discard-only `close()` maps to `close({ flush: false })`; the
+toolkit's existing explicit drain behavior remains available.
+Inject `fetchImpl`, clock, and ID factories for
+hermetic tests. Application fixture/test modes must explicitly disable
+production sending regardless of inherited environment configuration.
 
 ## Azure access
 

@@ -15,8 +15,9 @@ to install yet.
 
 ## Canvas authoring design preview
 
-[`plugins/canvas-authoring/`](plugins/canvas-authoring/) proposes a skills-only
-toolkit companion to the GitHub Copilot app's installed `create-canvas` skill,
+[`plugins/canvas-authoring/`](plugins/canvas-authoring/) contains the published
+installable payload for a skills-only toolkit companion to the GitHub Copilot
+app's installed `create-canvas` skill,
 the source of truth for canvas authoring. The companion invokes that skill first
 and runs bundled deterministic toolkit setup at its customization/build step.
 The command preserves the native entry and generates toolkit/build plumbing;
@@ -26,6 +27,11 @@ toolkit version or an explicitly approved local tarball. The Azure starter
 includes subscription scope, read-only resource groups, asset packaging and a
 focused browser smoke. No generated canvas or private toolkit payload is
 distributed here.
+
+The maintained plugin source, development tests, and export tooling live
+upstream. This repository carries the generated installable plugin, not a
+development checkout. Bundled runtime setup and Azure template tests are
+consumer scaffold inputs and remain part of the payload.
 
 ## Get involved
 

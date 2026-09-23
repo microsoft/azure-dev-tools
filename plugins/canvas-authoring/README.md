@@ -37,9 +37,9 @@ and an approved toolkit version."**
 
 The [Azure quickstart](skills/create-canvas-app/references/toolkit/quickstart.md)
 and [small reader](skills/create-canvas-app/references/toolkit/examples/resource-groups.mjs)
-are bundled snapshots of the canonical toolkit sources, with provenance hashes.
-`scripts/sync-toolkit-guides.mjs` copies their link dependencies and records
-hashes; do not maintain separately edited guides here.
+are bundled snapshots of the canonical toolkit sources. Their
+[provenance](skills/create-canvas-app/references/toolkit/provenance.json) records
+the package version and file checksums. No source checkout is required.
 
 The agent selects `--template azure-resource-groups` to generate auth, explicit
 subscription scope, a bounded read-only query, cancellation and shared UI/agent
@@ -76,10 +76,6 @@ resolves it later. An unavailable version fails installation; there is no fallba
 The published `0.1.0-preview.1` does not include `/build` and cannot build these
 starters. Use an approved local candidate containing the helper until a newer
 release includes it.
-
-The repository's `scripts/create-canvas.mjs` is only a convenience wrapper for
-the same bundled implementation and options. It is no longer a standalone
-whole-app generator: `--scaffold` is required. Do not download that wrapper alone.
 
 Setup reads a regular `extension.mjs` from a directory containing only that file.
 It does **not** parse/rewrite arbitrary native source or claim compatibility with
@@ -182,35 +178,13 @@ deliberately ephemeral, not durable document storage. Server/UI helpers provide
 loopback/origin/CSP protections and host-themed CSS. Automatic login, cloud
 writes, telemetry, UI frameworks and raw prompt forwarding are absent.
 
-## Contributor checks and current limitations
+## Verification boundaries
 
-```sh
-node --test tests/create-canvas.test.mjs
-CANVAS_TOOLKIT_TARBALL=/private/approved-toolkit.tgz \
-CANVAS_BROWSER=/path/to/chrome \
-node --test tests/canvas-integration.test.mjs tests/azure-starter.test.mjs
-```
-
-Once a compatible release exists, the Azure integration can use it directly:
-set `CANVAS_TOOLKIT_VERSION` to its exact version instead of
-`CANVAS_TOOLKIT_TARBALL`, then run `tests/azure-starter.test.mjs`.
-
-The command tests also install a pinned prerelease from a loopback registry
-fixture, without contacting npm or publishing anything. That proves npm
-dependency resolution, not public registry availability or a working toolkit.
-The integration runner uses a real approved kit in a temporary source app,
-installs/locks/builds/tests, checks negative wiring cases, relocates the build,
-deletes source/dependencies, then exercises the emitted host entry through an
-isolated test SDK seam and real Chromium under CSP. Without the environment
-options, real-kit/browser checks are explicitly skipped. For nonstandard npm
-layouts, set `npm_execpath` to your npm installation's `bin/npm-cli.js`.
-
-The checked-in host registration fixture is **not a fresh native scaffold**.
-The Azure integration generates, installs and builds the preset, then runs its
-focused smoke in a sandboxed browser. These checks use synthetic data and a test
-SDK seam, not native-host UI or live Azure authorization. Return to the installed
-host skill for actual activation. A fresh-builder trial is a separate adoption
-check, not something a passing package test establishes.
+Generated app checks use synthetic data and a test SDK seam, not native-host
+UI or live Azure authorization. Return to the installed host skill for actual
+activation. A fresh-builder trial is a separate adoption check, not something
+a passing package test establishes. This distribution contains installable
+resources, not the plugin's source-repository development tools or test runner.
 
 To verify plugin resources/discovery without changing installed plugins:
 
@@ -221,5 +195,4 @@ COPILOT_HOME=/private/temporary-config copilot --plugin-dir /absolute/plugin-pat
 
 Look for enabled `canvas-authoring` and `create-canvas-app`. CLI discovery does
 not prove the app-shipped prerequisite exists in every standalone CLI.
-Publishing and merge decisions are outside this local prototype; nothing was
-published, merged, or installed at user scope.
+Publishing, merging and native installation require separate approval.
