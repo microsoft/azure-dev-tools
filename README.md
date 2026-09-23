@@ -21,9 +21,11 @@ the source of truth for canvas authoring. The companion invokes that skill first
 and runs bundled deterministic toolkit setup at its customization/build step.
 The command preserves the native entry and generates toolkit/build plumbing;
 one explicit host-owned adapter hookup is required and checked before readiness.
-It does not replace the host's native scaffold. Toolkit use requires an explicitly
-approved local tarball; public distribution and release approval remain
-unresolved. No generated canvas or private toolkit payload is distributed here.
+It does not replace the host's native scaffold. Choose an exact published
+toolkit version or an explicitly approved local tarball. The Azure starter
+includes subscription scope, read-only resource groups, asset packaging and a
+focused browser smoke. No generated canvas or private toolkit payload is
+distributed here.
 
 ## Get involved
 

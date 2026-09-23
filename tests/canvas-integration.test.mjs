@@ -78,7 +78,7 @@ test("real toolkit install, tests, and relocated runtime artifact", { skip: !tar
         headers: { "Content-Type": "application/json", ...(originHeader ? { Origin: originHeader } : {}) },
         body: JSON.stringify(input),
     });
-    for (const asset of ["", "app.js", "app.css"]) {
+    for (const asset of ["", "app.js", "app.css", "canvas-ui/azure-subscription-picker.mjs", "canvas-ui/subscription-picker.mjs", "icons/Subscription.svg"]) {
         const response = await fetch(new URL(asset, url));
         assert.equal(response.status, 200);
         assert.match(response.headers.get("content-security-policy"), /script-src 'self'/);
@@ -188,6 +188,22 @@ async function browserCheck(executable, root, url, invoke) {
         assert.equal(await evaluate("document.querySelector('#error').hidden"), true);
         assert.equal(await evaluate("getComputedStyle(document.querySelector('main')).paddingTop"), "24px");
         assert.notEqual(await evaluate("getComputedStyle(document.querySelector('#increment')).backgroundColor"), "rgba(0, 0, 0, 0)");
+        const images = await evaluate(`(async () => {
+            const { createAzureSubscriptionPicker } = await import(new URL("canvas-ui/azure-subscription-picker.mjs", location.href));
+            const picker = createAzureSubscriptionPicker({
+                id: "asset-check", transport: async () => ({ accounts: [] }), onApply: async () => {},
+            });
+            document.body.append(picker.trigger);
+            const images = [...document.querySelectorAll("img")];
+            await Promise.all(images.map(image => image.decode()));
+            return images.map(image => ({
+                loaded: image.complete && image.naturalWidth > 0,
+                scoped: new URL(image.src).pathname.startsWith(location.pathname),
+            }));
+        })()`);
+        assert.equal(images.length, 2);
+        assert.ok(images.every(image => image.loaded && image.scoped),
+            "Generated starter must serve both decoded subscription icons inside its secret prefix.");
         await evaluate("document.documentElement.style.setProperty('--background-color-default','#123456')");
         assert.equal(await evaluate("getComputedStyle(document.body).backgroundColor"), "rgb(18, 52, 86)");
         assert.deepEqual(await evaluate("window.violations"), []);

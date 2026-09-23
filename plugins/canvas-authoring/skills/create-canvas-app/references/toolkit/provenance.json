@@ -1,0 +1,14 @@
+{
+  "package": "@microsoft/canvas-toolkit",
+  "version": "0.1.0",
+  "files": {
+    "quickstart.md": "cd076766f9e92958bb649bb1340cd179c2b43fe83cc934d35c5b0cb8852d873b",
+    "README.md": "4459fd3ae39c7290e504d0c52dedb2f6d540266617fc9f6b6f94b5fe31d34514",
+    "auth.md": "efc091cbd367bdfedf382010ea1f6b7b82073c42212403b00a331b6c6cf9db3a",
+    "examples/README.md": "0ec424e5e1be558eb0b674c5a61d7ae81eaa17a81e834059d7183556605920f6",
+    "LICENSE": "d25deed12d803f6c973597348627b1939e2d19bbc28fda83c93ea0cde44702da",
+    "examples/resource-groups.mjs": "3d81ea6de1551da83f008251f204e06e736e9655aed450765b4f416a834d1eb8",
+    "examples/sdk-client.mjs": "e9adf9797984f6b23f2f7b0807898a551f2ca5ab122f5f644033e705e2efa1cc",
+    "examples/custom-fetch-client.mjs": "18ea90a17fb7d39104f343b3a53079dfed536bdd9a6dafc71321de5158be61bb"
+  }
+}

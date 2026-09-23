@@ -32,10 +32,14 @@ host skill after this check rather than treating it as host activation.
 
 ## Dependency provenance
 
-This preview targets the inspected public exports of private
-`@microsoft/canvas-toolkit` 0.1.0 (Node >=22; 24 recommended). "Public exports"
-means the package's export map, **not** public npm availability. Obtain an
-explicitly approved local npm-pack tarball, copy it into the app, and declare:
+Use Node >=22 (24 recommended) and a toolkit release with the public `/build`
+export. `--toolkit-version` pins an exact published version; setup performs no
+registry request and `npm install` must resolve it before building. Tags, ranges,
+URLs and aliases are refused. Bundled guide provenance is **not** public npm
+availability or a release approval.
+
+Alternatively, `--toolkit-tarball` accepts an approved local npm-pack archive,
+including a prerelease. That mode copies the archive and declares:
 
 ```json
 {
@@ -55,7 +59,8 @@ The setup command creates this source app manifest; it does not merge existing
 package/lockfiles. For later host-guided customization, keep the same boundary.
 Do not install or bundle `@github/copilot-sdk/extension`. Keep the private
 tarball out of public commits; include it only in approved private source
-transfers so the relative dependency stays usable. Do not use absolute paths,
+transfers so the relative dependency stays usable. Registry mode needs no
+vendored toolkit archive. Do not use absolute paths,
 sibling-checkout dependencies, `latest`, or an assumed registry release.
 Inspect the approved package's README, export map, and any exported types when
 using additional APIs; do not import its internal modules.
@@ -159,6 +164,18 @@ actions/state/server/UI path.
 
 ## Build and check the app
 
+The public `@microsoft/canvas-toolkit/build` export provides
+`prepareCanvasUiAssets(outDir)`. It copies the public UI asset closure and returns
+`nodeImport`, `browserImports`, and `files`. The generated build uses those
+descriptors for its bundler; asset-copy rules are owned by the toolkit, not
+reimplemented in each app. Older tarballs without `/build` fail setup preflight;
+an incompatible registry package fails the build after installation.
+
+Provider modules must be emitted at `outDir` root and the browser entry served
+at the canvas URL root. The preserved Node map owns module-relative file URLs;
+its allowlisted browser routes own the corresponding URL layout. CSS may remain
+bundled. Do not inline or rewrite the toolkit SVG source as a general workaround.
+
 Use the source app's declared build dependencies. Configure esbuild with
 `bundle: true` and `format: "esm"`:
 
@@ -171,6 +188,19 @@ Do not externalize all npm packages. Keep the host-prescribed entrypoint and
 registration from the native scaffold; the build is not a new runtime standard.
 Copy HTML and static files, preserve module-relative asset paths (including any
 separate toolkit asset modules), and serve only the intended allowlisted assets.
+The bundled setup now does this for `canvasUiAssets`: it preserves the Node asset
+map and browser UI modules, copies their relative dependencies, and mounts the
+map through the toolkit server. Public browser UI imports resolve to those
+same-origin modules instead of being flattened into `app.js`. This matters for
+the subscription SVG: esbuild does not copy `new URL(..., import.meta.url)`
+assets automatically, and moving the owning module changes their URL.
+
+Keep these generated build/server defaults. Build readiness fetches every
+allowlisted toolkit UI asset and checks its content type and nonempty bytes.
+Browser tests must additionally call `decode()` on images, require positive
+`naturalWidth`, and fail on same-origin image/script/stylesheet HTTP errors;
+working buttons and no JavaScript exceptions do not prove asset completeness.
+
 Check esbuild's metafile for unexpected external dependencies. Native modules,
 dynamic imports, CommonJS dependencies, and runtime file lookups may need explicit
 handling; do not assume every npm dependency is bundle-safe.

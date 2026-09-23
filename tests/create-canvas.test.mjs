@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { createServer } from "node:http";
 import { cp, mkdir, mkdtemp, readFile, readdir, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import { gunzipSync, gzipSync } from "node:zlib";
 import { scaffold } from "../scripts/create-canvas.mjs";
 import { npmCommand } from "./npm-command.mjs";
@@ -13,7 +16,7 @@ import { hostEntry } from "./host-entry-fixture.mjs";
 const script = fileURLToPath(new URL("../plugins/canvas-authoring/skills/create-canvas-app/scripts/setup-toolkit.mjs", import.meta.url));
 
 // Manifest-only fixture for CLI tests, never used as proof of a working toolkit.
-function archive(manifest = { name: "@microsoft/canvas-toolkit", version: "0.1.0" }) {
+function archive(manifest = { name: "@microsoft/canvas-toolkit", version: "0.1.0", exports: { "./build": "./src/build.mjs" } }) {
     const body = Buffer.from(JSON.stringify(manifest));
     const header = Buffer.alloc(512);
     header.write("package/package.json");
@@ -77,6 +80,7 @@ test("deterministic portable output and build contract", async t => {
     const pkg = JSON.parse(await readFile(path.join(first, "package.json")));
     assert.equal(pkg.name, "my-canvas");
     assert.equal(pkg.private, true);
+    assert.equal(pkg.canvasTemplate, "counter");
     assert.deepEqual(pkg.dependencies, { "@microsoft/canvas-toolkit": "file:vendor/canvas-toolkit.tgz" });
     assert.equal(pkg.engines.node, ">=22");
     assert.equal(pkg.devDependencies.esbuild, "0.28.2");
@@ -94,6 +98,10 @@ test("deterministic portable output and build contract", async t => {
         "src/extension.mjs", "src/toolkit.mjs", "tests/app.test.mjs", "vendor/canvas-toolkit.tgz",
     ].sort());
     assert.match(await readFile(path.join(first, "src/browser/app.mjs"), "utf8"), /@microsoft\/canvas-toolkit\/ui\/styles\.css/);
+    assert.match(await readFile(path.join(first, "src/canvas.mjs"), "utf8"), /\.\.\.canvasUiAssets/);
+    assert.match(await readFile(path.join(first, "scripts/build.mjs"), "utf8"), /toolkit-browser-assets/);
+    assert.match(await readFile(path.join(first, "scripts/build.mjs"), "utf8"), /prepareCanvasUiAssets/);
+    assert.match(await readFile(path.join(first, "scripts/check-entry.mjs"), "utf8"), /Missing toolkit asset/);
     for (const file of ["README.md", "AGENTS.md"]) {
         const guidance = await readFile(path.join(first, file), "utf8");
         assert.match(guidance, /First invoke the GitHub Copilot app's installed create-canvas/);
@@ -101,6 +109,146 @@ test("deterministic portable output and build contract", async t => {
         assert.match(guidance, /native scaffold/);
         assert.match(guidance, /attachToolkit/);
     }
+});
+
+test("Azure preset generates the complete scoped reader and one focused smoke command", async t => {
+    const { root, native, args } = await fixture(t);
+    const destination = await scaffold([...args(), "--template", "azure-resource-groups"]);
+    const files = await inventory(destination);
+    assert.equal(Object.keys(files).length, 21);
+    assert.deepEqual(await readFile(path.join(destination, "src/extension.mjs")), await readFile(native));
+    const pkg = JSON.parse(await readFile(path.join(destination, "package.json"), "utf8"));
+    assert.equal(pkg.name, "my-canvas");
+    assert.equal(pkg.canvasTemplate, "azure-resource-groups");
+    assert.equal(pkg.dependencies["supports-color"], "8.1.1");
+    assert.equal(pkg.scripts.smoke, "node scripts/smoke.mjs");
+    assert.ok(pkg.devDependencies["playwright-core"]);
+    assert.match(await readFile(path.join(destination, "src/canvas.mjs"), "utf8"), /mode \?\? "azure"/);
+    assert.match(await readFile(path.join(destination, "src/domain.mjs"), "utf8"), /select_subscription/);
+    assert.match(await readFile(path.join(destination, "src/browser/app.mjs"), "utf8"), /provider builds differ/);
+    for (const name of Object.keys(files).filter(name => name.endsWith(".mjs"))) {
+        const source = await readFile(path.join(destination, name), "utf8");
+        assert.doesNotMatch(source, /__CANVAS_(?:NAME|TEMPLATE)__/);
+        assert.doesNotMatch(source, /prototype-inline|browser-build\.mjs/);
+        execFileSync(process.execPath, ["--check", path.join(destination, name)]);
+    }
+    const installed = path.join(root, "installed");
+    await cp(new URL("../plugins/canvas-authoring/", import.meta.url), installed, { recursive: true });
+    const command = path.join(installed, "skills/create-canvas-app/scripts/setup-toolkit.mjs");
+    execFileSync(process.execPath, [command, ...args(path.join(root, "installed-output")), "--template", "azure-resource-groups"]);
+    assert.deepEqual(await inventory(destination), await inventory(path.join(root, "installed-output")));
+});
+
+test("unsupported templates and old toolkit candidates fail before writing", async t => {
+    const { root, tarball, args } = await fixture(t);
+    await assert.rejects(scaffold([...args(), "--template", "../escape"]), /Unknown template/);
+    await writeFile(tarball, archive({ name: "@microsoft/canvas-toolkit", version: "0.1.0" }));
+    await assert.rejects(scaffold(args()), /public \/build export/);
+    assert.deepEqual((await readdir(root)).sort(), ["native", "toolkit.tgz"]);
+});
+
+test("registry setup pins exact versions without a tarball for both templates", async t => {
+    const { root, native, tarball, args } = await fixture(t);
+    await rm(tarball);
+    for (const preset of ["counter", "azure-resource-groups"]) {
+        const inputs = [...args(path.join(root, preset)).slice(0, -2),
+            "--toolkit-version", "0.1.0-preview.1", "--template", preset];
+        const app = await scaffold(inputs);
+        const pkg = JSON.parse(await readFile(path.join(app, "package.json"), "utf8"));
+        assert.equal(pkg.dependencies["@microsoft/canvas-toolkit"], "0.1.0-preview.1");
+        assert.equal(pkg.canvasTemplate, preset);
+        assert.deepEqual(await readFile(path.join(app, "src/extension.mjs")), await readFile(native));
+        await assert.rejects(readFile(path.join(app, "vendor/canvas-toolkit.tgz")), { code: "ENOENT" });
+        await assert.rejects(readFile(path.join(app, "package-lock.json")), { code: "ENOENT" });
+        assert.equal(Object.keys(await inventory(app)).length, preset === "counter" ? 17 : 20);
+    }
+});
+
+test("ambiguous toolkit sources and non-exact versions fail before writing", async t => {
+    const { root, args } = await fixture(t);
+    const before = await inventory(root);
+    const base = args().slice(0, -2);
+    await assert.rejects(scaffold(base), /exactly one/);
+    await assert.rejects(scaffold([...args(), "--toolkit-version", "0.1.0"]), /exactly one/);
+    for (const version of [
+        "latest", "preview", "^0.1.0", "~0.1.0", "0.1", "v0.1.0", "01.1.0",
+        "0.1.0-01", "0.1.0-alpha..1", "0.1.0 - 0.2.0", "*", "file:kit.tgz",
+        "npm:another@1.0.0", "https://example.invalid/kit.tgz", "0.1.0;echo bad",
+    ]) {
+        await assert.rejects(scaffold([...base, "--toolkit-version", version]), /exact SemVer/);
+    }
+    assert.deepEqual(await inventory(root), before);
+});
+
+test("local prerelease tarballs remain usable before publication", async t => {
+    const { tarball, args } = await fixture(t);
+    const bytes = archive({
+        name: "@microsoft/canvas-toolkit", version: "0.1.0-preview.1",
+        exports: { "./build": "./src/build.mjs" },
+    });
+    await writeFile(tarball, bytes);
+    const app = await scaffold(args());
+    assert.deepEqual(await readFile(path.join(app, "vendor/canvas-toolkit.tgz")), bytes);
+});
+
+test("npm resolves the generated exact prerelease from a registry fixture, not latest", { timeout: 45_000 }, async t => {
+    const { root, args } = await fixture(t);
+    const name = "@microsoft/canvas-toolkit";
+    const version = "0.1.0-preview.7";
+    const manifest = { name, version, exports: { "./build": "./src/build.mjs" } };
+    const bytes = archive(manifest);
+    const integrity = "sha512-" + createHash("sha512").update(bytes).digest("base64");
+    const requests = [];
+    const server = createServer((request, response) => {
+        const resource = decodeURIComponent(new URL(request.url, origin).pathname);
+        requests.push(resource);
+        if (request.method !== "GET") {
+            response.writeHead(405).end();
+        } else if (resource === "/@microsoft/canvas-toolkit") {
+            response.setHeader("Content-Type", "application/json");
+            response.end(JSON.stringify({
+                name, "dist-tags": { latest: "9.0.0" },
+                versions: { [version]: { ...manifest, dist: { tarball: origin + "/toolkit.tgz", integrity } } },
+            }));
+        } else if (resource === "/toolkit.tgz") {
+            response.setHeader("Content-Type", "application/octet-stream");
+            response.end(bytes);
+        } else {
+            response.writeHead(404).end();
+        }
+    });
+    await new Promise((resolve, reject) => {
+        server.once("error", reject);
+        server.listen(0, "127.0.0.1", resolve);
+    });
+    t.after(() => new Promise(resolve => { server.closeAllConnections(); server.close(resolve); }));
+    const origin = "http://127.0.0.1:" + server.address().port;
+    const app = await scaffold([...args().slice(0, -2), "--toolkit-version", version]);
+    const generated = JSON.parse(await readFile(path.join(app, "package.json"), "utf8"));
+    assert.deepEqual(requests, []);
+
+    // Isolate registry resolution from the real toolkit/build integration suite.
+    const consumer = path.join(root, "consumer");
+    await mkdir(consumer);
+    await writeFile(path.join(consumer, "package.json"), JSON.stringify({
+        private: true, dependencies: generated.dependencies,
+    }));
+    const config = path.join(root, "test.npmrc");
+    await writeFile(config, "registry=" + origin + "\n@microsoft:registry=" + origin + "\n");
+    const npm = await npmCommand();
+    await promisify(execFile)(npm.file, [...npm.args, "install", "--ignore-scripts", "--no-audit", "--no-fund", "--update-notifier=false",
+        "--userconfig", config, "--registry", origin, "--cache", path.join(root, "cache"), "--fetch-retries=0"], {
+        cwd: consumer, env: { ...process.env, NO_PROXY: "127.0.0.1", no_proxy: "127.0.0.1" },
+        timeout: 30_000,
+    });
+    const installed = JSON.parse(await readFile(path.join(consumer, "node_modules/@microsoft/canvas-toolkit/package.json"), "utf8"));
+    assert.equal(installed.version, version);
+    const lock = JSON.parse(await readFile(path.join(consumer, "package-lock.json"), "utf8"));
+    assert.equal(lock.packages[""].dependencies[name], version);
+    assert.equal(lock.packages["node_modules/@microsoft/canvas-toolkit"].integrity, integrity);
+    assert.ok(requests.includes("/@microsoft/canvas-toolkit"));
+    assert.ok(requests.includes("/toolkit.tgz"));
+    assert.ok(requests.every(resource => ["/@microsoft/canvas-toolkit", "/toolkit.tgz"].includes(resource)), JSON.stringify(requests));
 });
 
 test("rejects malformed options and hostile names without creating output", async t => {
@@ -138,7 +286,7 @@ test("rejects invalid or wrong toolkit archives before creating output", async t
     const badHeader = gunzipSync(archive());
     badHeader[0] ^= 1;
     for (const bytes of [Buffer.from("not gzip"), archive({ name: "different", version: "0.1.0" }),
-        archive({ name: "@microsoft/canvas-toolkit", version: "9.0.0" }),
+        archive({ name: "@microsoft/canvas-toolkit", version: "preview" }),
         gzipSync(badHeader), gzipSync(gunzipSync(archive()).subarray(0, 520))]) {
         await writeFile(tarball, bytes);
         await assert.rejects(scaffold(args()));
@@ -281,7 +429,7 @@ test("plugin-local references ship independently and contain toolkit-only exampl
         assert.ok(reference.includes("@microsoft/canvas-toolkit/" + exported));
     }
     assert.match(reference, /file:vendor\/canvas-toolkit\.tgz/);
-    assert.match(reference, /not\*\* public npm availability/);
+    assert.match(reference, /not\*\* public npm\s+availability/);
     assert.match(reference, /not durable persistence/);
     assert.match(reference, /Azure auth\/subscription helpers are opt-in/);
     assert.match(reference, /@github\/copilot-sdk\/extension` external/);
