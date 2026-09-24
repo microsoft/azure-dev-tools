@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { dirname, posix, resolve } from "node:path";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packages = {
@@ -48,6 +48,7 @@ const combinedPatchProducts = [
   "azure-resources-query",
   "canvas-authoring",
 ];
+const combinedPatchCommit = "a6d394bbaa6fb1dc0151257a85cbac0de772b138";
 const products = Object.keys(packages);
 const previousTags = {
   "azure-functions-hosted-skills-v0-5-1-2bb8354": "cc59516eba4d6eecda9ff7c9f0191fe2117167af",
@@ -79,6 +80,155 @@ function packageFiles(sha, path) {
     .split("\n").filter(Boolean).map((file) => file.slice(path.length + 1));
 }
 
+function packageTree(sha, path) {
+  return git("ls-tree", "-r", "-z", sha, "--", path)
+    .split("\0").filter(Boolean).map((entry) => {
+      const match = /^(\d{6}) (blob|commit) ([0-9a-f]{40})\t(.+)$/.exec(entry);
+      if (!match || !match[4].startsWith(`${path}/`)) {
+        throw new Error(`invalid package tree entry: ${entry}`);
+      }
+      return { mode: match[1], oid: match[3], file: match[4].slice(path.length + 1) };
+    });
+}
+
+const documentExtensions = /\.(?:md|markdown|txt|rst|adoc|png|jpe?g|webp|gif|avif)$/i;
+const noticeName = /(?:^|[\/._-])(?:notice|notices|licen[cs]e|copying|third.party)(?:[\/._-]|$)/i;
+const executablePath = /\.(?:mjs|cjs|js|jsx|ts|tsx|css|html|json|wasm|node|sh|py|ps1)$/i;
+
+function isInertReadmeName(name) {
+  return /^README(?:[.\w-]*)?$/i.test(name) &&
+    (name.toUpperCase() === "README" || /\.(?:md|markdown|txt|rst|adoc)$/i.test(name));
+}
+
+function isMutableDocument(file) {
+  const segments = file.split("/");
+  const name = segments.at(-1);
+  const inDocDirectory = segments.length > 1 &&
+    (segments[0].toLowerCase() === "doc" || segments[0].toLowerCase() === "docs");
+  const isReadme = isInertReadmeName(name) &&
+    !segments.slice(0, -1).some((segment, index) =>
+      segment.toLowerCase() === "extensions" ||
+      index > 0 && /^(?:doc|docs)$/i.test(segment));
+  return (inDocDirectory || isReadme) && !noticeName.test(file);
+}
+
+function referencesMutableDocument(file, content) {
+  const patterns = [
+    /\b(?:import|export)\s+(?:[^;\n"'`]*?\bfrom\s*)?["'`]([^"'`]+)["'`]/g,
+    /\b(?:import|require|readFileSync|readFile|createReadStream|fetch|new\s+URL)\s*\(\s*["'`]([^"'`]+)["'`]/g,
+    /\]\(([^)\s#]+)(?:#[^)]*)?\)/g,
+  ];
+  for (const pattern of patterns) {
+    for (const match of content.matchAll(pattern)) {
+      const target = match[1].replaceAll("\\", "/");
+      if (/^[a-z][a-z0-9+.-]*:/i.test(target)) continue;
+      if (isMutableDocument(posix.normalize(posix.join(posix.dirname(file), target))) ||
+          isMutableDocument(target)) return true;
+    }
+  }
+  return false;
+}
+
+function verifyInertDocument(file, content) {
+  const extension = file.slice(file.lastIndexOf(".")).toLowerCase();
+  const header = {
+    ".png": content.subarray(0, 8).equals(Buffer.from("89504e470d0a1a0a", "hex")),
+    ".jpg": content.subarray(0, 3).equals(Buffer.from("ffd8ff", "hex")),
+    ".jpeg": content.subarray(0, 3).equals(Buffer.from("ffd8ff", "hex")),
+    ".gif": /^GIF8[79]a/.test(content.toString("ascii", 0, 6)),
+    ".webp": content.toString("ascii", 0, 4) === "RIFF" &&
+      content.toString("ascii", 8, 12) === "WEBP",
+    ".avif": /^ftyp(?:avif|avis)$/.test(content.toString("ascii", 4, 12)),
+  };
+  if (Object.hasOwn(header, extension) && !header[extension]) {
+    throw new Error(`mutable documentation image is not a valid ${extension} file: ${file}`);
+  }
+  if (!Object.hasOwn(header, extension)) {
+    try {
+      const text = new TextDecoder("utf-8", { fatal: true }).decode(content);
+      if (text.includes("\0")) throw new Error("binary content");
+    } catch {
+      throw new Error(`mutable documentation is not inert UTF-8 text: ${file}`);
+    }
+  }
+}
+
+export function verifyMutableDocumentationTrees(current, tagged, readCurrent, readTagged) {
+  const pinned = (tree, readFile) => {
+    const files = new Map();
+    for (const entry of tree) {
+      if (files.has(entry.file) || /[\t\n\r\\]/.test(entry.file) ||
+          entry.file.split("/").some((segment) => !segment || segment === "..") ||
+          entry.mode !== "100644" && entry.mode !== "100755") {
+        throw new Error(`unsafe package file or mode: ${entry.file}`);
+      }
+      files.set(entry.file, entry);
+      const docPath = /^docs?\//i.test(entry.file) || /(^|\/)README/i.test(entry.file);
+      const protectedReadme = !/^docs?\//i.test(entry.file) &&
+        isInertReadmeName(entry.file.split("/").at(-1));
+      if (docPath && !isMutableDocument(entry.file) && !protectedReadme) {
+        throw new Error(`executable or legal content cannot hide in mutable documentation: ${entry.file}`);
+      }
+      if (isMutableDocument(entry.file)) {
+        if (entry.mode !== "100644" || !documentExtensions.test(entry.file) &&
+            !/^README$/i.test(entry.file)) {
+          throw new Error(`unsafe mutable documentation file: ${entry.file}`);
+        }
+        verifyInertDocument(entry.file, readFile(entry.file));
+      }
+    }
+    for (const entry of tree) {
+      if (!isMutableDocument(entry.file) &&
+          (executablePath.test(entry.file) || /^skills\/.*\/SKILL\.md$/.test(entry.file)) &&
+          /^(?:extensions|skills)\//.test(entry.file) &&
+          referencesMutableDocument(entry.file, readFile(entry.file).toString("utf8"))) {
+        throw new Error(`runtime or skill references mutable documentation: ${entry.file}`);
+      }
+    }
+    return files;
+  };
+  const currentFiles = pinned(current, readCurrent);
+  const taggedFiles = pinned(tagged, readTagged);
+  const immutableFiles = [...currentFiles.keys()].filter((file) =>
+    file !== "SHA256SUMS" && !isMutableDocument(file));
+  const taggedImmutableFiles = [...taggedFiles.keys()].filter((file) =>
+    file !== "SHA256SUMS" && !isMutableDocument(file));
+  if (immutableFiles.length !== taggedImmutableFiles.length ||
+      immutableFiles.some((file) => {
+        const now = currentFiles.get(file);
+        const atTag = taggedFiles.get(file);
+        return !atTag || now.mode !== atTag.mode || now.oid !== atTag.oid;
+      })) {
+    throw new Error("immutable package files differ from the reviewed release tag");
+  }
+  return immutableFiles;
+}
+
+export function verifyMutableReleaseMetadata(release, checksums, immutableFiles, readFile) {
+  const payload = immutableFiles.filter((file) =>
+    file !== "release.json" && file !== "checksums.json");
+  const expectedChecksums = [...payload, "release.json"];
+  if (release.schemaVersion !== 2 || release.mutableDocumentation !== true ||
+      release.readmeAssets !== undefined ||
+      !Array.isArray(release.files) ||
+      release.files.length !== payload.length ||
+      new Set(release.files).size !== payload.length ||
+      release.files.some((file) => !payload.includes(file)) ||
+      Object.keys(checksums).length !== expectedChecksums.length ||
+      expectedChecksums.some((file) => !Object.hasOwn(checksums, file)) ||
+      !immutableFiles.some((file) => file.startsWith("notices/")) ||
+      [...(release.modules ?? []), ...(release.assets ?? [])].some(({ file }) =>
+        isMutableDocument(file))) {
+    throw new Error("mutable-document release metadata must enumerate only protected payload and notices");
+  }
+  for (const file of expectedChecksums) {
+    const digest = createHash("sha256").update(readFile(file)).digest("hex");
+    if (checksums[file] !== digest) {
+      throw new Error(`protected release checksum differs: ${file}`);
+    }
+  }
+}
+
 function releaseTagFor(name, version) {
   const tags = git("tag", "-l", `${name}-v${version.replaceAll(".", "-")}-*`)
     .split("\n").filter(Boolean);
@@ -91,6 +241,9 @@ function releaseTagFor(name, version) {
 export function verifyCombinedReleaseCommits(commits) {
   if (commits.length !== combinedPatchProducts.length || new Set(commits).size !== 1) {
     throw new Error("Combined patch release tags must point to the same reviewed production merge commit");
+  }
+  if (commits[0] !== combinedPatchCommit) {
+    throw new Error("Combined patch immutable release tags moved from their reviewed commit");
   }
 }
 
@@ -113,7 +266,7 @@ export function verifySubsequentReleaseCommit(previousCommit, releaseCommit) {
 export function verifyReceiptPin({ receipt, receiptSha256, receiptCount }) {
   if (!receipt || !/^[0-9a-f]{64}$/.test(receiptSha256) ||
       !Number.isSafeInteger(receiptCount) || receiptCount < 1) {
-    throw new Error("Every product requires an independently reviewed full-file checksum receipt");
+    throw new Error("Every product requires an independently reviewed checksum receipt pin");
   }
 }
 
@@ -192,10 +345,6 @@ export function verifyPlugin({ source, name, version }) {
   const releaseTag = releaseTagFor(name, version);
   verifyTagSource(name, version, releaseTag);
   const revision = "HEAD";
-  if (git("rev-parse", `${revision}:${path}`) !==
-      git("rev-parse", `${releaseTag}:${path}`)) {
-    throw new Error(`${name}@${version}: current package bytes differ from ${releaseTag}`);
-  }
 
   try {
     const packageManifest = JSON.parse(fileAt(revision, `${path}/${product.manifest}`));
@@ -203,6 +352,20 @@ export function verifyPlugin({ source, name, version }) {
       throw new Error("plugin metadata differs from marketplace entry");
     }
     const files = packageFiles(revision, path);
+    const immutableFiles = verifyMutableDocumentationTrees(
+      packageTree(revision, path),
+      packageTree(releaseTag, path),
+      (file) => fileAt(revision, `${path}/${file}`),
+      (file) => fileAt(releaseTag, `${path}/${file}`),
+    );
+    if (product.mutableDocumentation) {
+      verifyMutableReleaseMetadata(
+        JSON.parse(fileAt(revision, `${path}/release.json`)),
+        JSON.parse(fileAt(revision, `${path}/checksums.json`)),
+        immutableFiles,
+        (file) => fileAt(revision, `${path}/${file}`),
+      );
+    }
     if (product.extension) {
       requireFile(revision, `${path}/extensions/${product.extension}/extension.mjs`);
       if (packageManifest.extensions !== "./extensions" ||
@@ -242,15 +405,19 @@ export function verifyPlugin({ source, name, version }) {
       }
       return { hash: match[1], file: match[2].slice((product.receiptPrefix ?? "").length) };
     });
-    const expectedFiles = files.filter((file) => file !== "SHA256SUMS");
+    const expectedFiles = product.mutableDocumentation
+      ? immutableFiles
+      : packageFiles(releaseTag, path).filter((file) => file !== "SHA256SUMS");
     if (entries.length !== product.receiptCount ||
         new Set(entries.map(({ file }) => file)).size !== expectedFiles.length ||
         entries.length !== expectedFiles.length ||
         entries.some(({ file }) => !expectedFiles.includes(file))) {
-      throw new Error(`checksum receipt must cover exactly the ${product.receiptCount} plugin files`);
+      const scope = product.mutableDocumentation ? "protected" : "historically tagged";
+      throw new Error(`checksum receipt must cover exactly the ${product.receiptCount} ${scope} plugin files`);
     }
     for (const { hash, file } of entries) {
-      if (createHash("sha256").update(fileAt(revision, `${path}/${file}`)).digest("hex") !== hash) {
+      const fileRevision = product.mutableDocumentation ? revision : releaseTag;
+      if (createHash("sha256").update(fileAt(fileRevision, `${path}/${file}`)).digest("hex") !== hash) {
         throw new Error(`plugin file differs from checksum receipt: ${file}`);
       }
     }

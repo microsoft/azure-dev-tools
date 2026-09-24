@@ -14,11 +14,46 @@ Each product uses two tag forms:
   convention writes semantic-version separators as hyphens, for example
   `PRODUCT-v1-2-3-abcdef0`. Never move, delete, or recreate an immutable tag.
 
-A package version identifies one exact set of bytes. Once a version has been
-used for a public candidate or release, different bytes require a new version,
-even when the change is described as a rebuild or correction. The source SHA in
-the immutable tag records the reviewed source revision; it does not permit the
-same version to be reused for different output.
+A package version identifies one exact set of protected bytes. Once a version
+has been used for a public candidate or release, changed runtime, skills,
+manifests, or legal notices require a new version, even when called a rebuild
+or correction. The source SHA in an immutable tag records the reviewed source
+revision; it does not permit the same version to be reused for different
+protected output.
+
+### Documentation-only updates
+
+The immutable tag records the entire reviewed candidate, including the
+original customer README and documentation. After release, inert `README*`
+files (including nested package READMEs outside runtime extensions) and files
+in package-root `doc/` or `docs/` may change on the default branch without
+moving tags or changing receipts. Runtime-reachable READMEs stay protected.
+The tag retains the historical documentation snapshot; newer
+default-branch documentation is not version-pinned. Disclose its revision
+separately when referring customers to mutable instructions.
+
+For the three existing products, their original complete `SHA256SUMS` receipts
+and internal checksums remain unchanged and are verified against their
+immutable **tag snapshots**, not against newer default-branch documentation.
+The verifier compares all protected files on the default branch to those
+tags, including additions and deletions, and pins each original tag to its
+reviewed commit. Do not rewrite or move old receipts, tags, or versions.
+
+A new Cost Health v3 candidate may use the separately reviewed
+`schemaVersion: 2`, `mutableDocumentation: true` contract: `release.json` and
+`checksums.json` enumerate protected files only, and its `SHA256SUMS` covers
+those protected files rather than documentation. Pin the receipt's digest and
+tag; validate both the source export's protected checksums and every protected
+file at the tag and on the default branch. Legal and third-party notices must
+be in protected paths, not under `doc/` or `docs/`. Verify and review the
+complete customer candidate, including its documentation, before the first
+release.
+
+Mutable documentation is restricted to plain README/Markdown/text and
+Markdown/text or PNG, JPEG, WebP, GIF, and AVIF files under package-root `doc/` or
+`docs/`. The verifier rejects symlinks, executable files, required notices
+or licenses, and runtime or skill dependencies in excluded paths. Active HTML
+and SVG are not eligible without a separately reviewed inert-document policy.
 
 When one approved production PR contains multiple independently reviewed products,
 their distinct source-qualified immutable version tags may all point to that

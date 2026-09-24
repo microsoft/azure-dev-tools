@@ -119,8 +119,10 @@ test("target tags must identify the independently reviewed patch source merge", 
 });
 
 test("three patch tags share one new commit and old tags retain exact historical commits", () => {
-  assert.doesNotThrow(() => verifyCombinedReleaseCommits(["abc", "abc", "abc"]));
+  const combinedPatchCommit = "a6d394bbaa6fb1dc0151257a85cbac0de772b138";
+  assert.doesNotThrow(() => verifyCombinedReleaseCommits(Array(3).fill(combinedPatchCommit)));
   assert.throws(() => verifyCombinedReleaseCommits(["abc", "abc", "def"]), /same reviewed production merge/);
+  assert.throws(() => verifyCombinedReleaseCommits(["abc", "abc", "abc"]), /moved from their reviewed commit/);
   assert.throws(() => verifyCombinedReleaseCommits(["abc"]), /same reviewed production merge/);
   assert.throws(() => verifyCombinedReleaseCommits(["abc", "abc"]), /same reviewed production merge/);
   const previous = {
@@ -149,7 +151,7 @@ test("a later product release has a distinct merge descending from the combined 
   assert.throws(() => verifySubsequentReleaseCommit(patchCommit, earlierCommit), /descend from the prior/);
 });
 
-test("every new product must pin a complete checksum receipt before publication", () => {
+test("every product must pin its reviewed receipt scope before publication", () => {
   const receipt = {
     receipt: "canvases/azure-cost-health-check-v3/SHA256SUMS",
     receiptSha256: "a".repeat(64),
@@ -163,6 +165,6 @@ test("every new product must pin a complete checksum receipt before publication"
     { ...receipt, receiptCount: undefined },
     { ...receipt, receiptCount: 0 },
   ]) {
-    assert.throws(() => verifyReceiptPin(incomplete), /full-file checksum receipt/);
+    assert.throws(() => verifyReceiptPin(incomplete), /checksum receipt pin/);
   }
 });
