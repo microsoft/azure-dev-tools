@@ -1,27 +1,43 @@
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const expectedSkills = {
-  "azure-functions-hosted-skills": [
-    "./skills/azure-functions-hosted-skills-canvas/",
-    "./skills/azure-functions-hosted-skills-github-daily-digest/",
-  ],
-  "azure-resources-query": ["./skills/azure-resources-query/"],
-};
-const products = Object.keys(expectedSkills);
-const reviewedSources = {
+const canvasProducts = ["azure-functions-hosted-skills", "azure-resources-query"];
+const builderProduct = "canvas-authoring";
+const packages = {
   "azure-functions-hosted-skills": {
+    path: "canvases/azure-functions-hosted-skills",
+    manifest: ".github/plugin/plugin.json",
+    skills: [
+      "./skills/azure-functions-hosted-skills-canvas/",
+      "./skills/azure-functions-hosted-skills-github-daily-digest/",
+    ],
+    extension: "azure-functions-hosted-skills",
     version: "0.5.1",
     sha: "2bb835480969ebf35f4d414b60c084590efb9ff6",
   },
   "azure-resources-query": {
+    path: "canvases/azure-resources-query",
+    manifest: ".github/plugin/plugin.json",
+    skills: ["./skills/azure-resources-query/"],
+    extension: "azure-resources-query",
     version: "0.1.1",
     sha: "be9551d7c65df8e728edb2bcf896a08d5b193269",
   },
+  "canvas-authoring": {
+    path: "plugins/canvas-authoring",
+    manifest: "plugin.json",
+    skills: ["./skills/create-canvas-app/"],
+    version: "0.1.0",
+    sha: "23aa6b19a50aca470c759f04f5c657481f6e2d6a",
+    receipt: "docs/canvas-authoring/SHA256SUMS",
+    receiptSha256: "282810a9792f231640baa745476faeee5e2e299a9226b06680a8d7bc1c0ee4de",
+  },
 };
+const products = Object.keys(packages);
 
 function git(...args) {
   return execFileSync("git", args, {
@@ -35,6 +51,18 @@ function requireFile(sha, path) {
   git("cat-file", "-e", `${sha}:${path}`);
 }
 
+function fileAt(sha, path) {
+  return execFileSync("git", ["show", `${sha}:${path}`], {
+    cwd: repoRoot,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+}
+
+function packageFiles(sha, path) {
+  return git("ls-tree", "-r", "--name-only", sha, "--", path)
+    .split("\n").filter(Boolean).map((file) => file.slice(path.length + 1));
+}
+
 function releaseTagFor(name, version) {
   const tags = git("tag", "-l", `${name}-v${version.replaceAll(".", "-")}-*`)
     .split("\n").filter(Boolean);
@@ -45,8 +73,8 @@ function releaseTagFor(name, version) {
 }
 
 export function verifyCombinedReleaseCommits(commits) {
-  if (commits.length !== products.length || new Set(commits).size !== 1) {
-    throw new Error("Combined release tags must point to the same reviewed production merge commit");
+  if (commits.length !== canvasProducts.length || new Set(commits).size !== 1) {
+    throw new Error("Canvas release tags must point to the same reviewed production merge commit");
   }
 }
 
@@ -60,83 +88,121 @@ export function verifyMarketplace(manifest) {
   const names = manifest.plugins.map(({ name }) => name);
   if (names.length !== products.length || new Set(names).size !== products.length ||
       products.some((name) => !names.includes(name))) {
-    throw new Error("Marketplace must contain exactly the two approved Azure canvas plugins");
+    throw new Error("Marketplace must contain exactly the two Azure canvas plugins and the skill-only builder");
   }
-  if (manifest.name === "azure-dev-tools" &&
-      manifest.plugins.some(({ name, version }) => version !== reviewedSources[name].version)) {
-    throw new Error("Marketplace versions must match the two reviewed source releases");
+  if (manifest.plugins.some(({ name, version }) => version !== packages[name].version)) {
+    throw new Error("Marketplace versions must match the three reviewed source releases");
   }
 
   const results = manifest.plugins.map(verifyPlugin);
   if (manifest.name === "azure-dev-tools") {
-    const commits = manifest.plugins.map(({ name, version }) =>
-      git("rev-parse", `${releaseTagFor(name, version)}^{commit}`));
+    const commits = canvasProducts.map((name) =>
+      git("rev-parse", `${releaseTagFor(name, packages[name].version)}^{commit}`));
     verifyCombinedReleaseCommits(commits);
+    const builderCommit = git("rev-parse", `${releaseTagFor(builderProduct, packages[builderProduct].version)}^{commit}`);
+    if (builderCommit === commits[0]) {
+      throw new Error("Builder release tag must identify a separate reviewed product commit");
+    }
     try {
-      git("merge-base", "--is-ancestor", commits[0], "HEAD");
+      git("merge-base", "--is-ancestor", commits[0], builderCommit);
     } catch {
-      throw new Error("Refresh this branch onto the reviewed production release merge commit");
+      throw new Error("Builder release commit must descend from the two canvas release commit");
+    }
+    try {
+      git("merge-base", "--is-ancestor", builderCommit, "HEAD");
+    } catch {
+      throw new Error("Refresh this branch onto the reviewed builder release commit");
     }
   }
   return results;
 }
 
 export function verifyTagSource(name, version, tag) {
-  if (version !== reviewedSources[name]?.version) return;
-  if (!/^[0-9a-f]{40}$/.test(reviewedSources[name].sha ?? "")) {
-    throw new Error(`${name}@${version}: reviewed source SHA is pending the routing hotfix`);
+  const product = packages[name];
+  if (!product || version !== product.version || !/^[0-9a-f]{40}$/.test(product.sha)) {
+    throw new Error(`${name}@${version}: no independently reviewed source release`);
   }
   const base = `${name}-v${version.replaceAll(".", "-")}-`;
   const suffix = tag.startsWith(base) ? tag.slice(base.length) : "";
   if (!/^[0-9a-f]{7,40}$/.test(suffix) ||
-      !reviewedSources[name].sha.startsWith(suffix)) {
+      !product.sha.startsWith(suffix)) {
     throw new Error(`${name}@${version}: tag does not identify the reviewed source commit`);
   }
 }
 
 export function verifyPlugin({ source, name, version }) {
-  if (!products.includes(name) || !/^\d+\.\d+\.\d+$/.test(version ?? "")) {
-    throw new Error(`${name}: expected an Azure canvas product and numeric semantic version`);
+  const product = packages[name];
+  if (!product || version !== product.version) {
+    throw new Error(`${name}: expected a reviewed product and version`);
   }
-  const path = `canvases/${name}`;
-  let revision;
-  let releaseTag;
-  if (source === path) {
-    releaseTag = releaseTagFor(name, version);
-    verifyTagSource(name, version, releaseTag);
-    revision = "HEAD";
-    if (git("rev-parse", `${revision}:${path}`) !==
-        git("rev-parse", `${releaseTag}:${path}`)) {
-      throw new Error(`${name}@${version}: current package bytes differ from ${releaseTag}`);
-    }
-  } else if (source?.source === "github" &&
-             source.repo === "microsoft/azure-dev-tools" && source.path === path &&
-             !source.ref && /^[0-9a-f]{40}$/.test(source.sha ?? "")) {
-    revision = source.sha;
-  } else {
-    throw new Error(`${name}: source must use its own repo-relative path or a full public commit SHA`);
+  const path = product.path;
+  if (source !== path) {
+    throw new Error(`${name}: source must use its own repo-relative path`);
+  }
+  const releaseTag = releaseTagFor(name, version);
+  verifyTagSource(name, version, releaseTag);
+  const revision = "HEAD";
+  if (git("rev-parse", `${revision}:${path}`) !==
+      git("rev-parse", `${releaseTag}:${path}`)) {
+    throw new Error(`${name}@${version}: current package bytes differ from ${releaseTag}`);
   }
 
   try {
-    const packageManifest = JSON.parse(git("show", `${revision}:${path}/.github/plugin/plugin.json`));
-    requireFile(revision, `${path}/extensions/${name}/extension.mjs`);
-    if (packageManifest.name !== name || packageManifest.version !== version ||
-        packageManifest.extensions !== "./extensions" ||
-        !Array.isArray(packageManifest.skills) ||
-        packageManifest.skills.length !== expectedSkills[name].length ||
-        expectedSkills[name].some((skill) => !packageManifest.skills.includes(skill))) {
-      throw new Error("plugin metadata, extension, or skills differ from marketplace entry");
+    const packageManifest = JSON.parse(fileAt(revision, `${path}/${product.manifest}`));
+    if (packageManifest.name !== name || packageManifest.version !== version) {
+      throw new Error("plugin metadata differs from marketplace entry");
     }
-    for (const skill of packageManifest.skills) {
+    const files = packageFiles(revision, path);
+    if (product.extension) {
+      requireFile(revision, `${path}/extensions/${product.extension}/extension.mjs`);
+      if (packageManifest.extensions !== "./extensions" ||
+          !Array.isArray(packageManifest.skills) ||
+          packageManifest.skills.length !== product.skills.length ||
+          product.skills.some((skill) => !packageManifest.skills.includes(skill))) {
+        throw new Error("extension or skills differ from marketplace entry");
+      }
+    } else if (Object.hasOwn(packageManifest, "extensions") ||
+               Object.hasOwn(packageManifest, "canvases") ||
+               files.some((file) => /^(extensions|canvases)\//.test(file)) ||
+               files.filter((file) => /^skills\/[^/]+\/SKILL\.md$/.test(file)).length !== 1 ||
+               (packageManifest.skills !== undefined &&
+                (!Array.isArray(packageManifest.skills) ||
+                 packageManifest.skills.length !== 1 ||
+                 packageManifest.skills[0] !== product.skills[0]))) {
+      throw new Error("builder must contain one skill and no extension or canvas");
+    }
+    for (const skill of product.skills) {
       if (!/^\.\/skills\/[a-z0-9-]+\/$/.test(skill)) {
         throw new Error(`invalid skill path: ${skill}`);
       }
       requireFile(revision, `${path}/${skill.slice(2)}SKILL.md`);
     }
+    if (product.receipt) {
+      const receipt = fileAt(revision, product.receipt);
+      if (createHash("sha256").update(receipt).digest("hex") !== product.receiptSha256) {
+        throw new Error("builder production checksum receipt differs from reviewed candidate");
+      }
+      const entries = receipt.toString("utf8").trimEnd().split("\n").map((line) => {
+        const match = /^([0-9a-f]{64})  (.+)$/.exec(line);
+        if (!match) throw new Error(`invalid checksum receipt entry: ${line}`);
+        return { hash: match[1], file: match[2] };
+      });
+      if (entries.length !== 26 ||
+          new Set(entries.map(({ file }) => file)).size !== files.length ||
+          entries.length !== files.length ||
+          entries.some(({ file }) => !files.includes(file))) {
+        throw new Error("builder checksum receipt must cover exactly the 26 plugin files");
+      }
+      for (const { hash, file } of entries) {
+        if (createHash("sha256").update(fileAt(revision, `${path}/${file}`)).digest("hex") !== hash) {
+          throw new Error(`builder file differs from checksum receipt: ${file}`);
+        }
+      }
+    }
   } catch (error) {
     throw new Error(`${name}@${version} (${revision}): ${error.message}`, { cause: error });
   }
-  return `${name}@${version} ${releaseTag ?? revision}`;
+  return `${name}@${version} ${releaseTag}`;
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
