@@ -92,7 +92,7 @@ function packageTree(sha, path) {
 }
 
 const documentExtensions = /\.(?:md|markdown|txt|rst|adoc|png|jpe?g|webp|gif|avif)$/i;
-const noticeName = /(?:^|[\/._-])(?:notice|notices|licen[cs]e|copying|third.party)(?:[\/._-]|$)/i;
+const noticeName = /(?:^|[\/._-])(?:notice|notices|licen[cs]e|copying|copyright|authors|attribution|patents|third.party)(?:[\/._-]|$)/i;
 const executablePath = /\.(?:mjs|cjs|js|jsx|ts|tsx|css|html|json|wasm|node|sh|py|ps1)$/i;
 
 function isInertReadmeName(name) {
@@ -204,6 +204,17 @@ export function verifyMutableDocumentationTrees(current, tagged, readCurrent, re
   return immutableFiles;
 }
 
+export function verifyRuntimeInventory(release) {
+  for (const field of ["modules", "assets"]) {
+    if (release[field] === undefined) continue;
+    if (!Array.isArray(release[field]) || release[field].some((entry) =>
+      !entry || typeof entry.file !== "string" ||
+      isMutableDocument(entry.file) || /^docs?\//i.test(entry.file))) {
+      throw new Error(`runtime ${field} cannot depend on mutable documentation`);
+    }
+  }
+}
+
 export function verifyMutableReleaseMetadata(release, checksums, immutableFiles, readFile) {
   const payload = immutableFiles.filter((file) =>
     file !== "release.json" && file !== "checksums.json");
@@ -216,11 +227,10 @@ export function verifyMutableReleaseMetadata(release, checksums, immutableFiles,
       release.files.some((file) => !payload.includes(file)) ||
       Object.keys(checksums).length !== expectedChecksums.length ||
       expectedChecksums.some((file) => !Object.hasOwn(checksums, file)) ||
-      !immutableFiles.some((file) => file.startsWith("notices/")) ||
-      [...(release.modules ?? []), ...(release.assets ?? [])].some(({ file }) =>
-        isMutableDocument(file))) {
+      !immutableFiles.some((file) => file.startsWith("notices/"))) {
     throw new Error("mutable-document release metadata must enumerate only protected payload and notices");
   }
+  verifyRuntimeInventory(release);
   for (const file of expectedChecksums) {
     const digest = createHash("sha256").update(readFile(file)).digest("hex");
     if (checksums[file] !== digest) {
@@ -358,6 +368,9 @@ export function verifyPlugin({ source, name, version }) {
       (file) => fileAt(revision, `${path}/${file}`),
       (file) => fileAt(releaseTag, `${path}/${file}`),
     );
+    if (files.includes("release.json")) {
+      verifyRuntimeInventory(JSON.parse(fileAt(releaseTag, `${path}/release.json`)));
+    }
     if (product.mutableDocumentation) {
       verifyMutableReleaseMetadata(
         JSON.parse(fileAt(revision, `${path}/release.json`)),

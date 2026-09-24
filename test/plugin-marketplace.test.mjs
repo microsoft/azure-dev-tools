@@ -8,6 +8,7 @@ import {
   verifyPlugin,
   verifyPreviousReleaseCommits,
   verifyReceiptPin,
+  verifyRuntimeInventory,
   verifySubsequentReleaseCommit,
   verifyTagSource,
 } from "../scripts/verify-plugin-marketplace.mjs";
@@ -166,5 +167,18 @@ test("every product must pin its reviewed receipt scope before publication", () 
     { ...receipt, receiptCount: 0 },
   ]) {
     assert.throws(() => verifyReceiptPin(incomplete), /checksum receipt pin/);
+  }
+});
+
+test("legacy tagged canvas runtime inventories do not load mutable documentation", () => {
+  for (const [name, version] of [
+    ["azure-functions-hosted-skills", "0-5-2"],
+    ["azure-resources-query", "0-1-2"],
+  ]) {
+    const tag = `${name}-v${version}-8af10f8`;
+    const release = JSON.parse(execFileSync("git", [
+      "show", `${tag}:canvases/${name}/release.json`,
+    ], { encoding: "utf8" }));
+    assert.doesNotThrow(() => verifyRuntimeInventory(release), tag);
   }
 });

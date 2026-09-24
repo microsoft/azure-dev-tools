@@ -4,6 +4,7 @@ import { test } from "node:test";
 import {
   verifyMutableDocumentationTrees,
   verifyMutableReleaseMetadata,
+  verifyRuntimeInventory,
 } from "../scripts/verify-plugin-marketplace.mjs";
 
 const image = Buffer.from("89504e470d0a1a0a0000", "hex");
@@ -101,6 +102,8 @@ test("documentation cannot carry executable assets, notices, links, or runtime d
     ["docs/worker.mjs", "export const run = true;"],
     ["doc/tool.py", "print('run')"],
     ["docs/chart-NOTICE.txt", "License terms"],
+    ["docs/COPYRIGHT.txt", "Copyright terms"],
+    ["docs/AUTHORS.md", "Attribution"],
     ["docs/page.html", "<script>alert(1)</script>"],
     ["docs/icon.svg", "<svg><script>alert(1)</script></svg>"],
     ["docs/fake.png", "not an image"],
@@ -157,8 +160,20 @@ test("schema 2 metadata and checksums enumerate only protected files and notices
     protectedFiles, tagged.read), /only protected payload/);
   assert.throws(() => verifyMutableReleaseMetadata(
     { ...release, assets: [{ file: "docs/screenshot.png" }] },
-    checksums, protectedFiles, tagged.read), /only protected payload/);
+    checksums, protectedFiles, tagged.read), /runtime assets cannot depend/);
   assert.throws(() => verifyMutableReleaseMetadata(
     release, { ...checksums, "release.json": "b".repeat(64) },
     protectedFiles, tagged.read), /protected release checksum differs/);
+});
+
+test("runtime inventories never declare mutable documentation as modules or assets", () => {
+  assert.doesNotThrow(() => verifyRuntimeInventory({
+    modules: [{ file: "extensions/azure-cost-health-check-v3/extension.mjs" }],
+  }));
+  for (const field of ["modules", "assets"]) {
+    assert.throws(() => verifyRuntimeInventory({ [field]: [{ file: "docs/screenshot.png" }] }),
+      new RegExp(`runtime ${field} cannot depend`));
+    assert.throws(() => verifyRuntimeInventory({ [field]: [{ file: "README.md" }] }),
+      new RegExp(`runtime ${field} cannot depend`));
+  }
 });
