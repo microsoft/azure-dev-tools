@@ -39,7 +39,7 @@ The verifier compares all protected files on the default branch to those
 tags, including additions and deletions, and pins each original tag to its
 reviewed commit. Do not rewrite or move old receipts, tags, or versions.
 
-A new Cost Health v3 candidate may use the separately reviewed
+A new Cost Health candidate may use the separately reviewed
 `schemaVersion: 2`, `mutableDocumentation: true` contract: `release.json` and
 `checksums.json` enumerate protected files only, and its `SHA256SUMS` covers
 those protected files rather than documentation. Pin the receipt's digest and

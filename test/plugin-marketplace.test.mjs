@@ -47,14 +47,12 @@ test("rejects missing products and duplicate entries", () => {
   })), /exactly the reviewed production products/);
 });
 
-test("does not advertise the unreviewed Cost Health v3 candidate", () => {
-  assert.throws(() => verifyMarketplace(modified((m) => {
-    m.plugins.push({
-      name: "azure-cost-health-check-v3",
-      version: "0.4.2",
-      source: "canvases/azure-cost-health-check-v3",
-    });
-  })), /exactly the reviewed production products/);
+test("does not advertise either unreviewed Cost Health identity", () => {
+  for (const name of ["azure-cost-health-check-v3", "azure-cost-health-check"]) {
+    assert.throws(() => verifyMarketplace(modified((m) => {
+      m.plugins.push({ name, version: "0.4.3", source: `canvases/${name}` });
+    })), /exactly the reviewed production products/);
+  }
 });
 
 test("rejects remote, moving, and cross-product sources", () => {
@@ -154,7 +152,7 @@ test("a later product release has a distinct merge descending from the combined 
 
 test("every product must pin its reviewed receipt scope before publication", () => {
   const receipt = {
-    receipt: "canvases/azure-cost-health-check-v3/SHA256SUMS",
+    receipt: "canvases/unreleased-canvas/SHA256SUMS",
     receiptSha256: "a".repeat(64),
     receiptCount: 32,
   };
