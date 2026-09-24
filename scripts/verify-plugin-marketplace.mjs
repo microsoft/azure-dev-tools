@@ -34,7 +34,7 @@ const packages = {
     version: "0.1.0",
     sha: "23aa6b19a50aca470c759f04f5c657481f6e2d6a",
     receipt: "docs/canvas-authoring/SHA256SUMS",
-    receiptSha256: "c5115fad1923e904a6b7b60caf590536ebbaab196e9e50cc2d84ecb4ceb4abc2",
+    receiptSha256: "282810a9792f231640baa745476faeee5e2e299a9226b06680a8d7bc1c0ee4de",
   },
 };
 const products = Object.keys(packages);
