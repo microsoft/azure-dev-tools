@@ -33,7 +33,7 @@ test("production catalog matches installable plugins in order and leaves planned
     ["Azure Functions Hosted Skills", "canvases/azure-functions-hosted-skills/", "azure-functions-hosted-skills", "Production package"],
     ["Azure Resources Query", "canvases/azure-resources-query/", "azure-resources-query", "Production package"],
     ["Canvas Toolkit (Canvas Authoring)", "plugins/canvas-authoring/", "canvas-authoring", "Production package"],
-    ["Azure Cost Health Check", "canvases/azure-cost-health-check/", "azure-cost-health-check", "Candidate package"],
+    ["Azure Cost Health Check", "canvases/azure-cost-health-check/", "azure-cost-health-check", "Production package"],
   ];
   assert.equal(rows.length, expected.length + 1);
   for (const [index, [label, path, name, linkLabel]] of expected.entries()) {
@@ -41,24 +41,21 @@ test("production catalog matches installable plugins in order and leaves planned
     assert.ok(rows[index].includes(`[${linkLabel}](${path})`), `${label}: package path`);
     assert.ok(existsSync(new URL(path, root)), `${label}: missing package`);
     assert.equal(manifest.plugins[index].name, name);
-    if (index < 3) {
-      const { version } = manifest.plugins[index];
-      const tagPath = `${name}-v${version.replaceAll(".", "-")}-[0-9a-f]{7,40}/${path.slice(0, -1)}`;
-      assert.match(
-        readme,
-        new RegExp(`https://github\\.com/microsoft/azure-dev-tools/tree/${tagPath}`),
-        `${label}: expected a source-qualified private patch tag destination`,
-      );
-    } else {
-      assert.match(rows[index], /Release candidate; immutable tag and App installation pending/);
-    }
+    const { version } = manifest.plugins[index];
+    const tagPath = `${name}-v${version.replaceAll(".", "-")}-[0-9a-f]{7,40}/${path.slice(0, -1)}`;
+    assert.match(
+      readme,
+      new RegExp(`https://github\\.com/microsoft/azure-dev-tools/tree/${tagPath}`),
+      `${label}: expected a source-qualified private tag destination`,
+    );
   }
   assert.match(rows[2], /Skill-only plugin; no canvas/);
+  assert.match(rows[3], /Immutable tag required; App installation unverified/);
   assert.equal(rows[expected.length], "| **Azure SRE Agent** | Planned | — | **COMING SOON** |");
   assert.deepEqual(manifest.plugins.map(({ name }) => name), expected.map(([, , name]) => name));
 });
 
-test("Cost Health package uses the reviewed Agent Plugins layout without a false release claim", () => {
+test("Cost Health package uses the reviewed Agent Plugins layout and conditional install URLs", () => {
   const path = "canvases/azure-cost-health-check/";
   const plugin = JSON.parse(readFileSync(new URL(`${path}.github/plugin/plugin.json`, root)));
   const release = JSON.parse(readFileSync(new URL(`${path}release.json`, root)));

@@ -8,16 +8,16 @@ through GitHub Copilot.
 The first three plugins have immutable source-qualified production tags.
 Check out the linked tag and follow the package README for full-plugin
 installation, including skills. The authoring companion is a skill-only
-product, not a running canvas. Cost Health is a fourth release **candidate**,
-not yet tagged or available from the published marketplace. Marketplace
-registration and native App installation have not yet been verified.
+product, not a running canvas. Cost Health is the fourth product; verify its
+immutable release tag before installation. Marketplace registration and native
+App installation have not yet been verified.
 
 | Plugin | Type | Production package | Status |
 | --- | --- | --- | --- |
 | **Azure Functions Hosted Skills** | Canvas with skills | [Production package](canvases/azure-functions-hosted-skills/) | Tagged; App installation unverified |
 | **Azure Resources Query** | Canvas with skill | [Production package](canvases/azure-resources-query/) | Tagged; App installation unverified |
 | **Canvas Toolkit (Canvas Authoring)** | Skill-only plugin; no canvas | [Production package](plugins/canvas-authoring/) | Tagged; App installation unverified |
-| **Azure Cost Health Check** | Canvas with skill | [Candidate package](canvases/azure-cost-health-check/) | **Release candidate; immutable tag and App installation pending** |
+| **Azure Cost Health Check** | Canvas with skill | [Production package](canvases/azure-cost-health-check/) | Immutable tag required; App installation unverified |
 | **Azure SRE Agent** | Planned | — | **COMING SOON** |
 
 For a reproducible production checkout, use the [Hosted Skills
@@ -26,12 +26,13 @@ tag](https://github.com/microsoft/azure-dev-tools/tree/azure-functions-hosted-sk
 tag](https://github.com/microsoft/azure-dev-tools/tree/azure-resources-query-v0-1-2-8af10f8/canvases/azure-resources-query),
 or [Canvas Authoring
 tag](https://github.com/microsoft/azure-dev-tools/tree/canvas-authoring-v0-1-1-8af10f8/plugins/canvas-authoring).
-The Cost Health [source export](https://github.com/coreai-microsoft/canvases-cloud-foundation/tree/b3551729b5d1e6377283efd1a012fa523e0c8aac/canvases/azure-cost-health-check)
-is pinned to the merged source revision. Its release tag must be created only
-after this candidate is independently reviewed and merged; do not use an
-unpublished `-latest` URL to install it. The older immutable Hosted 0.5.1 and ARG 0.1.1 package READMEs retain
-reviewed public source-distribution links. For production installation, use
-the private 0.5.2 and 0.1.2 package and tag links above instead.
+The [Cost Health 0.4.3 version tag](https://github.com/microsoft/azure-dev-tools/tree/azure-cost-health-check-v0-4-3-b355172/canvases/azure-cost-health-check)
+must point to the approved private merge before it is used for installation.
+Its [source export](https://github.com/coreai-microsoft/canvases-cloud-foundation/tree/b3551729b5d1e6377283efd1a012fa523e0c8aac/canvases/azure-cost-health-check)
+is pinned to the merged source revision. The older immutable Hosted 0.5.1
+and ARG 0.1.1 package READMEs retain reviewed public source-distribution
+links. For production installation, use the private 0.5.2 and 0.1.2 package
+and tag links above instead.
 
 After this repository's marketplace is approved and published, open GitHub
 Copilot App **Customize → Plugins**, use the marketplace gear to add

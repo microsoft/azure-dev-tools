@@ -6,14 +6,15 @@ Once this repository's marketplace is approved and published, in GitHub
 Copilot App open **Customize → Plugins**, use the gear beside the marketplace
 dropdown to add `microsoft/azure-dev-tools`, then select the
 `azure-dev-tools` marketplace. Install `azure-functions-hosted-skills`,
-`azure-resources-query`, `canvas-authoring`, or, **only after its release
-tag and marketplace publication are approved**, `azure-cost-health-check` separately **after each
-product's release gates pass**. Access to this repository is required.
+`azure-resources-query`, `canvas-authoring`, or `azure-cost-health-check`
+separately **after each product's release gates pass**. Access to this
+repository is required.
 Restart Copilot and verify the installed skills; open a canvas for the Hosted,
-Resources Query or released Cost Health products only. Installation does not automatically display a panel: ask
-Copilot **"Open Azure Resources Query"** or **"Open Azure Functions Hosted
-Skills"**, or, when Cost Health is released, **"Open Azure Cost Health Check in real mode for my subscription"**. The builder entry is skill-only: use the host's native
-`create-canvas` workflow instead of expecting a builder canvas.
+Resources Query, or Cost Health products only. Installation does not
+automatically display a panel: ask Copilot **"Open Azure Resources Query"**,
+**"Open Azure Functions Hosted Skills"**, or **"Open Azure Cost Health Check
+in real mode for my subscription"**. The builder entry is skill-only: use
+the host's native `create-canvas` workflow instead of expecting a builder canvas.
 [GitHub's App guide](https://docs.github.com/en/copilot/how-tos/github-copilot-app/customize-github-copilot-app#adding-plugins)
 documents the registration workflow, but **this marketplace's App install has
 not yet been verified**.
@@ -26,7 +27,6 @@ copilot plugin marketplace browse azure-dev-tools
 copilot plugin install azure-functions-hosted-skills@azure-dev-tools
 copilot plugin install azure-resources-query@azure-dev-tools
 copilot plugin install canvas-authoring@azure-dev-tools
-# Only after Cost Health has been approved and released:
 copilot plugin install azure-cost-health-check@azure-dev-tools
 copilot plugin list
 copilot skill list
@@ -39,7 +39,7 @@ source-distribution links, **not** this repository's
 production installation target. Native App installation from this
 marketplace has not yet been verified.
 
-Cost Health 0.4.3 is a **pre-tag private review candidate**, exported from
+Cost Health 0.4.3 was exported from
 the exact [merged source main revision](https://github.com/coreai-microsoft/canvases-cloud-foundation/commit/b3551729b5d1e6377283efd1a012fa523e0c8aac)
 as `azure-cost-health-check`, not the obsolete `-v3` identity. Its protected
 `checksums.json` digest is
@@ -49,12 +49,17 @@ the private 32-file protected `SHA256SUMS` digest is
 The package includes its `com.github.copilot/extensions/azure-cost-health-check`
 extension, launcher skill, protected `assets/preview.png`, third-party notices,
 and mutable `docs/azure-cost-health-check.png` customer screenshot. Its customer
-README and provisional `-latest` URL do **not** indicate that a tag or
-marketplace installation exists. The required source test
-`canvases/azure-cost-health-check/test/import.test.mjs:17` still expects the
-obsolete nested extension path; source owner must resolve that regression
-before release qualification. Private synthetic-tag tests are local-only;
-there has been no native App installation or public announcement.
+README's conditional `-latest` URL is usable only after a private reviewed
+merge and release-tag publication. The source's merged-main
+`canvases/azure-cost-health-check/test/import.test.mjs:17` still expects an
+obsolete nested extension path (one source test fails); this is disclosed,
+not evidence of a failed packaged plugin. The exact merged-main package passed
+source `verify:canvas` and isolated offline packaged-browser acceptance.
+This private package uses the same repository license and bundled vendor-notice
+model as the other marketplace products; the source repository's separate
+public-disclosure staging workflow is not part of this release. Private
+pre-tag qualification uses local-only synthetic tags; native App installation
+remains unverified.
 
 ## Build canvas apps
 
