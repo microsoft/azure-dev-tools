@@ -1,0 +1,35 @@
+name: Production marketplace release gate
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/production-marketplace-release.yml
+      - .github/plugin/**
+      - canvases/azure-functions-hosted-skills/**
+      - canvases/azure-resources-query/**
+      - plugins/canvas-authoring/**
+      - docs/canvas-authoring/SHA256SUMS
+      - docs/plugin-marketplace.md
+      - docs/release-process.md
+      - scripts/verify-plugin-marketplace.mjs
+      - test/plugin-marketplace.test.mjs
+      - test/fixtures/marketplace.candidate.json
+
+permissions:
+  contents: read
+
+jobs:
+  production-marketplace-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test marketplace policy
+        run: node --test test/plugin-marketplace.test.mjs
+      - name: Verify production marketplace against release tags
+        run: node scripts/verify-plugin-marketplace.mjs

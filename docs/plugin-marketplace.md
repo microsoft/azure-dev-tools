@@ -87,6 +87,16 @@ does not prove the build's origin.
 tags exist.** Pre-tag tests with temporary *local-only* tags in a disposable
 clone are synthetic candidate qualification, not release verification; never
 push those refs or present the result as a published install.
+The `Production marketplace release gate` pull-request workflow runs the
+marketplace tests and then this unmodified strict validator with complete Git
+history and fetched tags. It is expected to fail until the approved product
+PRs merge and all three real production tags exist; rerun it after tag
+publication. No candidate manifest or temporary tags satisfy this CI gate.
+An administrator must make the `production-marketplace-release` job a required
+status check for protected release branches; the workflow alone does not
+enforce merging policy. Because the workflow is path-filtered, requiring it
+for every PR on a branch would leave unrelated PRs pending: use an
+always-running required check if branch-wide protection is needed.
 
 After publication, check the actual GitHub-hosted marketplace with fresh, isolated
 `HOME`, `COPILOT_HOME`, and `COPILOT_CACHE_HOME` directories. Confirm that each
