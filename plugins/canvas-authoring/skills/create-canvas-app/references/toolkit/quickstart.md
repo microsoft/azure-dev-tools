@@ -1,237 +1,127 @@
 # Build your first Azure canvas
 
-Build a small **Resource groups** canvas: choose one subscription, list its
-resource groups, and refresh the same view from either the UI or the agent.
-This is a read-only learning scenario, not a resource-management framework.
+Create a read-only **Resource groups** app: select a subscription, list its
+resource groups, then refresh the same view from the UI or your agent.
 
-## Start with your agent
+The fastest path uses the `create-canvas-app` companion's Azure starter.
+The host's installed `create-canvas` skill handles native scaffolding and
+activation; the companion adds toolkit setup.
 
-Give your agent this guide and paste:
+## 1. Check prerequisites
 
-```text
-Build a read-only Resource groups canvas using @microsoft/canvas-toolkit.
-Follow its quickstart.md. Use the installed create-canvas-app companion if
-available; otherwise invoke the host's create-canvas skill and follow this
-guide at its customization step. Keep the host skill authoritative for native
-scaffolding, registration, lifecycle and verification.
+- A canvas-capable GitHub Copilot host with its `create-canvas` skill.
+- Node.js 22+ (24 recommended) and npm.
+- A toolkit version with `@microsoft/canvas-toolkit/build`, or a compatible
+  local `.tgz`. See [package setup](README.md#setup-and-exports).
+- For live reads, Azure CLI 2.61+ on the provider's PATH and permission to
+  read resource groups in your chosen subscription.
 
-Start in a new source-app directory. First open the generated demo in the
-actual host. Then add explicit subscription selection, the toolkit's
-examples/resource-groups.mjs reader, and a themed list with loading, empty,
-error and cancellation states. UI and agent calls must use the same validated
-actions and state. Keep tokens server-side and never sign in or query on open.
-Build a self-contained artifact, verify it in the host, and show me how to
-change the displayed fields. Do not create or modify Azure resources.
+Install the companion from its public distribution:
+
+```sh
+copilot plugin install microsoft/azure-dev-tools:plugins/canvas-authoring
 ```
 
-The agent should handle build configuration and wiring, not ask you to choose
-every library or write esbuild configuration. You supply the scenario, confirm
-the new project location, and choose the Azure account/subscription.
+If the companion is unavailable, use the host skill and the
+[manual integration map](#without-the-companion) below. If the host skill
+itself is missing, use a host that provides it.
 
-### What you need
+## 2. Ask your agent to create the app
 
-- A canvas-capable GitHub Copilot host with its installed `create-canvas` skill.
-  If that skill is unavailable, report the prerequisite; do not guess the
-  host's SDK or substitute a browser tab for native verification.
-- Node.js 22+ (24 recommended), npm, and the toolkit installed using the
-  [package setup instructions](README.md#setup-and-exports). A supplied local
-  toolkit tarball works too. Keep the generated application's lockfile.
-- For the Azure step, Azure CLI 2.61+ on the provider's PATH and an account
-  allowed to read resource groups in the chosen subscription. Sign in
-  explicitly with `az login` if needed; the example never signs in for you.
+```text
+Build a Resource groups canvas with @microsoft/canvas-toolkit.
+Use the native create-canvas skill and the companion's azure-resource-groups
+starter. Confirm the new project location and compatible toolkit version.
+Keep Azure reads explicit and share actions/state between the UI and agent.
+Build it, verify it in the host, and show me how to add a location filter.
+Do not create or modify Azure resources.
+```
 
-This guide ships at `node_modules/@microsoft/canvas-toolkit/quickstart.md`.
-All links below stay within the package. It does not require repository build
-scripts, another app's source, or a new scaffolding tool.
+The agent generates the app and connects its copied native entry. You should
+not need to choose libraries or write bundler configuration. The generated
+README explains the connection and source files.
 
-## 1. Get the smallest canvas running
+## 3. Build and open it
 
-The installed `create-canvas-app` companion, when available, invokes the
-host's `create-canvas` skill and supplies deterministic toolkit setup at its
-customization/build step. Follow that installed version's instructions and
-generated README; do not copy a setup script from an unrelated example.
-Without the companion, use the host skill and the contracts in this guide.
-
-Keep the native scaffold and SDK wiring. Separate Node extension code from
-browser code, use the toolkit's public exports, and keep the host SDK
-host-provided. Do not install a competing SDK runtime into the emitted app.
-Build and open the generated demo before adding Azure, so host/build problems
-are not confused with authentication problems.
-
-**Checkpoint:** the actual host registers the canvas, opens its panel, and
-an agent action updates that same panel. Generated files, a build success,
-or a standalone browser page alone do not establish this.
-
-## 2. Add explicit Azure scope
-
-Create one `createAzureAuthSession()` per owned app/controller lifetime, not
-per request. Explicitly load the local profile with `reloadProfile()` and
-return only its JSON-safe snapshot to the UI. Loading metadata is not an
-Azure resource query or proof of access.
-
-Use the [Azure subscription selector](README.md#azure-subscription-selector)
-with `selectionMode: "single"`. Its `transport` calls your same-origin metadata
-action; `onApply` calls your shared `select_subscription` action. Feed changes
-back with `picker.setState(...)`. On the server, validate against the loaded
-session using `auth.resolveScope(...)` and bind the selected subscription with
-`auth.bindSubscription({ subscriptionId, tenantId, cloud })`.
-
-Do not pick `accounts[0]`, change the CLI default, or treat a GUID as evidence
-of permission. Keep no selection, signed-out, tenant-only, disabled
-subscription, and a successful empty Azure result distinct.
-
-Use terminal sign-in for this first lesson. After an external account change,
-the user explicitly reloads the profile and selects again. In-panel sign-in
-and refresh-from-Azure can be added later using the [authentication
-guide](auth.md); they are not required to get the first read working.
-
-## 3. Reuse the small Azure reader
-
-Copy [resource-groups.mjs](examples/resource-groups.mjs) from the installed
-package's `examples` directory into your app's server-side source. It uses
-only public toolkit imports; it is example source, not a new package export.
-Given a bound context, its `readResourceGroups(context, { signal })`:
-
-- performs a read-only, cloud-aware ARM resource-group listing;
-- follows continuation pages, projecting only `id`, `name`, and `location`;
-- returns an empty array only for a successful empty listing;
-- rejects invalidated contexts, cancellation, invalid data, failed pages,
-  and the lesson's 200-row / 10-page bounds rather than claiming completeness.
-
-The fixed API version is for this resource-group operation, not a version to
-reuse for every Azure service. The optional `httpClient` argument supports
-hermetic tests; production callers normally omit it. Importing the example
-does not authenticate, read a CLI profile, or contact Azure.
-
-### One action path, two callers
-
-Use [shared actions and state](README.md#canvas-skeleton). The following is
-the action contract to implement in the generated app, not a list of
-preinstalled toolkit or host actions:
-
-| App action | Input / behavior |
-| --- | --- |
-| `get_state` | Empty strict object; return JSON-safe scope, status, and bounded rows without Azure I/O. |
-| `reload_profile` | Empty strict object; load local metadata, invalidate old scope/results, and publish the new snapshot. Never run the resource query. |
-| `select_subscription` | Required subscription ID, tenant ID and supported cloud; validate/bind on the server, cancel old work, and clear old results. No automatic query. |
-| `list_resource_groups` | Empty strict object; require the selected context, set loading, call `readResourceGroups` with an owned abort signal, then commit rows only if the context/request is still current. |
-| `cancel` | Empty strict object; abort this app's request and publish cancellation, not a successful empty list. |
-
-Define the input schemas once with `defineActions` and its schema builders.
-Publish those schemas to the native host actions. Both host handlers and the
-UI's `POST api/action` must call that same registry's `dispatch`; do not create
-a second Azure implementation for chat.
-
-Keep the selected context and `AbortController` out of serialized state.
-Subscribe to authentication lifecycle changes, cancel obsolete work, and
-reject stale completions before updating the view. Keep `AuthError`'s safe
-fields for expected failures; report unexpected failures with a bounded,
-non-sensitive message, never raw SDK/CLI output or a success-shaped `[]`.
-The [auth guide](auth.md) specifies context ownership and safe errors.
-
-## 4. Render the shared view
-
-Pass the registry's dispatch and the app's model/subscription functions to
-`startCanvasServer`. Serve the full `canvasUiAssets` map along with your HTML
-and compiled browser JavaScript. Load the shared stylesheet and use
-`class="canvas-ui"` as described in [styling and themes](README.md#styling-and-themes).
-The subscription selector also needs its stylesheet.
-
-Render a heading, selected subscription, **List resource groups** / **Cancel**
-controls, status, and a simple list. Use `textContent` for Azure values, label
-controls, preserve visible keyboard focus, and announce changing status.
-Use `formatAzureLocation` only for display; keep raw IDs and locations in state.
-
-The browser reads the same state the agent sees. Subscribe to the server's
-SSE change notifications and refresh the model; a chat action must update the
-open panel without asking the user to reload. Keep credentials and all Azure
-calls in Node, not in the iframe. Use same-origin script assets rather than
-inline scripts or CDN dependencies.
-
-`createViewStore` is in-memory, not durable storage. On close, cancel owned
-requests, unsubscribe listeners, destroy the browser picker, close the server,
-and dispose the owned auth session using the host scaffold's lifecycle.
-Do not introduce competing process-shutdown handlers.
-
-## 5. Build and verify the complete path
-
-Use the generated app's build commands. With the toolkit companion these are:
+From the generated source app:
 
 ```sh
 npm install
 npm run build
 npm test
+npm run smoke
 ```
 
-Use `npm ci` after the lockfile exists. Keep Node and browser bundles separate,
-the host SDK external, and all runtime assets in the emitted directory.
-Test a relocated copy with no access to the source app's dependencies.
-Do not use monorepo packaging commands in an independent application.
+Keep the lockfile and use `npm ci` for later installs. The Azure starter's
+`smoke` command uses installed Chrome or `CANVAS_BROWSER` with synthetic data;
+it does not sign in to Azure or download a browser.
 
-**Keep asset-owning UI modules and their relative files together.** Bundlers such
-as esbuild do not automatically copy assets referenced with
-`new URL(..., import.meta.url)`. Flattening the subscription picker into a
-different browser file can move its SVG request outside the canvas URL prefix.
-Use the supported [shared UI build helper](README.md#packaging-shared-ui):
+Have the host skill install the **complete `dist/` directory**, reload the
+provider and open the panel. A standalone browser check is not proof of native
+activation. A build-ID warning means the served files and provider differ;
+refreshing only the panel will not reload the provider.
 
-```js
-import { prepareCanvasUiAssets } from "@microsoft/canvas-toolkit/build";
-const ui = await prepareCanvasUiAssets("dist");
-```
+## 4. Read from Azure
 
-Use `ui.nodeImport` to rewrite and externalize the provider's
-`@microsoft/canvas-toolkit/ui` import; emit the provider at the `dist` root.
-Use `ui.browserImports` to rewrite and externalize the listed browser JS imports;
-serve the browser entry at the canvas URL root, such as `{secret-prefix}/app.js`.
-Those values are **server URL paths**, not disk paths. CSS can bundle normally.
-Spread the full `canvasUiAssets` into the server allowlist; the helper copies the
-files but does not configure the server or copy your application's own files.
-It needs no package at runtime and does not clean output or overwrite conflicting
-files. Keep the native scaffold's other build settings.
+If needed, sign in explicitly in a terminal with `az login`. In the panel:
 
-Preserve that module layout and check actual image decoding (`complete` and
-positive `naturalWidth`). Fail on image/script/stylesheet HTTP errors, not just
-JavaScript exceptions.
+1. Choose **Load profile**.
+2. Select a subscription.
+3. Choose **List resource groups**.
 
-Then return to the native host skill for activation and check:
+Opening the app does not sign in, select a default subscription or query Azure.
+Profile metadata is not proof of resource access: a read may still fail because
+of permissions or network access. Errors, cancellation and empty results are
+shown separately.
 
-| Try | Expected result |
+The example returns only ID, name and location. It rejects incomplete listings
+or results above 200 rows / 10 pages rather than silently hiding rows.
+
+## 5. Make it your own
+
+Start with a display-only location filter. Keep raw values and show both loaded
+and displayed counts so filtering is not mistaken for a narrower Azure query.
+
+| File | Change here |
 | --- | --- |
-| Open before sign-in or scope selection | Useful setup/selection state; no automatic login or resource query. |
-| Select a subscription and click **List resource groups** | Explicit read; names/locations appear, or an honest empty/error state. |
-| Ask the agent to refresh that panel | Same selected scope and action; visible UI update, no second query just for chat. |
+| `src/browser/` | Labels, layout, display fields and local filters. |
+| `src/resource-groups.mjs` | The copied [Azure reader](examples/resource-groups.mjs). Choose the target service's API, permissions and paging rules for another resource type. |
+| `src/domain.mjs` | Shared actions, scope, request status and cancellation. |
+| `src/canvas.mjs` | Per-panel lifecycle, transport and served assets. |
+
+Keep the generated [UI asset layout](README.md#packaging-shared-ui) and
+[shared styles](README.md#styling-and-themes). The build helper handles toolkit
+icons; new app assets still need a build copy and a server route.
+
+Before sharing the app, try:
+
+| Check | Expected result |
+| --- | --- |
+| Ask the agent to refresh | The open panel updates through the same action and selected scope. |
 | Cancel or change identity during a read | Old results cannot overwrite the new state. |
-| Use keyboard, a narrow panel, and a different host theme | Usable controls, readable status, no clipped content. |
-| Close and reopen | Owned work is stopped; a fresh ephemeral view is not mistaken for persisted state. |
+| Use keyboard, a narrow panel and another host theme | Controls and status stay usable; icons load. |
+| Close and reopen | Pending work stops; the new panel starts without old scope or results. |
 
-Keep fixture evidence and live-Azure evidence separate. A fixture verifies
-behavior without proving the user's account, network, host or permissions.
+State is per-panel and temporary. Persistent storage and cloud writes need
+their own design; do not add them by removing the starter's safeguards.
 
-## 6. Make it your own
+## Without the companion
 
-Start with a display-only change: add a location filter over the completed
-resource-group list. Preserve raw values, show both displayed and loaded
-counts, and do not claim that a local filter narrows the Azure query.
+Ask the host skill to create and open its smallest native canvas first. Then
+use this map at its customization step:
 
-Next, change the read operation in your app's copied reader while retaining
-the shared auth, scope, action, state and UI structure. Choose the target
-service's actual API version/SDK, permissions, paging rules and projection.
-For larger inventories, add a paged view rather than removing safety bounds.
-Resource writes are a separate design requiring explicit authorization and
-confirmation; changing an action's label does not supply either.
+- [Actions, state and server](README.md#canvas-skeleton): one validated dispatch
+  for UI and agent callers, with credentials and Azure calls kept in Node.
+- [Authentication](auth.md) and the
+  [subscription selector](README.md#azure-subscription-selector): own one session,
+  load metadata explicitly and bind a selected subscription.
+- [Resource-group reader](examples/resource-groups.mjs): copy it into server
+  source and pass a bound context and abort signal.
+- [Packaging](README.md#packaging-shared-ui): separate Node/browser bundles,
+  preserve asset paths and test the complete emitted app.
 
-Give the next builder the app README with its setup, commands, source map and
-known limits, plus the complete emitted artifact. An installed bundle helps
-someone try the app; readable source and one customization exercise help
-them learn to build.
-
-## If you get stuck
-
-| Symptom | First check |
-| --- | --- |
-| Native authoring skill is missing | Use a host with `create-canvas`; do not invent an SDK registration format. |
-| Demo works but subscriptions do not load | Check Azure CLI availability from the provider, explicit sign-in, and profile reload. |
-| Subscriptions load but Azure read fails | Check selected identity/scope, RBAC and network; metadata is not access proof. |
-| Browser works but the host panel is blank | Inspect the actual emitted assets, native registration and CSP; do not loosen CSP as a workaround. |
-| Agent action succeeds but UI stays stale | Trace the shared dispatch, state notification and browser subscription, not a second fetch path. |
-| Closing the panel leaves work running | Check ownership of requests, listeners, server and auth session against the host lifecycle. |
+Implement `get_state`, `reload_profile`, `select_subscription`,
+`list_resource_groups` and `cancel` through the shared registry. Keep scope
+changes separate from queries, cancel old work and reject stale completions.
+Dispose requests, listeners, the server and auth session with their owner.
+Return to the host skill for native verification.

@@ -1,20 +1,19 @@
 # Read-only Azure examples
 
 Building a new canvas? Start with the [Azure canvas quickstart](../quickstart.md),
-which includes an agent prompt and the end-to-end UI/action wiring recipe.
+then use these examples to customize its Azure reads.
 
 | Example | Use it to learn |
 | --- | --- |
-| [Resource groups](resource-groups.mjs) | Add a small, bounded Azure read to a host-created canvas. The app owns the context, UI, state and cancellation. |
+| [Resource groups](resource-groups.mjs) | List resource groups with explicit scope, paging limits and cancellation. |
 | [SDK client](sdk-client.mjs) | Pass a bound credential to an Azure SDK client or the optional toolkit ARM client. |
 | [Custom HTTP client](custom-fetch-client.mjs) | Use an SDK-cached bearer callback with a caller-owned HTTP transport. |
 
-The resource-group reader exports `readResourceGroups(context, { signal, httpClient })`.
-It has no CLI runner or import-time side effects. Copy it into your application's
-server source and pass a subscription-bound context. It returns only `id`,
-`name` and `location`; empty success, cancellation, invalid data, and incomplete
-or over-limit listings remain distinct. It rejects above 200 rows or 10 pages
-instead of silently returning a complete-looking partial list.
+Copy `resource-groups.mjs` into server source and call
+`readResourceGroups(context, { signal, httpClient })` with a subscription-bound
+context. It returns `id`, `name` and `location`, and rejects incomplete listings,
+invalid data, cancellation or results above 200 rows / 10 pages. An empty array
+means a successful empty listing. It has no CLI runner or import-time activity.
 
 ## Authentication and transport examples
 
@@ -55,26 +54,13 @@ establish live qualification for those environments. Examples time out after
   for actual `fetch` requests. Request routing is the custom client's concern,
   not an arbitrary-service-URL option on authentication. Redirects are disabled.
 
-Long-lived applications must subscribe to session changes and retire their own
-SDK/custom clients when a context becomes invalid. Their independent SDK
-pipelines can cache already-issued tokens; local disconnect does not revoke
-those tokens. Toolkit-owned ARM clients enforce validity even with cached
-tokens. The custom example checks context validity before and after each read.
-Reuse the custom reader for repeated requests rather than reconstructing its
-token callback; `context.invalidateTokens()` refreshes that callback's provider.
+For repeated requests, retain the client/reader until its auth context changes.
+Then cancel old requests and retire the client. See the auth guide for
+[lifetime and token-cache rules](../auth.md#lifetime-cancellation-and-disposal)
+and [ARM audience handling](../auth.md#optional-arm-transport).
 
-The ARM scope appends `/.default` to the exact `environment.armResource`.
-An audience ending in `/` therefore produces `//.default`: this preserves the
-audience's trailing slash when Azure Identity converts the scope to a resource.
-Do not normalize token audiences like request endpoints.
-
-For hermetic callers, create an injected-credential auth session and pass a
-bound context into the exported example functions. Both `readWithSdk(context,
-{ httpClient })` and `readWithOptionalArm(context, { httpClient })` accept a
-standard Azure SDK `HttpClient`. The underlying optional APIs accept it as
-`createArmClient(context, { httpClient })` or `listArm(context, path,
-{ httpClient, signal, maxPages })`; the transport is scoped to that client or
-listing, never installed globally. Default ARM clients are memoized per bound
-handle. Supplying a transport creates an isolated client and does not replace
-or reuse the memoized default. Tests use fake credentials and HTTP transports;
-ordinary test execution never invokes the opt-in runner.
+For automated tests, pass an injected-credential context rather than running
+the CLI examples. `readWithSdk(context, { httpClient })` and
+`readWithOptionalArm(context, { httpClient })` accept a standard Azure SDK
+`HttpClient`. Tests use fake credentials and per-client transports; they do not
+invoke the opt-in runner.

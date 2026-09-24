@@ -1,135 +1,94 @@
 ---
 name: create-canvas-app
-description: Build a canvas with @microsoft/canvas-toolkit using the installed create-canvas skill first. Includes an Azure starter with explicit subscription scope, read-only resource groups, shared UI/agent state, safe asset packaging, and a focused browser smoke.
+description: Create a canvas app with the native create-canvas skill and Microsoft Canvas Toolkit. Includes counter and read-only Azure resource-group starters.
 ---
 
 # Canvas toolkit companion
 
-**First action:** invoke the GitHub Copilot app's installed `create-canvas`
-skill through the host's skill mechanism: `skill({ skill: "create-canvas" })`.
-If it is already active, continue that invocation rather than invoking it again.
+**First action:** invoke the host's installed `create-canvas` skill with
+`skill({ skill: "create-canvas" })`. If already active, continue that invocation.
+It is the source of truth for native scaffolding, SDK registration, lifecycle,
+scope and activation. Follow its workflow, including its **native scaffold step**.
+Apply this companion at the customization/build step, then return to that
+workflow for verification. If unavailable, report that the required app skill
+is missing; do not invent a replacement host workflow.
 
-That live skill is the **source of truth** for canvas authoring: scope, SDK
-guidance, native scaffolding, entrypoint/registration, lifecycle, transport,
-theming, storage/lifetime, reload, and host verification. Follow its workflow,
-including its **native scaffold step**. Do not copy its text, hardcode its
-installation path, or replace its scaffold with this repository's generator.
-Apply this companion at the host workflow's customization/build step, then
-return to that workflow for verification.
+## 1. Choose the starter and package
 
-If `create-canvas` is unavailable, report that the required app skill is missing.
-Do not invent a replacement SDK/lifecycle workflow or claim native activation.
-Package-only toolkit/build guidance can still be useful, but is not a substitute.
+For Azure requests, use `--template azure-resource-groups`. It already includes
+auth, explicit subscription selection, a bounded reader, cancellation, shared
+UI/agent state and the subscription picker. Do not generate a counter and
+rebuild this wiring. Omit the template option for a generic counter.
 
-## Azure first-app path
+Confirm one compatible toolkit source: an exact published npm version with
+`/build`, or a local npm-pack tarball. Do not invent a published version, use
+tags/ranges, publish a package, or switch sources after a failed installation.
 
-For an Azure canvas, choose `--template azure-resource-groups` in setup rather
-than generating a counter and rebuilding the Azure wiring manually. The preset
-includes auth, explicit subscription selection, the bounded reader, cancellation,
-shared UI/agent state, and the picker. Follow the bundled
-[Azure quickstart](references/toolkit/quickstart.md) to customize it. Its
-[resource-group reader](references/toolkit/examples/resource-groups.mjs) is a small,
-read-only customization using public toolkit imports. The guide and example are
-available before installing npm dependencies; do not make the user find this
-repository or invent another scaffolder.
+Use the host-created canvas ID and `extension.mjs`. Its directory must contain
+only that file. Choose a separate, new source-app directory under an existing
+parent. Resolve symlinks in input/output paths first; setup rejects them and
+does not merge existing projects.
 
-Keep native authoring and activation owned by `create-canvas`. Use explicit
-Azure scope, one action/state path for UI and agent, visible failures, bounded
-results and cancellation. Test with clearly labelled synthetic fixtures before
-any live read; never substitute fixture results for real Azure data. No automatic
-login, resource query on open, cloud writes, or publication.
+## 2. Generate the source app
 
-The Azure preset supplies the SDK build dependencies, including the optional
-`supports-color` import needed by this inspected SDK graph. Do not relax the
-external-dependency check or assume the host supplies arbitrary npm modules.
-Live mode is the default but performs no discovery or query on open. Synthetic
-mode is explicit (`{"mode":"fixture"}`) and is what the smoke check uses.
+From this installed skill's directory, replace the placeholders:
 
-## Deterministic toolkit setup at customization
+```sh
+node scripts/setup-toolkit.mjs --name my-canvas \
+  --scaffold "<native-scaffold>/extension.mjs" \
+  --output "<existing-parent>/my-canvas-source" \
+  --toolkit-version "<exact-version>" \
+  --template azure-resource-groups
+```
 
-Read the bundled [toolkit reference](references/toolkit.md). Use the
-[setup command](scripts/setup-toolkit.mjs) at the host workflow's
-customization/build step, before adding custom business behavior:
+Alternatively, replace `--toolkit-version` with
+`--toolkit-tarball "<toolkit-package>.tgz"`. Choose exactly one.
 
-1. **Establish inputs.** Use a user/release-approved exact published
-   `@microsoft/canvas-toolkit` version with the public `/build` export.
-   An explicitly approved local npm-pack tarball is also supported. Never use
-   a tag/range, assume an unverified version exists, publish the kit, or
-   silently switch sources after an install failure. Use
-   the host-created `extension.mjs` from a directory containing only that file,
-   its canvas ID as the name, and a **new, separate source-app directory**.
-   Existing projects/package/lockfiles and symlink paths are refused, not merged.
-2. **Run the bundled script.** From this installed skill's directory, substituting
-   confirmed absolute paths (resolve OS path aliases before use):
+Setup copies the native entry unchanged and creates the app's package, source,
+assets and build checks. It performs no install, sign-in or resource read.
+It refuses any existing destination, including identical output. Registry mode
+is offline until `npm install`; an incompatible installed package fails build.
+The Azure template requires the full exported plugin, including bundled guides.
 
-   ```sh
-   node scripts/setup-toolkit.mjs --help
-   node scripts/setup-toolkit.mjs --name my-canvas \
-     --scaffold /path/to/native/my-canvas/extension.mjs \
-     --output /path/to/existing-parent/new-source-app \
-     --toolkit-version "$TOOLKIT_VERSION"
-   ```
+## 3. Connect and build
 
-   Set `TOOLKIT_VERSION` to the approved compatible published version, or
-   replace that option with `--toolkit-tarball /path/to/approved-toolkit.tgz`.
-   Choose exactly one source. Add `--template azure-resource-groups` for Azure requests. Omit it for the
-   generic counter. The Azure preset requires the full installed plugin because
-   its templates and canonical reader ship beside the command.
+Follow the generated README to import `attachToolkit` into the copied
+`src/extension.mjs` and wrap the existing `createCanvas` options. Preserve native
+metadata and session wiring. The adapter replaces scaffold demo callbacks and
+chains close handling; custom callbacks or shutdown handlers need explicit
+integration. Do not create a second provider.
 
-   This uses only bundled code and Node built-ins, not a download/bootstrap.
-   It copies the native entry unchanged to `src/extension.mjs`, generates the
-   toolkit modules/assets/package/build/checks, and pins the exact npm dependency
-   or copies the tarball to a relative `vendor/` dependency. Registry availability
-   is checked by `npm install`, not by this offline generator; build requires
-   the installed public `/build` export. Original scaffold files remain untouched.
-   All predictable validation happens before output creation. Reruns refuse
-   any existing destination, including identical output.
-3. **Connect the host declaration.** Follow the generated README: add
-   `import { attachToolkit } from "./toolkit.mjs";` to the copied entry and
-   wrap the existing options as `createCanvas(attachToolkit({ ... }))`.
-   Keep the native options and surrounding session wiring; forward host context
-   unchanged. The adapter replaces only demo actions/open and chains native
-   close after toolkit cleanup. The live host skill must review this hookup.
-   Custom actions/open or competing shutdown handlers need explicit integration,
-   not an automated rewrite. Do not use the setup command as a second provider.
-4. **Build and prove connection.** In the generated source app:
+```sh
+npm install
+npm run build
+npm test
+```
 
-   ```sh
-   npm install
-   npm run build
-   npm test
-   ```
+For Azure, also run `npm run smoke` with installed Chrome or `CANVAS_BROWSER`.
+Do not download a browser automatically. Keep checks scoped to the generated
+app during iteration, and retain its lockfile for later `npm ci`.
 
-   For the Azure UI path use `npm run smoke`: one sandboxed Chrome check with
-   synthetic data, decoded icons, build identity and UI/agent synchronization.
-   It uses installed Chrome, or `CANVAS_BROWSER` for an explicit executable;
-   do not download/install a browser automatically. Keep iteration checks scoped
-   to the generated app, not unrelated repository-wide suites.
+Source generation alone is NOT READY. Build checks the emitted host entry's
+registration and toolkit connection using a test SDK adapter. This executes
+trusted code; it is not native-host activation. Return to the host skill to
+install the whole `dist/`, reload the provider and verify the actual panel.
 
-   Keep the lockfile; later use `npm ci`. Build runs `npm run check`'s registration
-   check against the **emitted host entry**, not merely a toolkit import. Missing
-   hookup, unused imports, incompatible registration, or conflicting shutdown
-   ownership fail readiness. This executes trusted source using a test SDK seam,
-   not native-host activation or a sandbox. Source generation alone is NOT READY.
-5. **Customize and return.** Modify shared domain actions/state and UI as needed;
-   use the reference for public APIs. `createViewStore` is not durable persistence;
-   defer storage/lifetime to the host skill. Azure integrations are opt-in, not
-   prerequisites. No raw prompt forwarding. Keep Node/browser bundles separate,
-   the host SDK external, and all assets in `dist/`. Check the relocated artifact
-   and real browser, then return to the live host skill for installation/verification
-   in the chosen scope. Do not copy source dependencies into the runtime artifact.
-   Reload the provider before reopening the panel. The footer and `get_state`
-   expose a build ID; a mismatch with served files means the provider is stale.
-   Never claim a panel refresh alone activated a rebuilt provider.
+## 4. Customize without changing the contracts
 
-Keep the generated toolkit asset-copy and module-boundary rules when adding UI
-components. They preserve relative icon URLs and automatically expose only the
-public asset map under the canvas URL prefix. Build readiness checks every asset.
-Browser verification must check successful image decoding and fail on missing
-same-origin images/scripts/styles; clicking controls alone is insufficient.
+- UI and agent calls use the same validated actions and state. No raw prompt
+  forwarding or separate chat-only Azure implementation.
+- Azure mode is lazy: no profile read, login, default subscription selection,
+  resource query or cloud write on open. Each panel owns its scope and results.
+- Keep credentials server-side, cancel obsolete work and reject stale results.
+  Empty success, missing scope, errors and cancellation must remain distinct.
+- Use labelled `{"mode":"fixture"}` data for tests. Do not report it as live Azure.
+- Keep the generated build's dependencies and asset layout. Check decoded
+  images as well as controls; do not replace missing assets with SVG rewrites.
+- State is ephemeral. Follow the host skill for persistence and shutdown.
+  A panel refresh is not a provider reload; check the displayed build ID.
 
-The [plugin README](../../README.md) explains supported inputs and limitations.
-Installation only supplies the companion; it never executes setup automatically.
-
-Keep private tarballs and generated bundles out of public commits. A working
-local build is not approval to redistribute its dependencies.
+Use the [integration reference](references/toolkit.md) for adapter/build details
+and the [Azure quickstart](references/toolkit/quickstart.md) for customization.
+Toolkit guide links are assembled in the exported plugin, not maintained as
+copies in the source tree. Installation, publication and cloud mutations remain
+separate user decisions.

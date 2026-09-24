@@ -1,38 +1,37 @@
 # Azure authentication sessions
 
-`@microsoft/canvas-toolkit/auth` provides a host-neutral authentication session shared by
-a canvas's server-side clients and views. `@microsoft/canvas-toolkit/azure` provides
-**optional** ARM clients; using it is not required to use authentication.
-See the [package guide](README.md) for installation, exports, and licensing.
+Use `@microsoft/canvas-toolkit/auth` to manage a server-side Azure session and
+bind credentials to explicit scope. Use your own Azure SDK/HTTP client or the
+optional helpers in `@microsoft/canvas-toolkit/azure`.
 
-This guide describes the current API. Public Azure, Azure Government, Azure
-China, macOS, Windows, and Linux are support
-targets, **not evidence that live sign-in has passed on every combination**.
+Building a first app? Start with the [Azure quickstart](quickstart.md).
+This page is the authentication reference:
+
+- [Session methods and metadata](#public-session-api)
+- [Bring your own credential](#explicit-credential-injection)
+- [SDK and HTTP clients](#azure-sdk-clients-versus-custom-http-clients)
+- [Login and refresh](#login-refresh-and-external-changes)
+- [Lifetime and cancellation](#lifetime-cancellation-and-disposal)
+- [Errors](#errors-and-security-boundaries) and [migration](#migrating-earlier-examples)
+
+See the [package guide](README.md) for installation and licensing. Cloud and OS
+support targets do not establish live sign-in coverage for every combination.
 
 ## Responsibility and prerequisites
 
-- The default source is the installed Azure CLI. The released
-  `@azure/identity` **4.13.3** supplies `AzureCliCredential` and
-  `getBearerTokenProvider`; process support uses released
-  `@azure/core-process` **1.0.0**. Use Node.js **22 or newer**.
-  The CLI source requires Azure CLI **2.61 or newer** and reports unsupported
-  versions rather than upgrading automatically.
-- The CLI owns authentication, its token store, browser/WAM behavior where
-  applicable, and device-code login. The toolkit does not implement MSAL,
-  parse OAuth flows, maintain a second token store, or select an automatic
-  credential chain.
-- A partner can explicitly inject a standard Azure SDK `TokenCredential`.
-  That source uses caller-supplied context metadata, never unrelated CLI
-  accounts. The partner owns credential configuration and its authorization.
-- The canvas owns selected resources, application state, UI, mutation consent,
-  service-specific retries, and the lifetimes of its requests and clients.
-  Authentication metadata and a bound handle are not authorization boundaries.
+- Use Node.js **22+** and, for the default source, Azure CLI **2.61+**.
+  Azure Identity supplies the credential and bearer-token caching; the CLI owns
+  sign-in and its token store.
+- Alternatively, supply a `TokenCredential` with matching identity metadata.
+  You own its configuration and disposal; the toolkit does not mix it with
+  CLI accounts or fall back to another provider.
+- The app owns resource selection, UI/state, mutation consent, retries and
+  request/client lifetimes. A bound handle is not an authorization boundary.
 
-The toolkit does not automatically try another provider, launch login to repair
-a failed request, install or upgrade the CLI, change `PATH`, invoke machine-wide
-logout, or run `az account set`, `az cloud set`, or configuration mutations.
-`connect()` is the explicit login operation. CLI login and server refresh can
-change the user's shared CLI profile; local disconnect cannot undo those effects.
+Login requires explicit `connect()`. The toolkit does not repair failures by
+signing in, install or upgrade the CLI, change CLI defaults/cloud, or log out
+the machine. Login and `refreshFromAzure()` can change the shared CLI profile;
+local disconnect does not undo those changes.
 
 ## Start with one owned session
 
@@ -59,29 +58,27 @@ try {
 }
 ```
 
-Creation is lazy: it does not execute the CLI or authenticate. A real server
-usually keeps the session for its owner’s lifetime rather than per request.
-Keep credentials on the server. Only JSON-safe snapshots go to the iframe.
-The browser subscription picker consumes metadata, not tokens or credentials.
-Neither the CLI default nor the first returned subscription is implicit consent
-to run a canvas operation.
+Creation is lazy: it does not execute the CLI or authenticate. Keep a session
+for its owner's lifetime, not per request. Send only JSON-safe snapshots to
+the iframe; the subscription picker needs metadata, not credentials. Neither
+the CLI default nor the first subscription grants consent to run an operation.
 
-Hosts that already own executable discovery and child-environment policy can
-preserve it without a private toolkit import:
+If your host manages executable discovery and child environments, pass them
+through the public options:
 
 ```js
 const auth = createAzureAuthSession({
     source: {
         kind: "cli",
-        executable: "/absolute/path/to/az",
-        environment: { PATH: "/curated/bin", HTTPS_PROXY: "https://proxy.example" },
+        executable: azPath,
+        environment: childEnvironment,
     },
 });
 ```
 
-The selected executable and environment apply to profile, login, refresh, and
-token operations. Omit them to use the toolkit's normal `az` discovery and
-inherited environment.
+These options apply to profile, login, refresh and token operations. Preserve
+proxy and certificate settings when constructing `childEnvironment`. Omit the
+options to use normal `az` discovery and the inherited environment.
 
 ## Public session API
 
@@ -263,6 +260,7 @@ async function requestStorage(url, { signal } = {}) {
     const token = await getToken({ signal });
     context.assertActive();
     return fetch(url, {
+        redirect: "error",
         signal,
         headers: { Authorization: `Bearer ${token}` },
     });
@@ -286,10 +284,9 @@ late acquisition from an invalidated generation.
 
 ## Optional ARM transport
 
-Import `createArmClient`, `createPipelineRequest`, and `listArm` from
-`@microsoft/canvas-toolkit/azure` when a generic ARM client is useful. Authentication does
-not require these helpers; your own Azure SDK, custom client, or HTTP layer is
-equally valid.
+Import `createArmClient`, `createPipelineRequest` and `listArm` from
+`@microsoft/canvas-toolkit/azure` for generic ARM requests. They are optional;
+authentication also works with your own clients.
 
 `createArmClient(context, { httpClient }?)` uses the bound cloud's Resource Manager endpoint and
 ARM audience. Toolkit-owned clients check context validity on every request,
@@ -305,6 +302,8 @@ or supply service-specific request bodies.
 Both client and listing options accept an optional standard Azure SDK
 `httpClient`, scoped to that client or listing. There is no global HTTP mock.
 This lets applications test their actual clients without changing other sessions.
+Default ARM clients are memoized per bound handle. Supplying `httpClient`
+creates an isolated client and does not replace or reuse that cached default.
 
 Preserve `environment.armResource` exactly when forming
 `${environment.armResource}/.default`. An audience ending in `/` intentionally
@@ -395,19 +394,11 @@ from authentication failures (`code === "cancelled"` for auth operations, or
 do not turn a failed or cancelled discovery into an empty subscription list.
 Never serialize raw SDK/CLI causes, token responses, authorization headers,
 device codes, or login progress into durable errors or telemetry.
-Failing consumer event/progress callbacks and source-cleanup failures emit
-fixed, sanitized process warnings without their original error contents.
-They do not prevent local lifecycle invalidation from completing.
-POSIX CLI cancellation keeps ownership of the process group through bounded
-termination and escalation until its absence is verified. Parent exit or a
-successful signal alone does not prove its descendants are gone. A transient
-macOS `EPERM` during exit/reaping is not reported as a cleanup failure if the
-group subsequently disappears; unresolved groups still produce the sanitized
-cleanup warning and remain available for a later disposal retry.
-On Windows, if tree termination fails and the direct child is no longer
-signalable, cleanup waits a bounded interval for its close notification before
-reporting failure. A child that never closes still warns; a successful
-direct-child fallback does not hide a failed tree termination.
+Failing event/progress callbacks and cleanup failures emit fixed, sanitized
+process warnings without preventing local invalidation. CLI cancellation
+attempts to terminate owned process trees within bounded waits. Unresolved
+cleanup still warns and can be retried during disposal; do not treat a stopped
+parent process as proof that all its children stopped.
 
 Examples of actionable auth codes include:
 
@@ -452,10 +443,8 @@ discovers accounts. New auth consumers use the loaded session snapshot and
 metadata with another identity. Structural scope normalization is not
 authorization or proof that a subscription is available to the session.
 
-There is no public `credentialFor`, `findSubscription`, `defaultSubscription`,
-`groupByTenant`, `signInGate`, `createSelection`, `armGet`, `watchAzureState`, or
-automatic external-observer helper. UI grouping, selection, and state transport
-remain canvas responsibilities.
+Use the documented public exports. UI grouping, selection and state transport
+remain app responsibilities; there is no automatic external-change observer.
 
 ## Examples and qualification
 

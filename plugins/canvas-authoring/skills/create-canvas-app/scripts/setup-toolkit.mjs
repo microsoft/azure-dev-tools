@@ -748,106 +748,58 @@ test("built canvas shares UI/agent state and closes its servers", async t => {
 `,
     "README.md": String.raw`# __CANVAS_NAME__
 
-First invoke the GitHub Copilot app's installed create-canvas skill through the
-host skill mechanism. It is the source of truth, including its native scaffold.
-If that skill is unavailable, report the missing prerequisite. This directory
-contains deterministic toolkit setup, not a replacement host scaffold.
+A counter shared by the UI and agent. All panels in one provider share the
+count; browser reload keeps it and provider restart resets it.
 
-## Connect the host-owned entry (required)
+## Connect the host entry
 
-Setup copied the original native extension.mjs byte-for-byte to src/extension.mjs.
-The original is untouched. The source app is separate from the installation
-directory: source dependencies must never be required by the installed artifact.
-
-At the host skill's customization step, edit ONLY the copied entry to add:
+Use the installed create-canvas skill to connect the copied src/extension.mjs
+to its native scaffold. The host skill owns registration, lifecycle and
+activation. If it is missing, use a host that provides it. Add:
 
     import { attachToolkit } from "./toolkit.mjs";
 
-Wrap the native declaration's existing options:
+Wrap the existing declaration as createCanvas(attachToolkit(nativeOptions)).
+Keep its metadata, full context and surrounding session wiring. The adapter
+replaces demo callbacks and runs native close after toolkit cleanup. Customized
+callbacks or competing shutdown handlers need explicit integration.
+The original scaffold is unchanged.
 
-    createCanvas(attachToolkit({
-        // Keep the native options here, including id, metadata, actions,
-        // open, onClose, and their complete ctx parameters.
-    }))
+## Build and run
 
-Keep its surrounding joinSession options and session wiring unchanged. This is
-one import and one wrapper, not a second provider. It deliberately replaces the
-demo actions/open with toolkit behavior; the native onClose still runs after
-toolkit teardown. The complete host context passes through unchanged. Review
-this with the live host skill: do NOT attach over custom business actions/open
-logic. Unknown/customized host contracts need explicit adaptation, not rewriting.
-Existing or competing SIGTERM/SIGINT/disconnect listeners are rejected by the
-adapter/readiness check: a native process.exit handler must not race toolkit
-shutdown. Custom lifecycle ownership needs host-guided integration, not an
-automatic override.
-
-Before hookup, npm run build and npm run check MUST fail. An unused import does
-not count. Readiness executes the emitted host entry using a TEST SDK seam and
-checks actual registered actions, open/context/state/invalid input/close behavior.
-This is trusted code execution, not a sandbox or native-host activation. No
-host SDK is installed. The seam and checks are outside dist and are never shipped.
-
-An ephemeral counter shared by the browser and agent in one Copilot provider
-process. Browser reload preserves the count; provider restart resets it. All
-panels share it. This is a demo, not durable document storage.
-
-## Build
-
-Node >=22 (24 recommended) is required. package.json either pins the chosen
-published toolkit version or uses the approved tarball copied into vendor/.
-The selected toolkit must export /build. Setup does not contact the registry;
-npm install must succeed before building. There is no automatic source fallback.
+Use Node.js 22+ (24 recommended) and a toolkit package with /build.
 
     npm install
     npm run build
     npm test
 
-Keep the generated package-lock.json; subsequent installs use npm ci. The
-chosen dependency keeps builds independent of the scaffolder, plugin,
-and toolkit checkout. If using a tarball, private source transfers need vendor/.
-Never commit/publish a private tarball or bundle without distribution approval.
+Keep package-lock.json and use npm ci for later installs. Local package mode
+needs vendor/canvas-toolkit.tgz; do not commit private tarballs.
 
-## Use with the host workflow
+Build checks the emitted entry using a test SDK adapter; an unused import or
+missing connection fails. npm run check repeats that check without rebuilding.
+Tests cover domain/server behavior, not browser rendering or native activation.
 
-The installed create-canvas skill owns scope, SDK guidance, native scaffolding,
-registration, lifecycle, transport/theming, storage/lifetime, and host verification.
-Return to its live workflow for activation; the wiring here is a reference
-example and must not override that guidance.
+Use the host skill to install the whole dist/ directory, reload the provider
+and open the panel. It contains bundled toolkit code and browser assets; only
+@github/copilot-sdk/extension is host-provided. There is no automatic watch or
+reload. A panel refresh does not replace the provider.
 
-The whole dist/ artifact contains bundled toolkit code and browser assets, with no
-runtime npm installation or source checkout dependency. The canvas-capable host
-provides @github/copilot-sdk/extension; do not install or bundle that SDK.
-
-This demo exposes get_state with {}, increment with {"amount":1}, and reset
-with {}. Its UI buttons call the same validated actions.
-
-There is no watch command or automatic host reload. npm test requires npm run
-build first; it covers domain and emitted-server behavior, not real browser
-rendering or native-host activation.
+Try get_state with {}, increment with {"amount":1}, and reset with {}.
+The buttons call those same actions.
 
 ## Customize
 
-- src/domain.mjs: strict schemas, shared state, and action handlers.
-- src/canvas.mjs: public toolkit server and shared canvas behavior.
-- src/toolkit.mjs: explicit host-declaration adapter and shutdown.
-- src/extension.mjs: copied HOST-OWNED entry; only the native skill adapts it.
-- src/browser/: framework-free UI using public toolkit CSS and host tokens.
-- scripts/build.mjs: separate Node/browser bundles, static copies, readiness.
-- scripts/check*.mjs and host-*.mjs: test-only registration checks and SDK seam.
+- src/domain.mjs: validated actions and shared state.
+- src/browser/: UI and toolkit styles.
+- src/canvas.mjs: toolkit server, assets and canvas behavior.
+- src/toolkit.mjs: native adapter and shutdown.
+- scripts/build.mjs: Node/browser builds and asset copying.
 
-Toolkit UI modules and their public asset map are copied automatically, preserving
-module-relative SVG URLs. Browser UI imports resolve to the matching same-origin
-canvas-ui routes instead of moving asset-owning modules into app.js. The generated
-server mounts the public map inside its secret URL prefix. Keep this build/server
-pair when adding toolkit components: JavaScript bundling alone does not copy
-new URL(..., import.meta.url) assets. Tests check asset bytes and MIME types;
-browser acceptance must also check img.complete and positive naturalWidth.
-
-New custom static assets need both a build copy and an allowlisted server route. Do
-not relax script CSP or add inline handlers to fix asset-loading mistakes.
-The toolkit state helper is not durable persistence; follow the host skill's
-storage/lifetime guidance before replacing the demo.
-No Azure access, telemetry, prompt forwarding, or cloud mutations are included.
+Keep the generated toolkit asset layout. New app assets need a build copy and
+an allowlisted server route. Check images in a real browser as well as controls;
+do not relax CSP to fix loading errors. State is temporary, not durable storage.
+The counter includes no Azure access, telemetry or prompt forwarding.
 `,
     "AGENTS.md": String.raw`# App development
 
@@ -859,7 +811,7 @@ for the required attachToolkit import/wrapper at the host customization step.
 Do not replace joinSession or invent a second provider. If the skill is missing,
 report the prerequisite and do not claim native activation.
 
-Read README.md. Use Node >=22. After source changes run npm run build and npm test.
+Use Node >=22. After source changes run npm run build and npm test.
 UI and agent actions must use the same domain schemas, dispatch, and state.
 Preserve loopback/origin/CSP protections and the exact host SDK external.
 Keep browser imports free of Node and host SDK code. Preserve all emitted assets.

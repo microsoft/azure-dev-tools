@@ -9,29 +9,31 @@ There is no root package export; import one of the entry points below.
 
 ## Start here
 
-**[Build your first Azure canvas](quickstart.md)** with one copyable agent
-prompt, the host's native scaffold, and a small read-only resource-group
-example. The guide covers scope selection, shared UI/agent actions, theming,
-bundling, and checking the result in the actual host. It is included in the
-installed package, so neither the guide nor its example requires a source checkout.
+**[Build your first Azure canvas](quickstart.md)** using the authoring plugin's
+resource-group starter, then customize it. The guide and example are included
+in the package; no source checkout is needed.
 
-Already have a canvas? Choose an [entry point](#entry-points) below.
-For focused credential/client integration, use the
-[authentication examples](examples/README.md).
+Already have an app? Choose an [entry point](#entry-points) below or browse the
+[Azure examples](examples/README.md).
+
+This reference covers [app structure](#canvas-skeleton),
+[Azure access](#azure-access), [UI and packaging](#shared-ui), and optional
+[telemetry](#product-usage-telemetry) and [command logs](#commands-log).
 
 ## Setup and exports
 
-Use Node.js 22 or newer (Node.js 24 recommended). Install the toolkit in your
-application:
+Use Node.js 22 or newer (24 recommended). Choose a compatible published version;
+the authoring starter requires one with the `/build` export. Replace `<version>`
+and install it in your application:
 
 ```bash
-npm install @microsoft/canvas-toolkit
+npm install --save-exact "@microsoft/canvas-toolkit@<version>"
 ```
 
 To install from a downloaded package tarball instead, use its local path:
 
 ```bash
-npm install /path/to/microsoft-canvas-toolkit-<version>.tgz
+npm install "<path-to-toolkit-package>.tgz"
 ```
 
 Retain your application's lockfile for reproducible package and dependency
@@ -46,8 +48,8 @@ They do not require access to a source repository.
 
 | Entry point | Exports or content |
 | --- | --- |
-| `@microsoft/canvas-toolkit/build` | Typed `prepareCanvasUiAssets(outDir)`; Node-only build-time copying and bundler import boundaries for shared UI assets |
-| `@microsoft/canvas-toolkit/server` | `startCanvasServer`; the loopback HTTP server every canvas needs (secret path prefix, Host/Origin gate, locked-down CSP, bounded JSON, SSE change stream, static asset allowlist) |
+| `@microsoft/canvas-toolkit/build` | Typed `prepareCanvasUiAssets(outDir)`; copies shared UI assets and supplies bundler paths (Node.js, build time only) |
+| `@microsoft/canvas-toolkit/server` | `startCanvasServer`; loopback HTTP transport with a secret path prefix, Host/Origin checks, CSP, bounded JSON, SSE and an asset allowlist |
 | `@microsoft/canvas-toolkit/actions` | `defineActions`, `validate`, `InputError`, and JSON-Schema builders (`str`, `int`, `bool`, `num`, `enum_`, `constant`, `arr`, `obj`, `oneOf`, `empty`, `guid`); the shared input-validation gate |
 | `@microsoft/canvas-toolkit/state` | Optional `createViewStore`; a tiny versioned, observable view-model store |
 | `@microsoft/canvas-toolkit/session` | `createSessionBridge`; the safe UI→agent bridge (named server-built prompts, no raw prompt text from the iframe) |
@@ -73,12 +75,10 @@ They do not require access to a source repository.
 
 ## Canvas skeleton
 
-Every canvas is an untrusted iframe plus a trusted Node extension that cannot
-share memory, so the extension serves a tiny same-origin HTTP API the iframe
-calls. These four primitives are that skeleton — the runtime floor every canvas
-needs — so a canvas gets the secure transport and validation layer without
-hand-rolling ~110 lines of server/CSRF/SSE plumbing per extension. The server
-and actions stand alone; the state store and session bridge are optional.
+The toolkit connects a browser view to Node-side actions through a same-origin
+HTTP API. Use the server and action validation together or independently;
+the state store and session bridge are optional. Native registration and
+lifecycle still belong to the host.
 
 - **`server` — `startCanvasServer(options)`.** The loopback server. Binds to
   `127.0.0.1` on an ephemeral port (never the network), mints a per-launch
@@ -95,14 +95,12 @@ and actions stand alone; the state store and session bridge are optional.
   inline. It is deliberately unopinionated about state — pass any
   `dispatch`/`model`/`subscribe`.
 
-- **`actions` — `defineActions(...)` + `validate` + schema builders.** The
-  single shared gate every canvas puts in front of its handlers so "validate
-  the input" is done once, correctly, instead of re-implemented per canvas.
-  Objects are strict by default (`additionalProperties: false`) to blunt
-  mass-assignment, and the builders emit plain JSON-Schema so the same schema
-  can be published to the host's action registry. Validation is not
-  authorization — keep scope binding and confirmation in the handler. A failed
-  input raises a serializable `InputError` (`code: "invalid_input"`).
+- **`actions` — `defineActions(...)`, `validate` and schema builders.** Share
+  input validation between UI requests and host actions. Objects reject unknown
+  fields by default (`additionalProperties: false`), and builders emit JSON
+  Schema for the host registry. Invalid input raises `InputError` with
+  `code: "invalid_input"`. Validation is not authorization; keep scope binding
+  and confirmation in the handler.
 
 - **`state` — `createViewStore(...)` (optional).** A tiny versioned, observable
   view-model store so a canvas doesn't hand-roll one. Every committed change
@@ -120,13 +118,10 @@ and actions stand alone; the state store and session bridge are optional.
 
 ## Product-usage telemetry
 
-The toolkit-owned client reconciles the Hosted Skills usage-metrics prototype
-(#58) with the toolkit extraction (#102). This capability
-records `canvas_opened`, `feature_invoked`, `feature_completed`, and
-`ui_interaction`. It is **not** customer Function App/Application Insights log
-querying. The existing metrics gateway, ADX resources, authentication policy,
-and dashboards remain separate consumer-owned infrastructure; this API does
-not deploy or change them.
+Optional product telemetry records `canvas_opened`, `feature_invoked`,
+`feature_completed` and `ui_interaction`. It does not query customer Application
+Insights logs. Your application owns the collector, authentication policy and
+dashboards; the toolkit does not deploy them.
 
 Collection defaults to **disabled**. The toolkit does not read environment
 variables, discover identity, infer consent, or automatically enable a transport.
@@ -261,8 +256,8 @@ refuses redirects even with a bearer token. Every event includes `schemaVersion`
 `featureId`, `featureArea`, `actionName`, `usageClass`, and `mutates`; completions
 add `outcome`, integer `durationMs` clamped to 0–3,600,000, and `failureCode`.
 UI interactions add only `interactionType`, `controlId`, and `controlType`.
-This is the deployed schema-v1 gateway envelope; that gateway independently
-requires registered canvas releases/features and batches of at most 20.
+This is the built-in transport's schema-v1 envelope. Configure a collector that
+accepts that schema and your registered canvas/feature metadata.
 
 Defaults: 20 events per batch, 100 queued events, 1-second flush interval, and
 10-second request/total-close deadlines. Overflow drops the oldest queued event;
@@ -283,25 +278,16 @@ diagnostic callbacks may be synchronous or asynchronous. Throws and rejected
 promises produce a fixed warning without blocking actions, delivery, or UI
 interactions. No raw network or payload diagnostics are forwarded.
 
-Migration policy: the removed `@cloud-foundation/canvas-metrics` client no longer
-owns environment configuration. Its authenticated-envelope, cancellation,
-error-fidelity, privacy, and shutdown assertions now live in toolkit tests.
-Unlike that prototype, UI IDs must match an explicit static control registry,
-and `mutates` is registered metadata rather than action-result data. The
-prototype's discard-only `close()` maps to `close({ flush: false })`; the
-toolkit's existing explicit drain behavior remains available.
-Inject `fetchImpl`, clock, and ID factories for
-hermetic tests. Application fixture/test modes must explicitly disable
-production sending regardless of inherited environment configuration.
+For isolated tests, inject `fetchImpl`, clock and ID factories. Application
+fixture/test modes must disable production sending regardless of inherited
+environment configuration.
 
 ## Azure access
 
-Create an owned session from `@microsoft/canvas-toolkit/auth`, load its JSON-safe metadata,
-and bind an explicit subscription/tenant/cloud context. The default source is
-the installed Azure CLI; a partner can instead inject a `TokenCredential` with
-caller-supplied identity metadata. The implementation uses released
-`@azure/identity` 4.13.3 and `@azure/core-process` 1.0.0 on Node 22 or newer, not a
-custom MSAL/token store or automatic credential chain.
+Create a session, load its metadata and bind an explicitly selected scope.
+The default source is Azure CLI; you can instead
+[supply a `TokenCredential`](auth.md#explicit-credential-injection) and matching
+identity metadata. See the [authentication reference](auth.md) for the full API.
 
 ```js
 import { createAzureAuthSession } from "@microsoft/canvas-toolkit/auth";
@@ -370,28 +356,20 @@ const snapshot = await auth.reloadProfile();
 // Dispose auth when the route's server owner ends, not after each request.
 ```
 
-Account metadata contains only `{ id, name, tenantId, tenantName, cloud,
-isDefault, state, accountName }`, never credentials or tokens. Subscription and
-tenant IDs are normalized to lowercase. Supported cloud names are
-`AzureCloud`, `AzureUSGovernment`, and `AzureChinaCloud`. Unknown clouds are
-rejected. The handle's `cloud` is the name string; its `environment` holds
-immutable `{ name, resourceManager, armResource, authority }` metadata.
-Discovery alone does not prove token acquisition or live cloud access.
+See [snapshot shapes and cloud names](auth.md#snapshots-and-signed-in-state) for
+the metadata contract. Never send credentials to the picker.
 
-`auth.resolveScope({ tenantId, subscriptionIds, cloud })` validates the loaded
-snapshot without implicit CLI/network discovery. It rejects cross-tenant/cloud,
-missing, disabled, or ambiguous subscription selections and returns
-`{ tenantId, cloud, subscriptionIds, tenantName, subscriptions: [{ id, name }] }`.
-Reload explicitly when external CLI metadata changes.
+`auth.resolveScope({ tenantId, subscriptionIds, cloud })` validates loaded
+metadata without discovery. It rejects missing, disabled, ambiguous or
+cross-tenant/cloud selections and returns normalized scope with display names.
+Reload explicitly after external CLI changes.
 
-`@microsoft/canvas-toolkit/subscriptions` exports only `normalizeSubscriptionScope` and
-`SubscriptionError`. The pure helper checks `{ tenantId, subscriptionIds, cloud }`
-without contacting Azure: GUID tenant/subscription IDs, 1-1000 unique
-subscription IDs (case-insensitive), and an exact supported cloud name. It returns
-those fields with lowercase IDs; structural validation does not establish access.
-The previous `createSubscriptionProvider` discovery factory is removed; use the
-session instead. Session failures expose safe `AuthError` fields, not raw
-SDK/CLI output or empty success results.
+For structural checks only, `@microsoft/canvas-toolkit/subscriptions` exports
+`normalizeSubscriptionScope` and `SubscriptionError`. It validates GUIDs,
+1-1000 unique subscription IDs and a supported cloud, normalizing IDs to
+lowercase without contacting Azure. This does not establish account availability
+or access; use the session for that selection check. See the
+[migration guide](auth.md#migrating-earlier-examples) for removed global APIs.
 
 ## Shared UI
 
@@ -421,24 +399,19 @@ const ui = await prepareCanvasUiAssets("dist");
 // ui.files: sorted emitted paths relative to dist, with slash separators.
 ```
 
-The helper copies **every `canvasUiAssets` file plus its owning `ui.mjs`** into
-`dist/assets/toolkit/`, byte-for-byte and preserving the module-relative layout:
-`ui/styles.css`, `ui/subscription-picker.mjs`, `icons/Subscription.svg`, and
-the other allowlisted assets. It uses Node builtins, not a bundler, scaffolder,
-Azure client, or runtime dependency. Import it from your build script only.
-The emitted UI files do not need the toolkit package, `node_modules`, or package
-metadata at runtime.
+The helper copies `ui.mjs` and all `canvasUiAssets` files into
+`dist/assets/toolkit/`, preserving relative module and icon paths. Import it
+only in build scripts. The emitted UI assets work without the toolkit package
+or `node_modules` at runtime.
 
 There are **two different path spaces**:
 
-- **Node filesystem:** rewrite `ui.nodeImport.specifier` to `ui.nodeImport.path`
-  and mark it external. Emit the provider at the **`outDir` root** so its
-  import resolves to `assets/toolkit/ui.mjs`. Do not bundle that owning module.
-- **Browser URLs:** rewrite each `ui.browserImports` key to its value and mark
-  it external. These are server allowlist URLs, **not filesystem paths**.
-  Serve the ESM browser entry at the **canvas URL root** (for example,
-  `{secret-prefix}/app.js`), and spread the full `canvasUiAssets` map into
-  `startCanvasServer` as shown below. Never serve them outside the secret prefix.
+- **Node filesystem:** externalize `ui.nodeImport.specifier` at
+  `ui.nodeImport.path`. Emit the provider at the **`outDir` root** so it can
+  import `assets/toolkit/ui.mjs` without bundling that module.
+- **Browser URLs:** externalize each `ui.browserImports` key at its value.
+  These are **URL paths, not disk paths**. Serve the browser entry at the
+  canvas URL root and mount `canvasUiAssets` through the server's secret prefix.
 
 For example, with esbuild as an application-owned **dev dependency**:
 
@@ -472,28 +445,19 @@ await build({
 });
 ```
 
-Keep the scaffold's other build settings and provider dependency handling.
-Public JS UI exports represented in `canvasUiAssets` are externalized; other
-exports, such as visual-profile metadata, can bundle normally. **CSS is not
-externalized**: either load the copied styles through the allowlist or bundle
-CSS normally and serve/link the resulting stylesheet (for example `app.css`).
-The helper does not copy your HTML, app code, or the separate `azureIconAssets`
-catalog, and does not configure the host SDK or server.
+Keep the scaffold's other build settings. UI exports outside the returned map
+can bundle normally. **CSS is not externalized**: serve the copied styles or
+bundle CSS and link the emitted stylesheet. The helper does not copy app HTML,
+code or the separate `azureIconAssets` catalog, or configure the server.
 
-Relative paths are resolved from the build process's working directory.
-Use an owned output directory with no concurrent writers. Missing or unsafe
-source files, symlink output paths, non-directory parents, and existing files
-with different bytes reject the promise. Identical existing files are accepted;
-unrelated files are left alone. The helper never cleans the output root. After
-upgrading the toolkit, rebuild in a fresh directory or explicitly clean only
-your owned outputs. An I/O failure can leave partial output; do not ship a failed
-build.
+`outDir` is relative to the build's working directory. Use a directory without
+concurrent writers. Missing/unsafe files, symlink output paths, invalid parents
+and conflicting bytes fail; identical files are accepted and unrelated files
+are left alone. The helper never cleans output. Use a fresh directory after
+upgrades and discard incomplete output after a failed build.
 
-Do not flatten the picker into `app.js`: its
-`new URL("../icons/Subscription.svg", import.meta.url)` must resolve from
-`{secret-prefix}/canvas-ui/subscription-picker.mjs` to
-`{secret-prefix}/icons/Subscription.svg`. Test a relocated emitted directory,
-including actual SVG decoding, not only that the browser JavaScript loaded.
+Test a relocated app, including image decoding. Flattening the picker into
+`app.js` breaks its module-relative SVG URL even if the JavaScript still runs.
 
 ### Styling and themes
 
