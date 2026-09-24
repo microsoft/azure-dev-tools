@@ -1,0 +1,18 @@
+{
+  "name": "azure-dev-tools-fixture",
+  "owner": {
+    "name": "Microsoft"
+  },
+  "plugins": [
+    {
+      "name": "azure-functions-hosted-skills",
+      "version": "0.5.1",
+      "source": "canvases/azure-functions-hosted-skills"
+    },
+    {
+      "name": "azure-resources-query",
+      "version": "0.1.1",
+      "source": "canvases/azure-resources-query"
+    }
+  ]
+}

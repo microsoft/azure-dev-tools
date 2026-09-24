@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this form only for released Functions Hosted Skills or Azure SRE Agent canvas-package content. The current package directories contain no payload, so installation or runtime issues cannot yet be investigated. Do not include secrets or security vulnerabilities.
+        Use this form for released Azure Functions Hosted Skills or Azure Resources Query canvas-package content. Check that the package is published before reporting installation or runtime issues. Do not include secrets or security vulnerabilities.
   - type: textarea
     id: description
     attributes:

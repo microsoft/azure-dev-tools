@@ -1,10 +1,9 @@
 # Contributing
 
-This repository is being prepared for future public contributions to canvas
-packages, beginning with the intended Functions Hosted Skills and SRE Agent
-Studio areas. Until a canvas package is approved for release, do not submit
-product payloads, generated release artifacts, or third-party notices to this
-repository.
+This repository contains Azure Functions Hosted Skills and Azure Resources Query
+canvas packages. Submit product payloads, generated release artifacts, and
+third-party notices only through an approved release pull request following
+[the release process](docs/release-process.md).
 
 Most contributions to Microsoft open-source projects require you to agree to a
 Contributor License Agreement (CLA), declaring that you have the right to grant
