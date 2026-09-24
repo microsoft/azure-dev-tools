@@ -47,9 +47,10 @@ The canvas packages must preserve their independently reviewed public source
 bytes. The separately reviewed builder comes from approved source merge
 `23aa6b19a50aca470c759f04f5c657481f6e2d6a` (export receipt
 `332cafd2605df299bd4159655b746baeb75a3e7e0392d473e2bae3d2d5c6a7ab`);
-the production builder's 26-file inventory and checksum receipt include two
-disclosed customer-facing safety overlays. The marketplace is a proposed
-production catalog until the approved product PRs merge and **all three**
+the production builder's 26-file inventory and checksum receipt include
+disclosed customer-facing compatibility and safety overlays. The marketplace
+is a proposed production catalog until the approved product PRs merge and
+**all three**
 immutable version tags are published. The test fixture in
 `test/fixtures/marketplace.candidate.json` exercises the three-product shape,
 not an installation catalog.
@@ -70,7 +71,7 @@ point to a **separate descendant** builder release commit included in HEAD.
 The canvas checks require their extension and every companion skill
 (including both Hosted Skills skills). The builder check requires one skill,
 no extension/canvas, and all 26 files matching its pinned production checksum
-receipt. Build-input provenance and the two documented safety overlays
+receipt. Build-input provenance and the documented safety overlays
 remain separate release PR review facts; a source-qualified tag name alone
 does not prove the build's origin.
 **The default validator intentionally fails before real production release
