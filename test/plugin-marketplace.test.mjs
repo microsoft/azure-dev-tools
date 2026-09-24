@@ -32,10 +32,20 @@ test("requires release tags for full verification, then checks all four plugins"
   }
   const results = verifyMarketplace(fixture);
   assert.equal(results.length, 4);
-  assert.match(results[0], /azure-functions-hosted-skills@0\.5\.2 azure-functions-hosted-skills-v0-5-2-/);
-  assert.match(results[1], /azure-resources-query@0\.1\.2 azure-resources-query-v0-1-2-/);
+  assert.match(results[0], /azure-functions-hosted-skills@0\.5\.3 azure-functions-hosted-skills-v0-5-3-/);
+  assert.match(results[1], /azure-resources-query@0\.1\.3 azure-resources-query-v0-1-3-/);
   assert.match(results[2], /canvas-authoring@0\.1\.1 canvas-authoring-v0-1-1-/);
   assert.match(results[3], /azure-cost-health-check@0\.4\.3 azure-cost-health-check-v0-4-3-/);
+});
+
+test("candidate validates both new Agent Plugins packages but does not claim release tags", () => {
+  const candidate = modified((m) => { m.name = "azure-dev-tools"; });
+  const results = verifyMarketplace(candidate, { candidate: true });
+  assert.equal(results.length, 4);
+  assert.match(results[0], /azure-functions-hosted-skills@0\.5\.3 \(candidate; immutable tag pending\)/);
+  assert.match(results[1], /azure-resources-query@0\.1\.3 \(candidate; immutable tag pending\)/);
+  assert.match(results[2], /canvas-authoring-v0-1-1-8af10f8/);
+  assert.match(results[3], /azure-cost-health-check-v0-4-3-b355172/);
 });
 
 test("rejects missing products and duplicate entries", () => {
@@ -103,8 +113,8 @@ test("unreviewed versions fail before a tag lookup", () => {
 
 test("target tags must identify the independently reviewed patch source merge", () => {
   for (const [name, version, suffix] of [
-    ["azure-functions-hosted-skills", "0.5.2", "8af10f8"],
-    ["azure-resources-query", "0.1.2", "8af10f8"],
+    ["azure-functions-hosted-skills", "0.5.3", "b355172"],
+    ["azure-resources-query", "0.1.3", "b355172"],
     ["canvas-authoring", "0.1.1", "8af10f8"],
     ["azure-cost-health-check", "0.4.3", "b355172"],
   ]) {
@@ -132,6 +142,10 @@ test("three patch tags share one new commit and old tags retain exact historical
     "azure-functions-hosted-skills-v0-5-1-2bb8354": "cc59516eba4d6eecda9ff7c9f0191fe2117167af",
     "azure-resources-query-v0-1-1-be9551d": "cc59516eba4d6eecda9ff7c9f0191fe2117167af",
     "canvas-authoring-v0-1-0-23aa6b1": "180136488727f011e8001321c29150a005f89fe0",
+    "azure-functions-hosted-skills-v0-5-2-8af10f8": combinedPatchCommit,
+    "azure-resources-query-v0-1-2-8af10f8": combinedPatchCommit,
+    "canvas-authoring-v0-1-1-8af10f8": combinedPatchCommit,
+    "azure-cost-health-check-v0-4-3-b355172": "59e5889e464b099344a8ba8ff13cdf73d401d433",
   };
   assert.doesNotThrow(() => verifyPreviousReleaseCommits(previous));
   assert.throws(() => verifyPreviousReleaseCommits({

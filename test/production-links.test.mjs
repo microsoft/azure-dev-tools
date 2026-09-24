@@ -42,11 +42,12 @@ test("production catalog matches installable plugins in order and leaves planned
     assert.ok(existsSync(new URL(path, root)), `${label}: missing package`);
     assert.equal(manifest.plugins[index].name, name);
     const { version } = manifest.plugins[index];
-    const tagPath = `${name}-v${version.replaceAll(".", "-")}-[0-9a-f]{7,40}/${path.slice(0, -1)}`;
+    const ref = index < 2 ? "paulyuk-propagate-canvas-plugin-layout"
+      : `${name}-v${version.replaceAll(".", "-")}-[0-9a-f]{7,40}`;
     assert.match(
       readme,
-      new RegExp(`https://github\\.com/microsoft/azure-dev-tools/tree/${tagPath}`),
-      `${label}: expected a source-qualified private tag destination`,
+      new RegExp(`https://github\\.com/microsoft/azure-dev-tools/tree/${ref}/${path.slice(0, -1)}`),
+      `${label}: expected the correct private candidate or release destination`,
     );
   }
   assert.match(rows[2], /Skill-only plugin; no canvas/);
@@ -81,14 +82,14 @@ test("current builder install and bundled quickstart do not claim an active rele
   }
 });
 
-test("Hosted customer guide retains its install, launch, and first-run instructions", () => {
+test("Hosted customer guide identifies its plugin install, skills, and nested canvas fallback", () => {
   const readme = readFileSync(new URL("canvases/azure-functions-hosted-skills/README.md", root), "utf8");
-  assert.match(readme, /Build and run Hosted Skills in a local Azure Function App/);
-  for (const heading of ["Install", "Prerequisites", "First local run", "Invoke an existing Azure Function App"]) {
-    assert.ok(readme.includes(`## ${heading}\n`), `Hosted guide missing ${heading}`);
-  }
-  assert.match(readme, /Open Azure Functions Hosted Skills canvas/);
-  assert.match(readme, /https:\/\/github\.com\/microsoft\/azure-dev-tools\/blob\/azure-functions-hosted-skills-latest\/canvases\/azure-functions-hosted-skills\/README\.md/);
+  assert.match(readme, /^## Install the full plugin$/m);
+  assert.match(readme, /copilot plugin install azure-functions-hosted-skills@azure-dev-tools/);
+  assert.match(readme, /azure-functions-hosted-skills-canvas/);
+  assert.match(readme, /azure-functions-hosted-skills-github-daily-digest/);
+  assert.match(readme, /https:\/\/github\.com\/microsoft\/azure-dev-tools\/tree\/azure-functions-hosted-skills-latest\/canvases\/azure-functions-hosted-skills\/com\.github\.copilot\/extensions\/azure-functions-hosted-skills/);
+  assert.match(readme, /This installs the canvas only, not the/);
 });
 
 test("new canvas patch tags retain production support documentation", () => {

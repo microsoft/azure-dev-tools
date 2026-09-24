@@ -1,8 +1,13 @@
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "azure-resources-query",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Read-only Azure Resource Graph queries with explicit scope and saved views.",
-  "extensions": "./extensions",
+  "extensions": {
+    "com.github.copilot": {
+      "logo": "assets/preview.png"
+    }
+  },
   "skills": [
     "./skills/azure-resources-query/"
   ]

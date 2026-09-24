@@ -1,8 +1,13 @@
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "azure-functions-hosted-skills",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Azure Functions Hosted Skills canvas builds Hosted Skills with Timer, HTTP, Queue, and Microsoft 365 Inbox triggers locally or works with an existing Azure Function App.",
-  "extensions": "./extensions",
+  "extensions": {
+    "com.github.copilot": {
+      "logo": "assets/preview.png"
+    }
+  },
   "skills": [
     "./skills/azure-functions-hosted-skills-canvas/",
     "./skills/azure-functions-hosted-skills-github-daily-digest/"

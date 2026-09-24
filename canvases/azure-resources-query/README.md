@@ -28,7 +28,7 @@ Check **Plugin skills** for the Azure Resources Query launcher skill.
 #### Optional: pin the full plugin to an exact version
 
 From the [tag list](https://github.com/microsoft/azure-dev-tools/tags),
-copy the complete immutable tag starting with `azure-resources-query-v0-1-2-`,
+copy the complete immutable tag starting with `azure-resources-query-v0-1-3-`,
 including its source qualifier. The `azure-resources-query-latest` tag moves
 and is not an exact pin. Paste the versioned tag when prompted; this terminal
 path installs the full plugin, including the launcher skill:
@@ -48,7 +48,7 @@ choose **Customize > Canvases > Install from gist/URL** in the GitHub Copilot
 App and paste the latest nested canvas extension URL:
 
 ```text
-https://github.com/microsoft/azure-dev-tools/tree/azure-resources-query-latest/canvases/azure-resources-query/extensions/azure-resources-query
+https://github.com/microsoft/azure-dev-tools/tree/azure-resources-query-latest/canvases/azure-resources-query/com.github.copilot/extensions/azure-resources-query
 ```
 
 This URL installs **only the canvas extension**, not the launcher skill. If

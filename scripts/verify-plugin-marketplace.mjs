@@ -14,23 +14,24 @@ const packages = {
       "./skills/azure-functions-hosted-skills-github-daily-digest/",
     ],
     extension: "azure-functions-hosted-skills",
-    version: "0.5.2",
-    sha: "8af10f8408f69f45fb5137e9b8f5d746f40bc85e",
+    extensionPath: "com.github.copilot/extensions/azure-functions-hosted-skills",
+    version: "0.5.3",
+    sha: "b3551729b5d1e6377283efd1a012fa523e0c8aac",
     receipt: "canvases/azure-functions-hosted-skills/SHA256SUMS",
-    receiptSha256: "390ed2a003358a9e9125ec7bf593abaae87e3ff13207a298881b8e997ca76873",
-    receiptCount: 48,
+    receiptSha256: "96448262b1628003867dec4d5314e638a4c8c56c49816bc7f71778d8439296e0",
+    receiptCount: 49,
   },
   "azure-resources-query": {
     path: "canvases/azure-resources-query",
     manifest: ".github/plugin/plugin.json",
     skills: ["./skills/azure-resources-query/"],
     extension: "azure-resources-query",
-    version: "0.1.2",
-    sha: "8af10f8408f69f45fb5137e9b8f5d746f40bc85e",
-    receipt: "docs/azure-resources-query/SHA256SUMS",
-    receiptSha256: "789c6e79c18ebbb988af24b97b63d8ced12267c62623c460a4bc822d0fea68cb",
-    receiptPrefix: "canvases/azure-resources-query/",
-    receiptCount: 98,
+    extensionPath: "com.github.copilot/extensions/azure-resources-query",
+    version: "0.1.3",
+    sha: "b3551729b5d1e6377283efd1a012fa523e0c8aac",
+    receipt: "canvases/azure-resources-query/SHA256SUMS",
+    receiptSha256: "e33be5430a138e6005781c24153e9e434f311b44ebfd1c219ae242e0079ac05b",
+    receiptCount: 99,
   },
   "canvas-authoring": {
     path: "plugins/canvas-authoring",
@@ -62,11 +63,16 @@ const combinedPatchProducts = [
   "canvas-authoring",
 ];
 const combinedPatchCommit = "a6d394bbaa6fb1dc0151257a85cbac0de772b138";
+const newCanvasProducts = ["azure-functions-hosted-skills", "azure-resources-query"];
 const products = Object.keys(packages);
 const previousTags = {
   "azure-functions-hosted-skills-v0-5-1-2bb8354": "cc59516eba4d6eecda9ff7c9f0191fe2117167af",
   "azure-resources-query-v0-1-1-be9551d": "cc59516eba4d6eecda9ff7c9f0191fe2117167af",
   "canvas-authoring-v0-1-0-23aa6b1": "180136488727f011e8001321c29150a005f89fe0",
+  "azure-functions-hosted-skills-v0-5-2-8af10f8": combinedPatchCommit,
+  "azure-resources-query-v0-1-2-8af10f8": combinedPatchCommit,
+  "canvas-authoring-v0-1-1-8af10f8": combinedPatchCommit,
+  "azure-cost-health-check-v0-4-3-b355172": "59e5889e464b099344a8ba8ff13cdf73d401d433",
 };
 
 function git(...args) {
@@ -300,7 +306,7 @@ export function verifyPreviousReleaseCommits(commits) {
   }
 }
 
-export function verifyMarketplace(manifest) {
+export function verifyMarketplace(manifest, { candidate = false } = {}) {
   if (!manifest.name || !/^[a-z][a-z0-9-]*$/.test(manifest.name)) {
     throw new Error("Marketplace must have a kebab-case name");
   }
@@ -316,10 +322,11 @@ export function verifyMarketplace(manifest) {
     throw new Error("Marketplace versions must match the reviewed source releases");
   }
 
-  const results = manifest.plugins.map(verifyPlugin);
+  const results = manifest.plugins.map((plugin) =>
+    verifyPlugin(plugin, { candidate: candidate && newCanvasProducts.includes(plugin.name) }));
   if (manifest.name === "azure-dev-tools") {
     const commits = combinedPatchProducts.map((name) =>
-      git("rev-parse", `${releaseTagFor(name, packages[name].version)}^{commit}`));
+      git("rev-parse", `${name}-v${previousVersion(name)}-8af10f8^{commit}`));
     verifyCombinedReleaseCommits(commits);
     verifyPreviousReleaseCommits(Object.fromEntries(Object.keys(previousTags).map((tag) =>
       [tag, git("rev-parse", `${tag}^{commit}`)])));
@@ -333,13 +340,26 @@ export function verifyMarketplace(manifest) {
     } catch {
       throw new Error("Refresh this branch onto the reviewed combined patch release commit");
     }
-    for (const name of products.filter((product) => !combinedPatchProducts.includes(product))) {
-      const releaseCommit = git("rev-parse",
-        `${releaseTagFor(name, packages[name].version)}^{commit}`);
-      verifySubsequentReleaseCommit(commits[0], releaseCommit);
+    const costCommit = git("rev-parse", "azure-cost-health-check-v0-4-3-b355172^{commit}");
+    verifySubsequentReleaseCommit(commits[0], costCommit);
+    if (!candidate) {
+      const canvasCommits = newCanvasProducts.map((name) =>
+        git("rev-parse", `${releaseTagFor(name, packages[name].version)}^{commit}`));
+      if (new Set(canvasCommits).size !== 1) {
+        throw new Error("New canvas release tags must point to the same reviewed merge commit");
+      }
+      verifySubsequentReleaseCommit(costCommit, canvasCommits[0]);
     }
   }
   return results;
+}
+
+function previousVersion(name) {
+  return {
+    "azure-functions-hosted-skills": "0-5-2",
+    "azure-resources-query": "0-1-2",
+    "canvas-authoring": "0-1-1",
+  }[name];
 }
 
 export function verifyTagSource(name, version, tag) {
@@ -355,7 +375,7 @@ export function verifyTagSource(name, version, tag) {
   }
 }
 
-export function verifyPlugin({ source, name, version }) {
+export function verifyPlugin({ source, name, version }, { candidate = false } = {}) {
   const product = packages[name];
   if (!product || version !== product.version) {
     throw new Error(`${name}: expected a reviewed product and version`);
@@ -365,8 +385,8 @@ export function verifyPlugin({ source, name, version }) {
   if (source !== path) {
     throw new Error(`${name}: source must use its own repo-relative path`);
   }
-  const releaseTag = releaseTagFor(name, version);
-  verifyTagSource(name, version, releaseTag);
+  const releaseTag = candidate ? null : releaseTagFor(name, version);
+  if (releaseTag) verifyTagSource(name, version, releaseTag);
   const revision = "HEAD";
 
   try {
@@ -377,21 +397,34 @@ export function verifyPlugin({ source, name, version }) {
     const files = packageFiles(revision, path);
     const immutableFiles = verifyMutableDocumentationTrees(
       packageTree(revision, path),
-      packageTree(releaseTag, path),
+      packageTree(releaseTag ?? revision, path),
       (file) => fileAt(revision, `${path}/${file}`),
-      (file) => fileAt(releaseTag, `${path}/${file}`),
+      (file) => fileAt(releaseTag ?? revision, `${path}/${file}`),
     );
     if (files.includes("release.json")) {
-      verifyRuntimeInventory(JSON.parse(fileAt(releaseTag, `${path}/release.json`)));
+      verifyRuntimeInventory(JSON.parse(fileAt(releaseTag ?? revision, `${path}/release.json`)));
     }
-    if (product.mutableDocumentation) {
+    if (product.extensionPath) {
       const release = JSON.parse(fileAt(revision, `${path}/release.json`));
-      verifyMutableReleaseMetadata(
-        release,
-        JSON.parse(fileAt(revision, `${path}/checksums.json`)),
-        immutableFiles,
-        (file) => fileAt(revision, `${path}/${file}`),
-      );
+      const checksums = JSON.parse(fileAt(revision, `${path}/checksums.json`));
+      if (product.mutableDocumentation) {
+        verifyMutableReleaseMetadata(release, checksums, immutableFiles,
+          (file) => fileAt(revision, `${path}/${file}`));
+      } else {
+        const payload = files.filter((file) =>
+          file !== "release.json" && file !== "checksums.json" && file !== "SHA256SUMS");
+        const expected = [...payload, "release.json"];
+        if (release.schemaVersion !== 1 || release.format !== "plugin" ||
+            release.publicationRepository !== "microsoft/azure-dev-tools" ||
+            release.files.length !== payload.length ||
+            new Set(release.files).size !== payload.length ||
+            release.files.some((file) => !payload.includes(file)) ||
+            Object.keys(checksums).length !== expected.length ||
+            expected.some((file) => checksums[file] !==
+              createHash("sha256").update(fileAt(revision, `${path}/${file}`)).digest("hex"))) {
+          throw new Error("Agent Plugins release inventory or checksums differ from package files");
+        }
+      }
       const packageJson = JSON.parse(fileAt(revision, `${path}/package.json`));
       if (release.name !== name || release.version !== version ||
           release.plugin?.manifest !== product.manifest ||
@@ -437,7 +470,7 @@ export function verifyPlugin({ source, name, version }) {
       requireFile(revision, `${path}/${skill.slice(2)}SKILL.md`);
     }
     const receipt = fileAt(revision, product.receipt);
-    if (!receipt.equals(fileAt(releaseTag, product.receipt))) {
+    if (releaseTag && !receipt.equals(fileAt(releaseTag, product.receipt))) {
       throw new Error("current checksum receipt differs from immutable release tag");
     }
     if (createHash("sha256").update(receipt).digest("hex") !== product.receiptSha256) {
@@ -453,7 +486,7 @@ export function verifyPlugin({ source, name, version }) {
     });
     const expectedFiles = product.mutableDocumentation
       ? immutableFiles
-      : packageFiles(releaseTag, path).filter((file) => file !== "SHA256SUMS");
+      : packageFiles(releaseTag ?? revision, path).filter((file) => file !== "SHA256SUMS");
     if (entries.length !== product.receiptCount ||
         new Set(entries.map(({ file }) => file)).size !== expectedFiles.length ||
         entries.length !== expectedFiles.length ||
@@ -462,7 +495,7 @@ export function verifyPlugin({ source, name, version }) {
       throw new Error(`checksum receipt must cover exactly the ${product.receiptCount} ${scope} plugin files`);
     }
     for (const { hash, file } of entries) {
-      const fileRevision = product.mutableDocumentation ? revision : releaseTag;
+      const fileRevision = product.mutableDocumentation ? revision : releaseTag ?? revision;
       if (createHash("sha256").update(fileAt(fileRevision, `${path}/${file}`)).digest("hex") !== hash) {
         throw new Error(`plugin file differs from checksum receipt: ${file}`);
       }
@@ -470,13 +503,16 @@ export function verifyPlugin({ source, name, version }) {
   } catch (error) {
     throw new Error(`${name}@${version} (${revision}): ${error.message}`, { cause: error });
   }
-  return `${name}@${version} ${releaseTag}`;
+  return `${name}@${version} ${releaseTag ?? "(candidate; immutable tag pending)"}`;
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const path = resolve(process.argv[2] ?? ".github/plugin/marketplace.json");
+  const candidate = process.argv.includes("--candidate");
+  const path = resolve(process.argv.slice(2).find((arg) => arg !== "--candidate") ??
+    ".github/plugin/marketplace.json");
   try {
-    for (const result of verifyMarketplace(JSON.parse(readFileSync(path, "utf8")))) {
+    for (const result of verifyMarketplace(
+      JSON.parse(readFileSync(path, "utf8")), { candidate })) {
       console.log(result);
     }
   } catch (error) {

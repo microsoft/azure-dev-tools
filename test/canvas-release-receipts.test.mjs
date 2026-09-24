@@ -24,6 +24,53 @@ const versions = {
   "azure-resources-query": "0.1.2",
 };
 
+for (const [name, version, count, receiptHash] of [
+  ["azure-functions-hosted-skills", "0.5.3", 49,
+    "96448262b1628003867dec4d5314e638a4c8c56c49816bc7f71778d8439296e0"],
+  ["azure-resources-query", "0.1.3", 99,
+    "e33be5430a138e6005781c24153e9e434f311b44ebfd1c219ae242e0079ac05b"],
+]) {
+  test(`${name} ${version} candidate pins its entire generated Agent Plugins package`, () => {
+    const packagePath = `canvases/${name}/`;
+    const read = (file) => readFileSync(new URL(`${packagePath}${file}`, root));
+    const manifest = JSON.parse(read(".github/plugin/plugin.json"));
+    const release = JSON.parse(read("release.json"));
+    const metadata = JSON.parse(read("package.json"));
+    const checksums = JSON.parse(read("checksums.json"));
+    const receipt = read("SHA256SUMS");
+    assert.equal(createHash("sha256").update(receipt).digest("hex"), receiptHash);
+    assert.equal(manifest.$schema, "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json");
+    assert.equal(manifest.version, version);
+    assert.equal(release.version, version);
+    assert.equal(release.publicationRepository, "microsoft/azure-dev-tools");
+    assert.equal(release.plugin.extension.entry,
+      `com.github.copilot/extensions/${name}/extension.mjs`);
+    assert.equal(release.plugin.preview.file, "assets/preview.png");
+    assert.equal(manifest.extensions["com.github.copilot"].logo, "assets/preview.png");
+    assert.equal(metadata.main, release.plugin.extension.entry);
+    assert.ok(read("assets/preview.png").subarray(0, 8).equals(
+      Buffer.from("89504e470d0a1a0a", "hex")));
+    assert.ok(read(release.plugin.extension.entry).length > 0);
+
+    const files = execFileSync("git", ["ls-files", "--", packagePath], {
+      cwd: root, encoding: "utf8",
+    }).trimEnd().split("\n").map((file) => file.slice(packagePath.length));
+    const entries = receipt.toString("utf8").trimEnd().split("\n").map((line) => {
+      const match = /^([0-9a-f]{64})  (.+)$/.exec(line);
+      assert.ok(match, `malformed receipt entry: ${line}`);
+      return { hash: match[1], file: match[2] };
+    });
+    assert.equal(entries.length, count);
+    assert.deepEqual(entries.map(({ file }) => file).sort(),
+      files.filter((file) => file !== "SHA256SUMS").sort());
+    assert.deepEqual(Object.keys(checksums).sort(), [...release.files, "release.json"].sort());
+    for (const { hash, file } of entries) {
+      assert.equal(createHash("sha256").update(read(file)).digest("hex"), hash, file);
+      if (file !== "checksums.json") assert.equal(checksums[file], hash, file);
+    }
+  });
+}
+
 test("Cost Health 0.4.3 pins every protected Agent Plugins file without pinning mutable docs", () => {
   const packagePath = "canvases/azure-cost-health-check/";
   const read = (file) => readFileSync(new URL(`${packagePath}${file}`, root));

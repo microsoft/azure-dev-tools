@@ -32,9 +32,13 @@ copilot plugin list
 copilot skill list
 ```
 
-Use this repository's [production package catalog](../README.md) or the
-source-qualified production tag when following install instructions. The
-older immutable 0.5.1/0.1.1 canvas package READMEs retain public
+Use this repository's [production package catalog](../README.md) or a
+published source-qualified production tag when following install instructions.
+Hosted Skills 0.5.3 and Azure Resources Query 0.1.3 in the marketplace are
+**untagged candidates**; their `-latest` extension URLs in the package READMEs
+are not 0.5.3/0.1.3 installation targets until approved tags are published.
+The previous 0.5.2/0.1.2 tags remain available. The older immutable
+0.5.1/0.1.1 canvas package READMEs retain public
 source-distribution links, **not** this repository's
 production installation target. Native App installation from this
 marketplace has not yet been verified.
@@ -78,6 +82,24 @@ can build or that native activation was verified.
 
 ## Production release gate
 
+The Hosted Skills 0.5.3 and Azure Resources Query 0.1.3 candidates were built
+from [merged source revision b3551729b5d1e6377283efd1a012fa523e0c8aac](https://github.com/coreai-microsoft/canvases-cloud-foundation/commit/b3551729b5d1e6377283efd1a012fa523e0c8aac)
+with `npm run package:plugin -- --repository=microsoft/azure-dev-tools <product>`
+in a clean detached checkout. The generated Agent Plugins manifests use
+`https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`, preview images
+at `assets/preview.png`, and executable extensions under
+`com.github.copilot/extensions/<product>/extension.mjs`. Hosted's
+[49-file receipt](../canvases/azure-functions-hosted-skills/SHA256SUMS) has
+SHA-256 `96448262b1628003867dec4d5314e638a4c8c56c49816bc7f71778d8439296e0`;
+ARG's [99-file receipt](../canvases/azure-resources-query/SHA256SUMS) has
+SHA-256 `e33be5430a138e6005781c24153e9e434f311b44ebfd1c219ae242e0079ac05b`.
+Run `node scripts/verify-plugin-marketplace.mjs --candidate` on a committed
+candidate: it verifies the new manifests, complete file receipts, release
+inventories, and all historical release tags without inventing new tags.
+Without `--candidate`, verification requires the two new immutable tags to
+point to the same reviewed merge descending from the Cost Health release.
+Neither the candidate command nor a clean build authorizes publication.
+
 The canvas patches come from independently reviewed source export merge
 `8af10f8408f69f45fb5137e9b8f5d746f40bc85e`
 (reviewed head `cf1776327462b2ca41cec5bfe269ef9d5155df96`;
@@ -110,11 +132,11 @@ disclosed documentation/provenance overlays are
 README checksum), and `skills/create-canvas-app/references/toolkit/quickstart.md`
 (release hold and toolkit version), with the latter three paths relative to
 `plugins/canvas-authoring/`. The original product PRs and marketplace
-catalog are merged and their immutable tags published. This patch release
-replaces the obsolete builder release hold and corrects the canvas packages'
+catalog are merged and their immutable tags published. That historical patch release
+replaced the obsolete builder release hold and corrected the canvas packages'
 production install destinations using separately reviewed source exports
 plus the disclosed Hosted customer-guide overlay;
-its three new immutable tags must not be published before merge. Each
+its three immutable tags were published only after merge. Each
 builder version's 26 plugin bytes have their own pinned receipt in
 `docs/canvas-authoring/SHA256SUMS`. Native marketplace/App installation
 remains unverified. The test fixture in

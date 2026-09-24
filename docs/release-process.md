@@ -32,7 +32,7 @@ The tag retains the historical documentation snapshot; newer
 default-branch documentation is not version-pinned. Disclose its revision
 separately when referring customers to mutable instructions.
 
-For the three existing products, their original complete `SHA256SUMS` receipts
+For previous releases, their original complete `SHA256SUMS` receipts
 and internal checksums remain unchanged and are verified against their
 immutable **tag snapshots**, not against newer default-branch documentation.
 The verifier compares all protected files on the default branch to those
@@ -90,6 +90,14 @@ Release order:
 
 Never move `PRODUCT-latest` to an unmerged branch, candidate commit, or
 unapproved rebuild.
+
+For the 0.5.3 Hosted Skills and 0.1.3 Azure Resources Query candidates, the
+Agent Plugins v1 manifests, protected previews, namespaced extensions, and
+complete new in-package `SHA256SUMS` receipts are verified with
+`node scripts/verify-plugin-marketplace.mjs --candidate` on the candidate
+commit. Strict verification without `--candidate` still requires real new
+immutable tags after an approved merge. The 0.5.2/0.1.2 tags and their original
+receipts remain unchanged; do not replace those tags with synthetic candidates.
 
 The original canvas version tags retain the reviewed public distribution bytes,
 including historical README links to the public source. Do not edit those

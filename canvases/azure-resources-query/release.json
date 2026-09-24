@@ -2,15 +2,18 @@
   "schemaVersion": 1,
   "format": "plugin",
   "name": "azure-resources-query",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publicationRepository": "microsoft/azure-dev-tools",
   "plugin": {
     "manifest": ".github/plugin/plugin.json",
     "extension": {
       "name": "azure-resources-query",
       "canvasId": "azure-resources-query",
-      "directory": "extensions/azure-resources-query",
-      "entry": "extensions/azure-resources-query/extension.mjs"
+      "directory": "com.github.copilot/extensions/azure-resources-query",
+      "entry": "com.github.copilot/extensions/azure-resources-query/extension.mjs"
+    },
+    "preview": {
+      "file": "assets/preview.png"
     },
     "skills": [
       {
@@ -30,96 +33,97 @@
     ".github/plugin/plugin.json",
     "README.md",
     "THIRD_PARTY_NOTICES.txt",
+    "assets/preview.png",
+    "com.github.copilot/extensions/azure-resources-query/assets/Resource-Graph-Explorer.provenance.json",
+    "com.github.copilot/extensions/azure-resources-query/assets/Resource-Graph-Explorer.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons.mjs",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/AiFoundry.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ApiManagementService.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/AppServiceKubernetesEnvironment.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/AppServicePlans.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/AppServices.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ApplicationInsights.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ArcEnabledMachines.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/AvailabilitySets.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/AzureCosmosDb.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/AzureCosmosDbForMongoDbRu.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/AzureDocumentDb.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/BatchAccounts.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/CacheRedis.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ContainerApps.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ContainerAppsEnvironment.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ContainerRegistry.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ContainerServiceManagedClusters.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/Customlocations.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/DevTestLabs.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/DeviceIotHubs.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/Disks.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/DurableTaskHub.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/DurableTaskScheduler.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/EventGridDomains.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/EventGridEventSubscriptions.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/EventGridTopics.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/EventHubNamespaces.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/FrontDoorAndCdnProfiles.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/FunctionApp.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/Generic.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/Images.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/KeyVaults.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/KubernetesConnectedClusters.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/LoadBalancers.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/LogicApp.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/LogicWorkflows.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ManagedIdentityUserAssignedIdentities.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/MongoClusters.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/MysqlServers.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkApplicationGateways.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkApplicationSecurityGroups.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkInterfaces.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkLocalNetworkGateways.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkPublicIpPrefixes.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkRouteTables.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkSecurityGroups.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkVirtualNetworkGateways.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkWatchers.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NotificationHubNamespaces.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/OperationalInsightsWorkspaces.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/OperationsManagementSolutions.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/PostgresqlServersFlexible.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/PostgresqlServersStandard.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/PublicIpAddresses.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ResourceGroup.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ServiceBusNamespaces.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ServiceFabricClusters.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ServiceFabricMeshApplications.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/SignalRService.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/SpringApps.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/SqlDatabases.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/SqlServers.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/StaticWebApps.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/StorageAccounts.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/Subscription.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/VirtualMachineScaleSets.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/VirtualMachines.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/VirtualNetworks.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/WebHostingEnvironments.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/WebPubSub.svg",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui.mjs",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/azure-subscription-picker.mjs",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/commands-log.css",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/commands-log.mjs",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/icons.mjs",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/locations.mjs",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/profiles/coreai-azure.css",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/styles.css",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/subscription-picker.css",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/subscription-picker.mjs",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/telemetry.mjs",
+    "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/theme.mjs",
+    "com.github.copilot/extensions/azure-resources-query/extension.mjs",
+    "com.github.copilot/extensions/azure-resources-query/ui/client.js",
+    "com.github.copilot/extensions/azure-resources-query/ui/index.html",
+    "com.github.copilot/extensions/azure-resources-query/ui/styles.css",
     "docs/resources-fixture.png",
-    "extensions/azure-resources-query/assets/Resource-Graph-Explorer.provenance.json",
-    "extensions/azure-resources-query/assets/Resource-Graph-Explorer.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons.mjs",
-    "extensions/azure-resources-query/assets/toolkit/icons/AiFoundry.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/ApiManagementService.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/AppServiceKubernetesEnvironment.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/AppServicePlans.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/AppServices.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/ApplicationInsights.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/ArcEnabledMachines.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/AvailabilitySets.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/AzureCosmosDb.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/AzureCosmosDbForMongoDbRu.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/AzureDocumentDb.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/BatchAccounts.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/CacheRedis.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/ContainerApps.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/ContainerAppsEnvironment.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/ContainerRegistry.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/ContainerServiceManagedClusters.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/Customlocations.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/DevTestLabs.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/DeviceIotHubs.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/Disks.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/DurableTaskHub.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/DurableTaskScheduler.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/EventGridDomains.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/EventGridEventSubscriptions.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/EventGridTopics.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/EventHubNamespaces.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/FrontDoorAndCdnProfiles.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/FunctionApp.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/Generic.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/Images.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/KeyVaults.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/KubernetesConnectedClusters.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/LoadBalancers.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/LogicApp.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/LogicWorkflows.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/ManagedIdentityUserAssignedIdentities.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/MongoClusters.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/MysqlServers.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/NetworkApplicationGateways.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/NetworkApplicationSecurityGroups.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/NetworkInterfaces.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/NetworkLocalNetworkGateways.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/NetworkPublicIpPrefixes.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/NetworkRouteTables.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/NetworkSecurityGroups.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/NetworkVirtualNetworkGateways.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/NetworkWatchers.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/NotificationHubNamespaces.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/OperationalInsightsWorkspaces.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/OperationsManagementSolutions.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/PostgresqlServersFlexible.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/PostgresqlServersStandard.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/PublicIpAddresses.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/ResourceGroup.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/ServiceBusNamespaces.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/ServiceFabricClusters.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/ServiceFabricMeshApplications.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/SignalRService.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/SpringApps.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/SqlDatabases.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/SqlServers.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/StaticWebApps.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/StorageAccounts.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/Subscription.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/VirtualMachineScaleSets.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/VirtualMachines.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/VirtualNetworks.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/WebHostingEnvironments.svg",
-    "extensions/azure-resources-query/assets/toolkit/icons/WebPubSub.svg",
-    "extensions/azure-resources-query/assets/toolkit/ui.mjs",
-    "extensions/azure-resources-query/assets/toolkit/ui/azure-subscription-picker.mjs",
-    "extensions/azure-resources-query/assets/toolkit/ui/commands-log.css",
-    "extensions/azure-resources-query/assets/toolkit/ui/commands-log.mjs",
-    "extensions/azure-resources-query/assets/toolkit/ui/icons.mjs",
-    "extensions/azure-resources-query/assets/toolkit/ui/locations.mjs",
-    "extensions/azure-resources-query/assets/toolkit/ui/profiles/coreai-azure.css",
-    "extensions/azure-resources-query/assets/toolkit/ui/styles.css",
-    "extensions/azure-resources-query/assets/toolkit/ui/subscription-picker.css",
-    "extensions/azure-resources-query/assets/toolkit/ui/subscription-picker.mjs",
-    "extensions/azure-resources-query/assets/toolkit/ui/telemetry.mjs",
-    "extensions/azure-resources-query/assets/toolkit/ui/theme.mjs",
-    "extensions/azure-resources-query/extension.mjs",
-    "extensions/azure-resources-query/ui/client.js",
-    "extensions/azure-resources-query/ui/index.html",
-    "extensions/azure-resources-query/ui/styles.css",
     "package.json",
     "skills/azure-resources-query/SKILL.md",
     "skills/azure-resources-query/resolve-canvas-launch.mjs"
@@ -132,8 +136,8 @@
   },
   "build": {
     "esbuild": "0.25.12",
-    "lockSha256": "e2830a779ca54208d42c61ff4ed355980c26f28954f49d55fb58527b64c31676",
-    "inputSha256": "3fb90cf086d5b9da4d0dc7800865e347a85f5680248378272ebb5ebeae7d878d"
+    "lockSha256": "6962eb7b78a3823529c4677ba5da2b58ea79df2c520df94b802d11a2a86f804b",
+    "inputSha256": "2855019b08d6eca50e312ab996ee05f187568d34cf14f7762fc33237a6a57275"
   },
   "dependencies": [
     {
@@ -304,47 +308,47 @@
   ],
   "modules": [
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons.mjs",
       "platform": "node"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui.mjs",
       "platform": "node"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/azure-subscription-picker.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/azure-subscription-picker.mjs",
       "platform": "browser"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/commands-log.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/commands-log.mjs",
       "platform": "browser"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/icons.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/icons.mjs",
       "platform": "browser"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/locations.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/locations.mjs",
       "platform": "browser"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/subscription-picker.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/subscription-picker.mjs",
       "platform": "browser"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/telemetry.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/telemetry.mjs",
       "platform": "browser"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/theme.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/theme.mjs",
       "platform": "browser"
     },
     {
-      "file": "extensions/azure-resources-query/extension.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/extension.mjs",
       "platform": "node"
     },
     {
-      "file": "extensions/azure-resources-query/ui/client.js",
+      "file": "com.github.copilot/extensions/azure-resources-query/ui/client.js",
       "platform": "browser"
     },
     {
@@ -354,427 +358,427 @@
   ],
   "assets": [
     {
-      "file": "extensions/azure-resources-query/assets/Resource-Graph-Explorer.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/Resource-Graph-Explorer.svg",
       "route": "assets/Resource-Graph-Explorer.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/AiFoundry.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/AiFoundry.svg",
       "route": "icons/AiFoundry.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/ApiManagementService.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ApiManagementService.svg",
       "route": "icons/ApiManagementService.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/ApplicationInsights.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ApplicationInsights.svg",
       "route": "icons/ApplicationInsights.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/AppServiceKubernetesEnvironment.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/AppServiceKubernetesEnvironment.svg",
       "route": "icons/AppServiceKubernetesEnvironment.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/AppServicePlans.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/AppServicePlans.svg",
       "route": "icons/AppServicePlans.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/AppServices.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/AppServices.svg",
       "route": "icons/AppServices.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/ArcEnabledMachines.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ArcEnabledMachines.svg",
       "route": "icons/ArcEnabledMachines.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/AvailabilitySets.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/AvailabilitySets.svg",
       "route": "icons/AvailabilitySets.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/AzureCosmosDb.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/AzureCosmosDb.svg",
       "route": "icons/AzureCosmosDb.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/AzureCosmosDbForMongoDbRu.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/AzureCosmosDbForMongoDbRu.svg",
       "route": "icons/AzureCosmosDbForMongoDbRu.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/AzureDocumentDb.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/AzureDocumentDb.svg",
       "route": "icons/AzureDocumentDb.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/BatchAccounts.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/BatchAccounts.svg",
       "route": "icons/BatchAccounts.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/CacheRedis.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/CacheRedis.svg",
       "route": "icons/CacheRedis.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/ContainerApps.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ContainerApps.svg",
       "route": "icons/ContainerApps.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/ContainerAppsEnvironment.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ContainerAppsEnvironment.svg",
       "route": "icons/ContainerAppsEnvironment.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/ContainerRegistry.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ContainerRegistry.svg",
       "route": "icons/ContainerRegistry.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/ContainerServiceManagedClusters.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ContainerServiceManagedClusters.svg",
       "route": "icons/ContainerServiceManagedClusters.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/Customlocations.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/Customlocations.svg",
       "route": "icons/Customlocations.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/DeviceIotHubs.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/DeviceIotHubs.svg",
       "route": "icons/DeviceIotHubs.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/DevTestLabs.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/DevTestLabs.svg",
       "route": "icons/DevTestLabs.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/Disks.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/Disks.svg",
       "route": "icons/Disks.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/DurableTaskHub.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/DurableTaskHub.svg",
       "route": "icons/DurableTaskHub.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/DurableTaskScheduler.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/DurableTaskScheduler.svg",
       "route": "icons/DurableTaskScheduler.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/EventGridDomains.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/EventGridDomains.svg",
       "route": "icons/EventGridDomains.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/EventGridEventSubscriptions.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/EventGridEventSubscriptions.svg",
       "route": "icons/EventGridEventSubscriptions.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/EventGridTopics.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/EventGridTopics.svg",
       "route": "icons/EventGridTopics.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/EventHubNamespaces.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/EventHubNamespaces.svg",
       "route": "icons/EventHubNamespaces.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/FrontDoorAndCdnProfiles.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/FrontDoorAndCdnProfiles.svg",
       "route": "icons/FrontDoorAndCdnProfiles.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/FunctionApp.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/FunctionApp.svg",
       "route": "icons/FunctionApp.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/Generic.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/Generic.svg",
       "route": "icons/Generic.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/Images.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/Images.svg",
       "route": "icons/Images.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/KeyVaults.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/KeyVaults.svg",
       "route": "icons/KeyVaults.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/KubernetesConnectedClusters.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/KubernetesConnectedClusters.svg",
       "route": "icons/KubernetesConnectedClusters.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/LoadBalancers.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/LoadBalancers.svg",
       "route": "icons/LoadBalancers.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/LogicApp.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/LogicApp.svg",
       "route": "icons/LogicApp.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/LogicWorkflows.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/LogicWorkflows.svg",
       "route": "icons/LogicWorkflows.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/ManagedIdentityUserAssignedIdentities.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ManagedIdentityUserAssignedIdentities.svg",
       "route": "icons/ManagedIdentityUserAssignedIdentities.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/MongoClusters.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/MongoClusters.svg",
       "route": "icons/MongoClusters.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/MysqlServers.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/MysqlServers.svg",
       "route": "icons/MysqlServers.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/NetworkApplicationGateways.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkApplicationGateways.svg",
       "route": "icons/NetworkApplicationGateways.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/NetworkApplicationSecurityGroups.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkApplicationSecurityGroups.svg",
       "route": "icons/NetworkApplicationSecurityGroups.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/NetworkInterfaces.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkInterfaces.svg",
       "route": "icons/NetworkInterfaces.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/NetworkLocalNetworkGateways.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkLocalNetworkGateways.svg",
       "route": "icons/NetworkLocalNetworkGateways.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/NetworkPublicIpPrefixes.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkPublicIpPrefixes.svg",
       "route": "icons/NetworkPublicIpPrefixes.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/NetworkRouteTables.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkRouteTables.svg",
       "route": "icons/NetworkRouteTables.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/NetworkSecurityGroups.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkSecurityGroups.svg",
       "route": "icons/NetworkSecurityGroups.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/NetworkVirtualNetworkGateways.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkVirtualNetworkGateways.svg",
       "route": "icons/NetworkVirtualNetworkGateways.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/NetworkWatchers.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NetworkWatchers.svg",
       "route": "icons/NetworkWatchers.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/NotificationHubNamespaces.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/NotificationHubNamespaces.svg",
       "route": "icons/NotificationHubNamespaces.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/OperationalInsightsWorkspaces.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/OperationalInsightsWorkspaces.svg",
       "route": "icons/OperationalInsightsWorkspaces.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/OperationsManagementSolutions.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/OperationsManagementSolutions.svg",
       "route": "icons/OperationsManagementSolutions.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/PostgresqlServersFlexible.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/PostgresqlServersFlexible.svg",
       "route": "icons/PostgresqlServersFlexible.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/PostgresqlServersStandard.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/PostgresqlServersStandard.svg",
       "route": "icons/PostgresqlServersStandard.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/PublicIpAddresses.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/PublicIpAddresses.svg",
       "route": "icons/PublicIpAddresses.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/ResourceGroup.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ResourceGroup.svg",
       "route": "icons/ResourceGroup.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/ServiceBusNamespaces.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ServiceBusNamespaces.svg",
       "route": "icons/ServiceBusNamespaces.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/ServiceFabricClusters.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ServiceFabricClusters.svg",
       "route": "icons/ServiceFabricClusters.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/ServiceFabricMeshApplications.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/ServiceFabricMeshApplications.svg",
       "route": "icons/ServiceFabricMeshApplications.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/SignalRService.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/SignalRService.svg",
       "route": "icons/SignalRService.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/SpringApps.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/SpringApps.svg",
       "route": "icons/SpringApps.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/SqlDatabases.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/SqlDatabases.svg",
       "route": "icons/SqlDatabases.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/SqlServers.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/SqlServers.svg",
       "route": "icons/SqlServers.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/StaticWebApps.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/StaticWebApps.svg",
       "route": "icons/StaticWebApps.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/StorageAccounts.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/StorageAccounts.svg",
       "route": "icons/StorageAccounts.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/Subscription.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/Subscription.svg",
       "route": "icons/Subscription.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/VirtualMachines.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/VirtualMachines.svg",
       "route": "icons/VirtualMachines.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/VirtualMachineScaleSets.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/VirtualMachineScaleSets.svg",
       "route": "icons/VirtualMachineScaleSets.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/VirtualNetworks.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/VirtualNetworks.svg",
       "route": "icons/VirtualNetworks.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/WebHostingEnvironments.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/WebHostingEnvironments.svg",
       "route": "icons/WebHostingEnvironments.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/icons/WebPubSub.svg",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/icons/WebPubSub.svg",
       "route": "icons/WebPubSub.svg",
       "mime": "image/svg+xml"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/azure-subscription-picker.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/azure-subscription-picker.mjs",
       "route": "canvas-ui/azure-subscription-picker.mjs",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/commands-log.css",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/commands-log.css",
       "route": "canvas-ui/commands-log.css",
       "mime": "text/css; charset=utf-8"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/commands-log.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/commands-log.mjs",
       "route": "canvas-ui/commands-log.mjs",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/icons.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/icons.mjs",
       "route": "canvas-ui/icons.mjs",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/locations.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/locations.mjs",
       "route": "canvas-ui/locations.mjs",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/profiles/coreai-azure.css",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/profiles/coreai-azure.css",
       "route": "canvas-ui/profiles/coreai-azure.css",
       "mime": "text/css; charset=utf-8"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/styles.css",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/styles.css",
       "route": "canvas-ui/styles.css",
       "mime": "text/css; charset=utf-8"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/subscription-picker.css",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/subscription-picker.css",
       "route": "canvas-ui/subscription-picker.css",
       "mime": "text/css; charset=utf-8"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/subscription-picker.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/subscription-picker.mjs",
       "route": "canvas-ui/subscription-picker.mjs",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/telemetry.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/telemetry.mjs",
       "route": "canvas-ui/telemetry.mjs",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "extensions/azure-resources-query/assets/toolkit/ui/theme.mjs",
+      "file": "com.github.copilot/extensions/azure-resources-query/assets/toolkit/ui/theme.mjs",
       "route": "canvas-ui/theme.mjs",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "extensions/azure-resources-query/ui/client.js",
+      "file": "com.github.copilot/extensions/azure-resources-query/ui/client.js",
       "route": "client.js",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "extensions/azure-resources-query/ui/index.html",
+      "file": "com.github.copilot/extensions/azure-resources-query/ui/index.html",
       "route": "",
       "mime": "text/html; charset=utf-8"
     },
     {
-      "file": "extensions/azure-resources-query/ui/styles.css",
+      "file": "com.github.copilot/extensions/azure-resources-query/ui/styles.css",
       "route": "styles.css",
       "mime": "text/css; charset=utf-8"
     }
