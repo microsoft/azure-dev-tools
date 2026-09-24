@@ -1281,7 +1281,7 @@ function contract(canvasId, host, versions, actions, controls) {
 var FUNCTION_STUDIO_USAGE_CONTRACT = contract(
   "azure-functions-hosted-skills",
   "copilot_app",
-  ["0.5.0", "0.5.1", "0.5.2"],
+  ["0.5.0", "0.5.1", "0.5.2", "0.5.3"],
   {
     installation_status: usage("installation.status", "installation"),
     set_trigger: usage("trigger.select", "authoring"),
@@ -4114,6 +4114,7 @@ import { lstat as lstat2, readdir as readdir2, readFile as readFile2, realpath }
 import path3 from "node:path";
 import { homedir as homedir2 } from "node:os";
 var identities = /* @__PURE__ */ new Set([PRODUCT_ID, LEGACY_PLUGIN_ID, ...LEGACY_PREVIEW_PLUGIN_IDS]);
+var COPILOT_EXTENSION_NAMESPACE = "com.github.copilot";
 async function optional(operation) {
   try {
     return await operation();
@@ -4121,6 +4122,14 @@ async function optional(operation) {
     if (error.code === "ENOENT" || error.code === "ENOTDIR") return null;
     throw error;
   }
+}
+function pluginExtensionPath(manifest, id) {
+  if (!manifest || !identities.has(id)) return null;
+  if (["./extensions", "extensions"].includes(manifest.extensions)) return path3.join("extensions", id);
+  if (manifest.extensions?.[COPILOT_EXTENSION_NAMESPACE]?.logo === "assets/preview.png") {
+    return path3.join(COPILOT_EXTENSION_NAMESPACE, "extensions", id);
+  }
+  return null;
 }
 async function installationStatus({
   copilotHome = process.env.COPILOT_HOME || path3.join(homedir2(), ".copilot"),
@@ -4131,8 +4140,9 @@ async function installationStatus({
     const manifestText = readManifest ? await optional(() => readFile2(path3.join(directory, ".github/plugin/plugin.json"), "utf8")) : null;
     const manifest = manifestText ? JSON.parse(manifestText) : null;
     const id = manifest ? manifest.name : inferredId;
-    if (manifest && identities.has(id) && ["./extensions", "extensions"].includes(manifest.extensions)) {
-      await inspect(path3.join(directory, "extensions", id), id, false);
+    const extensionPath = pluginExtensionPath(manifest, id);
+    if (extensionPath) {
+      await inspect(path3.join(directory, extensionPath), id, false);
       return;
     }
     const entry = await optional(() => lstat2(path3.join(directory, "extension.mjs")));
@@ -14589,11 +14599,12 @@ async function resolvePythonProvisioning(entry) {
 }
 async function checkExtensionRegistration2() {
   const pluginRoot = path12.dirname(fileURLToPath3(import.meta.url));
+  const relativeManifest = path12.basename(path12.dirname(path12.dirname(pluginRoot))) === "com.github.copilot" ? "../../../.github/plugin/plugin.json" : "../../.github/plugin/plugin.json";
   if (path12.basename(pluginRoot) === PLUGIN_ID && path12.basename(path12.dirname(pluginRoot)) === "extensions") {
-    const manifestPath = path12.resolve(pluginRoot, "../../.github/plugin/plugin.json");
+    const manifestPath = path12.resolve(pluginRoot, relativeManifest);
     if (await exists(manifestPath)) {
       const manifest = JSON.parse(await readFile10(manifestPath, "utf8"));
-      if (manifest.name === PLUGIN_ID && ["./extensions", "extensions"].includes(manifest.extensions)) {
+      if (pluginExtensionPath(manifest, PLUGIN_ID) === path12.relative(path12.resolve(manifestPath, "../../.."), pluginRoot)) {
         return { registered: true, detail: `native plugin at ${pluginRoot}` };
       }
     }

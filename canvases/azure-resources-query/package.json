@@ -1,9 +1,9 @@
 {
   "name": "azure-resources-query",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "type": "module",
-  "main": "extensions/azure-resources-query/extension.mjs",
+  "main": "com.github.copilot/extensions/azure-resources-query/extension.mjs",
   "engines": {
     "node": ">=22"
   },

@@ -75,7 +75,7 @@ registration:
 If recovery still fails, report the real error and give the full-plugin
 reinstallation steps, then stop:
 
-1. When the `microsoft/azure-dev-tools` marketplace lists version 0.5.2,
+1. When the `microsoft/azure-dev-tools` marketplace lists version 0.5.3,
    use GitHub Copilot **Customize → Plugins → marketplace gear → add
    `microsoft/azure-dev-tools` (ID `azure-dev-tools`) → install Azure Functions
    Hosted Skills**. This installs the canvas and both launcher skills.
@@ -88,9 +88,9 @@ After marketplace publication, the equivalent CLI commands are
 `copilot plugin marketplace add microsoft/azure-dev-tools` and
 `copilot plugin install azure-functions-hosted-skills@azure-dev-tools`.
 If the marketplace is not listed yet, optionally install the full plugin from
-the exact published immutable 0.5.2 versioned/source-qualified tag: set
+the exact published immutable 0.5.3 versioned/source-qualified tag: set
 `HOSTED_SKILLS_TAG` to
-`azure-functions-hosted-skills-v0-5-2-<source-qualifier>` with the release's
+`azure-functions-hosted-skills-v0-5-3-<source-qualifier>` with the release's
 exact qualifier, then run
 `git clone --depth 1 --branch "$HOSTED_SKILLS_TAG" https://github.com/microsoft/azure-dev-tools.git azure-functions-hosted-skills-plugin`
 and
@@ -98,7 +98,7 @@ and
 
 > **Canvas-only fallback:** If the full plugin is unavailable, use
 > **Customize → Canvases → Install from gist/URL** with the nested
-> `https://github.com/microsoft/azure-dev-tools/tree/azure-functions-hosted-skills-latest/canvases/azure-functions-hosted-skills/extensions/azure-functions-hosted-skills`
+> `https://github.com/microsoft/azure-dev-tools/tree/azure-functions-hosted-skills-latest/canvases/azure-functions-hosted-skills/com.github.copilot/extensions/azure-functions-hosted-skills`
 > URL. The `-latest` tag is movable. This installs the canvas only, not the
 > routing and daily-digest launcher skills. New apps still receive the
 > required `.funcignore` exclusions; unsafe deployment is refused.
