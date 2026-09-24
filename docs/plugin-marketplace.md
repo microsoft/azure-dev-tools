@@ -58,18 +58,17 @@ disclosed documentation/provenance overlays are
 README checksum), and `skills/create-canvas-app/references/toolkit/quickstart.md`
 (release hold and toolkit version), with the latter three paths relative to
 `plugins/canvas-authoring/`. All 26 production plugin bytes are covered by
-`docs/canvas-authoring/SHA256SUMS`. The marketplace is a proposed production
-catalog until the approved product PRs merge and **all three** immutable
-version tags are published. The test fixture in
+`docs/canvas-authoring/SHA256SUMS`. The production product PRs are merged
+and all three immutable version tags are published. This marketplace
+catalog remains proposed until its own PR merges; native marketplace/App
+installation remains unverified. The test fixture in
 `test/fixtures/marketplace.candidate.json` exercises the three-product shape,
 not an installation catalog.
 
 Entries use same-repository `canvases/<product>` or
 `plugins/canvas-authoring` paths. This is a **mutable marketplace channel**,
 not an immutable pin: later marketplace checkouts follow the then-current
-production default branch, and `version` is display metadata. After merging
-the reviewed product PRs and publishing the real production immutable release
-tags, run
+production default branch, and `version` is display metadata. Run
 `node --test test/plugin-marketplace.test.mjs` and
 `node scripts/verify-plugin-marketplace.mjs`. The validator
 requires one source-qualified immutable version tag per product, checks
@@ -83,8 +82,8 @@ no extension/canvas, and all 26 files matching its pinned production checksum
 receipt. Build-input provenance and the documented safety overlays
 remain separate release PR review facts; a source-qualified tag name alone
 does not prove the build's origin.
-**The default validator intentionally fails before real production release
-tags exist.** Pre-tag tests with temporary *local-only* tags in a disposable
+**The default validator fails closed without real production release
+tags.** Pre-tag tests with temporary *local-only* tags in a disposable
 clone are synthetic candidate qualification, not release verification; never
 push those refs or present the result as a published install.
 

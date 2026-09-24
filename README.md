@@ -5,17 +5,17 @@ through GitHub Copilot.
 
 ## Install full plugins (primary)
 
-The first three plugins are available from their immutable public release
-tags. Check out the linked tag and follow the package README to install the
-full plugin, including its skills. The authoring companion is a skill-only
-product, not a running canvas. Private marketplace registration and native
-App installation have separate release gates.
+The first three plugins have immutable source-qualified production tags.
+Check out the linked tag and follow the package README for full-plugin
+installation, including skills. The authoring companion is a skill-only
+product, not a running canvas. Marketplace registration and native App
+installation have not yet been verified.
 
-| Plugin | Type | Installable public package | Production status |
+| Plugin | Type | Production package | Status |
 | --- | --- | --- | --- |
-| **Azure Functions Hosted Skills** | Canvas with skills | [Immutable release](https://github.com/Azure/azure-dev-tools/tree/azure-functions-hosted-skills-v0-5-1-2bb8354/canvases/azure-functions-hosted-skills) | Production package merged; private tags pending |
-| **Azure Resources Query** | Canvas with skill | [Immutable release](https://github.com/Azure/azure-dev-tools/tree/azure-resources-query-v0-1-1-be9551d/canvases/azure-resources-query) | Production package merged; private tags pending |
-| **Canvas Toolkit (Canvas Authoring)** | Skill-only plugin; no canvas | [Immutable release](https://github.com/Azure/azure-dev-tools/tree/canvas-authoring-v0-1-0-23aa6b1/plugins/canvas-authoring) | Production package merged; marketplace and private tag pending |
+| **Azure Functions Hosted Skills** | Canvas with skills | [Immutable release](https://github.com/microsoft/azure-dev-tools/tree/azure-functions-hosted-skills-v0-5-1-2bb8354/canvases/azure-functions-hosted-skills) | Tagged; App installation unverified |
+| **Azure Resources Query** | Canvas with skill | [Immutable release](https://github.com/microsoft/azure-dev-tools/tree/azure-resources-query-v0-1-1-be9551d/canvases/azure-resources-query) | Tagged; App installation unverified |
+| **Canvas Toolkit (Canvas Authoring)** | Skill-only plugin; no canvas | [Immutable release](https://github.com/microsoft/azure-dev-tools/tree/canvas-authoring-v0-1-0-23aa6b1/plugins/canvas-authoring) | Tagged; App installation unverified |
 | **Azure SRE Agent** | Planned | — | **COMING SOON** |
 
 After this repository's marketplace is approved and published, open GitHub
@@ -37,8 +37,8 @@ and installation target are verified.
 
 The [`canvas-authoring` production package](plugins/canvas-authoring/) and
 its [26-file checksum receipt](docs/canvas-authoring/SHA256SUMS) are available
-for review; private marketplace installation still awaits its approved
-catalog merge, source-qualified tag, and install verification. Its one
+from the reviewed product merge. Marketplace registration and native
+installation remain unverified. Its one
 `create-canvas-app` companion skill adds toolkit setup and counter or
 read-only Azure resource-group starters to the host's **native**
 `create-canvas` workflow. The host skill must already be installed; this
