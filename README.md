@@ -28,6 +28,19 @@ and document prerequisites and a canvas-only URL fallback; that fallback
 does not install companion skills. Do not treat a proposed package as released
 until the approved production merge and version tags are verified.
 
+## Canvas authoring companion (draft)
+
+[`plugins/canvas-authoring/`](plugins/canvas-authoring/) is a separate,
+skills-only builder proposal with a counter and read-only Azure resource-group
+starter. It adds toolkit setup to the host's native `create-canvas` workflow;
+it is not an installed canvas app or a marketplace product. The proposed
+payload and its [checksums](docs/canvas-authoring/SHA256SUMS) are available for
+review, **not installation**. The production candidate depends on the
+two-product promotion above and must receive its own approval, merge,
+source-qualified immutable product tag, and install verification before any
+install instructions apply. A compatible `@microsoft/canvas-toolkit` release
+with a `/build` export is also required; `0.1.0-preview.1` does not provide it.
+
 ## Get involved
 
 Watch this repository for updates and see [CONTRIBUTING.md](CONTRIBUTING.md)
