@@ -7,6 +7,7 @@ import {
   verifyMarketplace,
   verifyPlugin,
   verifyPreviousReleaseCommits,
+  verifySubsequentReleaseCommit,
   verifyTagSource,
 } from "../scripts/verify-plugin-marketplace.mjs";
 
@@ -35,13 +36,23 @@ test("requires release tags for full verification, then checks all three plugins
 });
 
 test("rejects missing products and duplicate entries", () => {
-  assert.throws(() => verifyMarketplace(modified((m) => m.plugins.pop())), /exactly the two Azure canvas plugins and the skill-only builder/);
+  assert.throws(() => verifyMarketplace(modified((m) => m.plugins.pop())), /exactly the reviewed production products/);
   assert.throws(() => verifyMarketplace(modified((m) => {
     m.plugins[1] = structuredClone(m.plugins[0]);
-  })), /exactly the two Azure canvas plugins and the skill-only builder/);
+  })), /exactly the reviewed production products/);
   assert.throws(() => verifyMarketplace(modified((m) => {
     m.plugins.push({ name: "unapproved-plugin", version: "1.0.0", source: "canvases/unapproved-plugin" });
-  })), /exactly the two Azure canvas plugins and the skill-only builder/);
+  })), /exactly the reviewed production products/);
+});
+
+test("does not advertise the unreviewed Cost Health v3 candidate", () => {
+  assert.throws(() => verifyMarketplace(modified((m) => {
+    m.plugins.push({
+      name: "azure-cost-health-check-v3",
+      version: "0.4.2",
+      source: "canvases/azure-cost-health-check-v3",
+    });
+  })), /exactly the reviewed production products/);
 });
 
 test("rejects remote, moving, and cross-product sources", () => {
@@ -123,4 +134,16 @@ test("three patch tags share one new commit and old tags retain exact historical
   assert.throws(() => verifyPreviousReleaseCommits({
     ...previous, "canvas-authoring-v0-1-0-23aa6b1": undefined,
   }), /moved or are missing/);
+});
+
+test("a later product release has a distinct merge descending from the combined patch", () => {
+  const earlierCommit = execFileSync("git", [
+    "rev-parse", "canvas-authoring-v0-1-0-23aa6b1^{commit}",
+  ], { encoding: "utf8" }).trim();
+  const patchCommit = execFileSync("git", [
+    "rev-parse", "azure-resources-query-v0-1-2-8af10f8^{commit}",
+  ], { encoding: "utf8" }).trim();
+  assert.doesNotThrow(() => verifySubsequentReleaseCommit(earlierCommit, patchCommit));
+  assert.throws(() => verifySubsequentReleaseCommit("HEAD", "HEAD"), /own reviewed merge commit/);
+  assert.throws(() => verifySubsequentReleaseCommit(patchCommit, earlierCommit), /descend from the prior/);
 });

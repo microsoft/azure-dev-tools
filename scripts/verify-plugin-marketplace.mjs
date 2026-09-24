@@ -43,6 +43,11 @@ const packages = {
     receiptCount: 26,
   },
 };
+const combinedPatchProducts = [
+  "azure-functions-hosted-skills",
+  "azure-resources-query",
+  "canvas-authoring",
+];
 const products = Object.keys(packages);
 const previousTags = {
   "azure-functions-hosted-skills-v0-5-1-2bb8354": "cc59516eba4d6eecda9ff7c9f0191fe2117167af",
@@ -84,8 +89,24 @@ function releaseTagFor(name, version) {
 }
 
 export function verifyCombinedReleaseCommits(commits) {
-  if (commits.length !== products.length || new Set(commits).size !== 1) {
+  if (commits.length !== combinedPatchProducts.length || new Set(commits).size !== 1) {
     throw new Error("Combined patch release tags must point to the same reviewed production merge commit");
+  }
+}
+
+export function verifySubsequentReleaseCommit(previousCommit, releaseCommit) {
+  if (previousCommit === releaseCommit) {
+    throw new Error("Subsequent product release must have its own reviewed merge commit");
+  }
+  try {
+    git("merge-base", "--is-ancestor", previousCommit, releaseCommit);
+  } catch {
+    throw new Error("Subsequent product release must descend from the prior production release");
+  }
+  try {
+    git("merge-base", "--is-ancestor", releaseCommit, "HEAD");
+  } catch {
+    throw new Error("Refresh this branch onto the reviewed subsequent product release commit");
   }
 }
 
@@ -106,15 +127,15 @@ export function verifyMarketplace(manifest) {
   const names = manifest.plugins.map(({ name }) => name);
   if (names.length !== products.length || new Set(names).size !== products.length ||
       products.some((name) => !names.includes(name))) {
-    throw new Error("Marketplace must contain exactly the two Azure canvas plugins and the skill-only builder");
+    throw new Error("Marketplace must contain exactly the reviewed production products");
   }
   if (manifest.plugins.some(({ name, version }) => version !== packages[name].version)) {
-    throw new Error("Marketplace versions must match the three reviewed source releases");
+    throw new Error("Marketplace versions must match the reviewed source releases");
   }
 
   const results = manifest.plugins.map(verifyPlugin);
   if (manifest.name === "azure-dev-tools") {
-    const commits = products.map((name) =>
+    const commits = combinedPatchProducts.map((name) =>
       git("rev-parse", `${releaseTagFor(name, packages[name].version)}^{commit}`));
     verifyCombinedReleaseCommits(commits);
     verifyPreviousReleaseCommits(Object.fromEntries(Object.keys(previousTags).map((tag) =>

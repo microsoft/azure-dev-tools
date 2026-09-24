@@ -25,15 +25,15 @@ test("customer installation docs identify the production repository, not public 
   }
 });
 
-test("production catalog navigates to three local packages in order and leaves planned entry unlinked", () => {
+test("production catalog matches installable plugins in order and leaves planned entry unlinked", () => {
   const readme = readFileSync(new URL("README.md", root), "utf8");
   const rows = readme.split("\n").filter((line) => line.startsWith("| **"));
   const expected = [
-    ["Azure Functions Hosted Skills", "canvases/azure-functions-hosted-skills/"],
-    ["Azure Resources Query", "canvases/azure-resources-query/"],
-    ["Canvas Toolkit (Canvas Authoring)", "plugins/canvas-authoring/"],
+    ["Azure Functions Hosted Skills", "canvases/azure-functions-hosted-skills/", "azure-functions-hosted-skills"],
+    ["Azure Resources Query", "canvases/azure-resources-query/", "azure-resources-query"],
+    ["Canvas Toolkit (Canvas Authoring)", "plugins/canvas-authoring/", "canvas-authoring"],
   ];
-  assert.equal(rows.length, 4);
+  assert.equal(rows.length, expected.length + 1);
   for (const [index, [label, path]] of expected.entries()) {
     assert.ok(rows[index].startsWith(`| **${label}** |`), `catalog order: ${label}`);
     assert.ok(rows[index].includes(`[Production package](${path})`), `${label}: production path`);
@@ -47,12 +47,8 @@ test("production catalog navigates to three local packages in order and leaves p
     );
   }
   assert.match(rows[2], /Skill-only plugin; no canvas/);
-  assert.equal(rows[3], "| **Azure SRE Agent** | Planned | — | **COMING SOON** |");
-  assert.deepEqual(manifest.plugins.map(({ name }) => name), [
-    "azure-functions-hosted-skills",
-    "azure-resources-query",
-    "canvas-authoring",
-  ]);
+  assert.equal(rows[expected.length], "| **Azure SRE Agent** | Planned | — | **COMING SOON** |");
+  assert.deepEqual(manifest.plugins.map(({ name }) => name), expected.map(([, , name]) => name));
 });
 
 test("current builder install and bundled quickstart do not claim an active release hold", () => {
