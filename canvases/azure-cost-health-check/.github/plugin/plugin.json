@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "azure-cost-health-check",
+  "version": "0.4.3",
+  "description": "Copilot canvas extension for direct ARM-based Azure Cost Management and AI Foundry usage health checks with native alerts and Flint-powered visualizations.",
+  "extensions": {
+    "com.github.copilot": {
+      "logo": "assets/preview.png"
+    }
+  },
+  "skills": [
+    "./skills/azure-cost-health-check/"
+  ]
+}

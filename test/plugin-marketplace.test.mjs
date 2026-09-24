@@ -21,7 +21,7 @@ function modified(update) {
   return manifest;
 }
 
-test("requires release tags for full verification, then checks all three plugins", () => {
+test("requires release tags for full verification, then checks all four plugins", () => {
   const tags = fixture.plugins.map(({ name, version }) =>
     execFileSync("git", ["tag", "-l", `${name}-v${version.replaceAll(".", "-")}-*`], {
       encoding: "utf8",
@@ -31,10 +31,11 @@ test("requires release tags for full verification, then checks all three plugins
     return;
   }
   const results = verifyMarketplace(fixture);
-  assert.equal(results.length, 3);
+  assert.equal(results.length, 4);
   assert.match(results[0], /azure-functions-hosted-skills@0\.5\.2 azure-functions-hosted-skills-v0-5-2-/);
   assert.match(results[1], /azure-resources-query@0\.1\.2 azure-resources-query-v0-1-2-/);
   assert.match(results[2], /canvas-authoring@0\.1\.1 canvas-authoring-v0-1-1-/);
+  assert.match(results[3], /azure-cost-health-check@0\.4\.3 azure-cost-health-check-v0-4-3-/);
 });
 
 test("rejects missing products and duplicate entries", () => {
@@ -47,12 +48,14 @@ test("rejects missing products and duplicate entries", () => {
   })), /exactly the reviewed production products/);
 });
 
-test("does not advertise either unreviewed Cost Health identity", () => {
-  for (const name of ["azure-cost-health-check-v3", "azure-cost-health-check"]) {
-    assert.throws(() => verifyMarketplace(modified((m) => {
-      m.plugins.push({ name, version: "0.4.3", source: `canvases/${name}` });
-    })), /exactly the reviewed production products/);
-  }
+test("rejects the obsolete Cost Health v3 identity", () => {
+  assert.throws(() => verifyMarketplace(modified((m) => {
+    m.plugins[3] = {
+      name: "azure-cost-health-check-v3",
+      version: "0.4.3",
+      source: "canvases/azure-cost-health-check-v3",
+    };
+  })), /exactly the reviewed production products/);
 });
 
 test("rejects remote, moving, and cross-product sources", () => {
@@ -103,6 +106,7 @@ test("target tags must identify the independently reviewed patch source merge", 
     ["azure-functions-hosted-skills", "0.5.2", "8af10f8"],
     ["azure-resources-query", "0.1.2", "8af10f8"],
     ["canvas-authoring", "0.1.1", "8af10f8"],
+    ["azure-cost-health-check", "0.4.3", "b355172"],
   ]) {
     assert.doesNotThrow(() => verifyTagSource(
       name, version, `${name}-v${version.replaceAll(".", "-")}-${suffix}`,

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 const root = new URL("../", import.meta.url);
@@ -22,6 +23,43 @@ const versions = {
   "azure-functions-hosted-skills": "0.5.2",
   "azure-resources-query": "0.1.2",
 };
+
+test("Cost Health 0.4.3 pins every protected Agent Plugins file without pinning mutable docs", () => {
+  const packagePath = "canvases/azure-cost-health-check/";
+  const read = (file) => readFileSync(new URL(`${packagePath}${file}`, root));
+  const release = JSON.parse(read("release.json"));
+  const checksums = JSON.parse(read("checksums.json"));
+  const manifest = JSON.parse(read(".github/plugin/plugin.json"));
+  const receipt = read("SHA256SUMS");
+  assert.equal(release.schemaVersion, 2);
+  assert.equal(release.mutableDocumentation, true);
+  assert.equal(release.version, "0.4.3");
+  assert.equal(manifest.version, "0.4.3");
+  assert.equal(manifest.extensions["com.github.copilot"].logo, "assets/preview.png");
+  assert.equal(createHash("sha256").update(read("checksums.json")).digest("hex"),
+    "7fae84cfdc0612410dd870104f373193a05bf03278d2ad9af90025d44e88e812");
+  assert.equal(createHash("sha256").update(receipt).digest("hex"),
+    "4053ea1aa490e2c43893a7dfa5dcad8d36e22801b99cda7dbb7c33517e0fef49");
+
+  const files = execFileSync("git", ["ls-files", "--", packagePath], {
+    cwd: root, encoding: "utf8",
+  }).trimEnd().split("\n").map((file) => file.slice(packagePath.length));
+  const protectedFiles = files.filter((file) =>
+    file !== "README.md" && !file.startsWith("docs/") && file !== "SHA256SUMS");
+  const entries = receipt.toString("utf8").trimEnd().split("\n").map((line) => {
+    const match = /^([0-9a-f]{64})  (.+)$/.exec(line);
+    assert.ok(match, `invalid protected receipt entry: ${line}`);
+    return { hash: match[1], file: match[2] };
+  });
+  assert.equal(files.length, 35);
+  assert.equal(entries.length, 32);
+  assert.deepEqual(entries.map(({ file }) => file).sort(), protectedFiles.sort());
+  assert.deepEqual(Object.keys(checksums).sort(), [...release.files, "release.json"].sort());
+  for (const { hash, file } of entries) {
+    assert.equal(createHash("sha256").update(read(file)).digest("hex"), hash, file);
+    if (file !== "checksums.json") assert.equal(checksums[file], hash, file);
+  }
+});
 
 test("canvas-authoring 0.1.1 receipt covers the skill-only package and its toolkit provenance", () => {
   const packagePath = "plugins/canvas-authoring/";

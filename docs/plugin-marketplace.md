@@ -6,12 +6,13 @@ Once this repository's marketplace is approved and published, in GitHub
 Copilot App open **Customize → Plugins**, use the gear beside the marketplace
 dropdown to add `microsoft/azure-dev-tools`, then select the
 `azure-dev-tools` marketplace. Install `azure-functions-hosted-skills`,
-`azure-resources-query`, or `canvas-authoring` separately **after each
+`azure-resources-query`, `canvas-authoring`, or, **only after its release
+tag and marketplace publication are approved**, `azure-cost-health-check` separately **after each
 product's release gates pass**. Access to this repository is required.
-Restart Copilot and verify the installed skills; open a canvas for the first
-two products only. Installation does not automatically display a panel: ask
+Restart Copilot and verify the installed skills; open a canvas for the Hosted,
+Resources Query or released Cost Health products only. Installation does not automatically display a panel: ask
 Copilot **"Open Azure Resources Query"** or **"Open Azure Functions Hosted
-Skills"**. The builder entry is skill-only: use the host's native
+Skills"**, or, when Cost Health is released, **"Open Azure Cost Health Check in real mode for my subscription"**. The builder entry is skill-only: use the host's native
 `create-canvas` workflow instead of expecting a builder canvas.
 [GitHub's App guide](https://docs.github.com/en/copilot/how-tos/github-copilot-app/customize-github-copilot-app#adding-plugins)
 documents the registration workflow, but **this marketplace's App install has
@@ -25,6 +26,8 @@ copilot plugin marketplace browse azure-dev-tools
 copilot plugin install azure-functions-hosted-skills@azure-dev-tools
 copilot plugin install azure-resources-query@azure-dev-tools
 copilot plugin install canvas-authoring@azure-dev-tools
+# Only after Cost Health has been approved and released:
+copilot plugin install azure-cost-health-check@azure-dev-tools
 copilot plugin list
 copilot skill list
 ```
@@ -35,6 +38,23 @@ older immutable 0.5.1/0.1.1 canvas package READMEs retain public
 source-distribution links, **not** this repository's
 production installation target. Native App installation from this
 marketplace has not yet been verified.
+
+Cost Health 0.4.3 is a **pre-tag private review candidate**, exported from
+the exact [merged source main revision](https://github.com/coreai-microsoft/canvases-cloud-foundation/commit/b3551729b5d1e6377283efd1a012fa523e0c8aac)
+as `azure-cost-health-check`, not the obsolete `-v3` identity. Its protected
+`checksums.json` digest is
+`7fae84cfdc0612410dd870104f373193a05bf03278d2ad9af90025d44e88e812`;
+the private 32-file protected `SHA256SUMS` digest is
+`4053ea1aa490e2c43893a7dfa5dcad8d36e22801b99cda7dbb7c33517e0fef49`.
+The package includes its `com.github.copilot/extensions/azure-cost-health-check`
+extension, launcher skill, protected `assets/preview.png`, third-party notices,
+and mutable `docs/azure-cost-health-check.png` customer screenshot. Its customer
+README and provisional `-latest` URL do **not** indicate that a tag or
+marketplace installation exists. The required source test
+`canvases/azure-cost-health-check/test/import.test.mjs:17` still expects the
+obsolete nested extension path; source owner must resolve that regression
+before release qualification. Private synthetic-tag tests are local-only;
+there has been no native App installation or public announcement.
 
 ## Build canvas apps
 
@@ -93,7 +113,7 @@ its three new immutable tags must not be published before merge. Each
 builder version's 26 plugin bytes have their own pinned receipt in
 `docs/canvas-authoring/SHA256SUMS`. Native marketplace/App installation
 remains unverified. The test fixture in
-`test/fixtures/marketplace.candidate.json` exercises the three-product shape,
+`test/fixtures/marketplace.candidate.json` exercises the four-product candidate shape,
 not an installation catalog.
 
 Entries use same-repository `canvases/<product>` or
@@ -104,12 +124,14 @@ production default branch, and `version` is display metadata. Run
 `node scripts/verify-plugin-marketplace.mjs`. The validator
 requires one source-qualified immutable version tag per product, checks
 each tag's source fragment against its independently reviewed full source
-SHA, and checks that HEAD's package tree equals its tag. The three new patch
+SHA, and checks HEAD's protected package files against its tag. The three patch
 tags must share the same approved hotfix merge commit, descending from the
 original builder release. The original two canvas tags must still identify
 the original #6 commit and the original builder tag must still identify its
 separate #7 descendant commit.
-The canvas checks require their extension and every companion skill
+The canvas checks require their extension (including Cost Health's
+`com.github.copilot/extensions/azure-cost-health-check` Agent Plugins layout)
+and every companion skill
 (including both Hosted Skills skills). The builder check requires one skill,
 no extension/canvas, and all 26 files matching its pinned production checksum
 receipt. Build-input provenance and the documented safety overlays

@@ -25,6 +25,12 @@
       "description": "Build canvas apps with the native create-canvas skill and a toolkit setup companion.",
       "version": "0.1.1",
       "source": "plugins/canvas-authoring"
+    },
+    {
+      "name": "azure-cost-health-check",
+      "description": "Review Azure spend, forecasts, native alerts, and AI billing with a read-only canvas and launcher skill.",
+      "version": "0.4.3",
+      "source": "canvases/azure-cost-health-check"
     }
   ]
 }

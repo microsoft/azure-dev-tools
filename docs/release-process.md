@@ -112,7 +112,8 @@ verify that the README:
 
 - starts with the customer value statement;
 - includes an `## Install` section with the
-  `PRODUCT-latest/canvases/PRODUCT/extensions/EXTENSION` nested-folder URL;
+  `PRODUCT-latest/canvases/PRODUCT/<extension directory>` nested-folder URL
+  (for Agent Plugins, `com.github.copilot/extensions/PRODUCT`);
 - links to the README through `PRODUCT-latest`;
 - includes the exact prompt needed to open the canvas;
 - includes a numbered quickstart using actual UI labels; and
@@ -161,11 +162,11 @@ version.
   **Rollout owner:** `<person or team>`. **Dark-deployed:** `<status and scope,
   when applicable>`.
 - **Install:** latest
-  `<https://github.com/microsoft/azure-dev-tools/tree/<product>-latest/canvases/<product>/extensions/<extension>>`;
+  `<https://github.com/microsoft/azure-dev-tools/tree/<product>-latest/canvases/<product>/<extension-directory>>`;
   README
   `<https://github.com/microsoft/azure-dev-tools/blob/<product>-latest/canvases/<product>/README.md>`;
   exact version
-  `<https://github.com/microsoft/azure-dev-tools/tree/<product>-v<major>-<minor>-<patch>-<source-sha>/canvases/<product>/extensions/<extension>>`.
+  `<https://github.com/microsoft/azure-dev-tools/tree/<product>-v<major>-<minor>-<patch>-<source-sha>/canvases/<product>/<extension-directory>>`.
 
 The first bullet must name the product and version, explain the value or rollout
 in one short statement, and use the literal wording **Rollout owner:**. Include

@@ -42,6 +42,19 @@ const packages = {
     receiptSha256: "d66a82894955dcac9ea072143524c718ea49728d3c947224acdb5fa30fe63c02",
     receiptCount: 26,
   },
+  "azure-cost-health-check": {
+    path: "canvases/azure-cost-health-check",
+    manifest: ".github/plugin/plugin.json",
+    skills: ["./skills/azure-cost-health-check/"],
+    extension: "azure-cost-health-check",
+    extensionPath: "com.github.copilot/extensions/azure-cost-health-check",
+    version: "0.4.3",
+    sha: "b3551729b5d1e6377283efd1a012fa523e0c8aac",
+    receipt: "canvases/azure-cost-health-check/SHA256SUMS",
+    receiptSha256: "4053ea1aa490e2c43893a7dfa5dcad8d36e22801b99cda7dbb7c33517e0fef49",
+    receiptCount: 32,
+    mutableDocumentation: true,
+  },
 };
 const combinedPatchProducts = [
   "azure-functions-hosted-skills",
@@ -372,20 +385,40 @@ export function verifyPlugin({ source, name, version }) {
       verifyRuntimeInventory(JSON.parse(fileAt(releaseTag, `${path}/release.json`)));
     }
     if (product.mutableDocumentation) {
+      const release = JSON.parse(fileAt(revision, `${path}/release.json`));
       verifyMutableReleaseMetadata(
-        JSON.parse(fileAt(revision, `${path}/release.json`)),
+        release,
         JSON.parse(fileAt(revision, `${path}/checksums.json`)),
         immutableFiles,
         (file) => fileAt(revision, `${path}/${file}`),
       );
+      const packageJson = JSON.parse(fileAt(revision, `${path}/package.json`));
+      if (release.name !== name || release.version !== version ||
+          release.plugin?.manifest !== product.manifest ||
+          release.plugin?.extension?.entry !== `${product.extensionPath}/extension.mjs` ||
+          release.plugin?.extension?.canvasId !== product.extension ||
+          release.plugin?.preview?.file !== "assets/preview.png" ||
+          packageJson.name !== name || packageJson.version !== version ||
+          packageJson.main !== `${product.extensionPath}/extension.mjs`) {
+        throw new Error("protected release identity or extension layout differs from marketplace entry");
+      }
     }
     if (product.extension) {
-      requireFile(revision, `${path}/extensions/${product.extension}/extension.mjs`);
-      if (packageManifest.extensions !== "./extensions" ||
-          !Array.isArray(packageManifest.skills) ||
+      requireFile(revision, `${path}/${product.extensionPath ?? `extensions/${product.extension}`}/extension.mjs`);
+      if (product.extensionPath) {
+        if (packageManifest.$schema !== "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json" ||
+          packageManifest.extensions?.["com.github.copilot"]?.logo !== "assets/preview.png" ||
+          Object.keys(packageManifest.extensions).length !== 1 ||
+          !files.includes("assets/preview.png")) {
+          throw new Error("Agent Plugins extension metadata differs from marketplace entry");
+        }
+      } else if (packageManifest.extensions !== "./extensions") {
+        throw new Error("extension metadata differs from marketplace entry");
+      }
+      if (!Array.isArray(packageManifest.skills) ||
           packageManifest.skills.length !== product.skills.length ||
           product.skills.some((skill) => !packageManifest.skills.includes(skill))) {
-        throw new Error("extension or skills differ from marketplace entry");
+        throw new Error("skills differ from marketplace entry");
       }
     } else if (Object.hasOwn(packageManifest, "extensions") ||
                Object.hasOwn(packageManifest, "canvases") ||
