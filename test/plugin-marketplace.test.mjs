@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
@@ -16,7 +17,15 @@ function modified(update) {
   return manifest;
 }
 
-test("accepts two independently pinned package versions with extension and skills", () => {
+test("requires release tags for full verification, then checks both plugins", () => {
+  const tags = fixture.plugins.map(({ name, version }) =>
+    execFileSync("git", ["tag", "-l", `${name}-v${version.replaceAll(".", "-")}-*`], {
+      encoding: "utf8",
+    }).trim());
+  if (tags.some((tag) => !tag)) {
+    assert.throws(() => verifyMarketplace(fixture), /expected exactly one reviewed immutable release tag/);
+    return;
+  }
   const results = verifyMarketplace(fixture);
   assert.equal(results.length, 2);
   assert.match(results[0], /azure-functions-hosted-skills@0\.5\.1 azure-functions-hosted-skills-v0-5-1-2bb8354/);
