@@ -1,0 +1,24 @@
+{
+  "name": "azure-dev-tools",
+  "owner": {
+    "name": "Microsoft"
+  },
+  "metadata": {
+    "description": "Azure canvas plugins for this repository; installs follow the current marketplace checkout.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "azure-functions-hosted-skills",
+      "description": "Build and run Azure Functions Hosted Skills with a canvas and companion skills.",
+      "version": "0.5.1",
+      "source": "canvases/azure-functions-hosted-skills"
+    },
+    {
+      "name": "azure-resources-query",
+      "description": "Explore Azure resources with read-only queries, a canvas, and a skill.",
+      "version": "0.1.1",
+      "source": "canvases/azure-resources-query"
+    }
+  ]
+}
