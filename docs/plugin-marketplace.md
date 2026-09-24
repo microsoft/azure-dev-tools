@@ -29,6 +29,13 @@ copilot plugin list
 copilot skill list
 ```
 
+Use this repository's [production package catalog](../README.md) or the
+source-qualified production tag when following install instructions. The
+earlier immutable canvas package READMEs retain public
+source-distribution links, **not** this repository's
+production installation target. Native App installation from this
+marketplace has not yet been verified.
+
 ## Build canvas apps
 
 `canvas-authoring` at `plugins/canvas-authoring/plugin.json` is **skill-only**:
@@ -37,17 +44,18 @@ canvas. It supplies toolkit setup and counter or read-only Azure resource-group
 starters to a canvas-capable GitHub Copilot host that **already provides the
 native `create-canvas` skill**. It neither replaces that skill nor installs a
 running app. Follow the [builder README](../plugins/canvas-authoring/README.md)
-only after the release hold is lifted. A compatible published
-`@microsoft/canvas-toolkit` with `@microsoft/canvas-toolkit/build` is also
-required. Canonical npmjs.org publishes `0.1.0-preview.2` with that export;
-corporate npm mirrors may not yet serve it. The earlier `0.1.0-preview.1`
+after its source-qualified production patch tag is published. A compatible
+published `@microsoft/canvas-toolkit` with `@microsoft/canvas-toolkit/build`
+is also required. Canonical npmjs.org publishes `0.1.0-preview.2` with that
+export; corporate npm mirrors may not yet serve it. The earlier `0.1.0-preview.1`
 lacks `/build`. Do not treat a successful plugin install as proof that an app
 can build or that native activation was verified.
 
 ## Production release gate
 
-The canvas packages must preserve their independently reviewed public source
-bytes. The separately reviewed builder comes from approved source merge
+The canvas patches must match their independently reviewed source exports
+and checksum receipts. The original separately reviewed builder came from
+approved source merge
 `23aa6b19a50aca470c759f04f5c657481f6e2d6a` (export receipt
 `332cafd2605df299bd4159655b746baeb75a3e7e0392d473e2bae3d2d5c6a7ab`);
 the production builder retains 22/26 source files byte-for-byte. Its four
@@ -57,11 +65,14 @@ disclosed documentation/provenance overlays are
 `skills/create-canvas-app/references/toolkit/provenance.json` (matching
 README checksum), and `skills/create-canvas-app/references/toolkit/quickstart.md`
 (release hold and toolkit version), with the latter three paths relative to
-`plugins/canvas-authoring/`. All 26 production plugin bytes are covered by
-`docs/canvas-authoring/SHA256SUMS`. The production product PRs are merged
-and all three immutable version tags are published. This marketplace
-catalog remains proposed until its own PR merges; native marketplace/App
-installation remains unverified. The test fixture in
+`plugins/canvas-authoring/`. The original product PRs and marketplace
+catalog are merged and their immutable tags published. This patch release
+replaces the obsolete builder release hold and corrects the canvas packages'
+production install destinations using separately reviewed source exports;
+its three new immutable tags must not be published before merge. Each
+builder version's 26 plugin bytes have their own pinned receipt in
+`docs/canvas-authoring/SHA256SUMS`. Native marketplace/App installation
+remains unverified. The test fixture in
 `test/fixtures/marketplace.candidate.json` exercises the three-product shape,
 not an installation catalog.
 
@@ -73,9 +84,11 @@ production default branch, and `version` is display metadata. Run
 `node scripts/verify-plugin-marketplace.mjs`. The validator
 requires one source-qualified immutable version tag per product, checks
 each tag's source fragment against its independently reviewed full source
-SHA, and checks that HEAD's package tree equals its tag. The two canvas
-tags must share their approved two-product merge commit; the builder tag must
-point to a **separate descendant** builder release commit included in HEAD.
+SHA, and checks that HEAD's package tree equals its tag. The three new patch
+tags must share the same approved hotfix merge commit, descending from the
+original builder release. The original two canvas tags must still identify
+the original #6 commit and the original builder tag must still identify its
+separate #7 descendant commit.
 The canvas checks require their extension and every companion skill
 (including both Hosted Skills skills). The builder check requires one skill,
 no extension/canvas, and all 26 files matching its pinned production checksum

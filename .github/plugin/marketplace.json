@@ -11,19 +11,19 @@
     {
       "name": "azure-functions-hosted-skills",
       "description": "Build and run Azure Functions Hosted Skills with a canvas and companion skills.",
-      "version": "0.5.1",
+      "version": "0.5.2",
       "source": "canvases/azure-functions-hosted-skills"
     },
     {
       "name": "azure-resources-query",
       "description": "Explore Azure resources with read-only queries, a canvas, and a skill.",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "source": "canvases/azure-resources-query"
     },
     {
       "name": "canvas-authoring",
       "description": "Build canvas apps with the native create-canvas skill and a toolkit setup companion.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "source": "plugins/canvas-authoring"
     }
   ]

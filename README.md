@@ -13,10 +13,20 @@ installation have not yet been verified.
 
 | Plugin | Type | Production package | Status |
 | --- | --- | --- | --- |
-| **Azure Functions Hosted Skills** | Canvas with skills | [Immutable release](https://github.com/microsoft/azure-dev-tools/tree/azure-functions-hosted-skills-v0-5-1-2bb8354/canvases/azure-functions-hosted-skills) | Tagged; App installation unverified |
-| **Azure Resources Query** | Canvas with skill | [Immutable release](https://github.com/microsoft/azure-dev-tools/tree/azure-resources-query-v0-1-1-be9551d/canvases/azure-resources-query) | Tagged; App installation unverified |
-| **Canvas Toolkit (Canvas Authoring)** | Skill-only plugin; no canvas | [Immutable release](https://github.com/microsoft/azure-dev-tools/tree/canvas-authoring-v0-1-0-23aa6b1/plugins/canvas-authoring) | Tagged; App installation unverified |
+| **Azure Functions Hosted Skills** | Canvas with skills | [Production package](canvases/azure-functions-hosted-skills/) | Tagged; App installation unverified |
+| **Azure Resources Query** | Canvas with skill | [Production package](canvases/azure-resources-query/) | Tagged; App installation unverified |
+| **Canvas Toolkit (Canvas Authoring)** | Skill-only plugin; no canvas | [Production package](plugins/canvas-authoring/) | Tagged; App installation unverified |
 | **Azure SRE Agent** | Planned | — | **COMING SOON** |
+
+For a reproducible production checkout, use the [Hosted Skills
+tag](https://github.com/microsoft/azure-dev-tools/tree/azure-functions-hosted-skills-v0-5-1-2bb8354/canvases/azure-functions-hosted-skills),
+[Azure Resources Query
+tag](https://github.com/microsoft/azure-dev-tools/tree/azure-resources-query-v0-1-1-be9551d/canvases/azure-resources-query),
+or [Canvas Authoring
+tag](https://github.com/microsoft/azure-dev-tools/tree/canvas-authoring-v0-1-0-23aa6b1/plugins/canvas-authoring).
+Previously tagged package READMEs retain reviewed public source-distribution
+links. For production installation, use this repository's package and tag
+links above rather than those older public links.
 
 After this repository's marketplace is approved and published, open GitHub
 Copilot App **Customize → Plugins**, use the marketplace gear to add
