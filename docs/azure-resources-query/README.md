@@ -10,7 +10,7 @@ conversation with an inventory table.
 
 When the **azure-dev-tools** marketplace lists **Azure Resources Query**, open
 **Customize > Plugins** in the GitHub Copilot App. Use the marketplace gear to
-add `Azure/azure-dev-tools` (ID `azure-dev-tools`), then install **Azure
+add `microsoft/azure-dev-tools` (ID `azure-dev-tools`), then install **Azure
 Resources Query** (`azure-resources-query`). This installs the full plugin:
 the canvas and its launcher skill. Fully quit GitHub Copilot (not merely the
 chat or window), reopen the app, start a new chat, and ask exactly:
@@ -21,8 +21,8 @@ Check **Plugin skills** for the Azure Resources Query launcher skill.
 
 #### Optional: pin the full plugin to an exact version
 
-From the [public tag list](https://github.com/Azure/azure-dev-tools/tags),
-copy the complete immutable tag starting with `azure-resources-query-v0-1-1-`,
+From the [production tag list](https://github.com/microsoft/azure-dev-tools/tags),
+copy the complete immutable tag starting with `azure-resources-query-v0-1-2-`,
 including its source qualifier. The `azure-resources-query-latest` tag moves
 and is not an exact pin. Paste the versioned tag when prompted; this terminal
 path installs the full plugin, including the launcher skill:
@@ -30,7 +30,7 @@ path installs the full plugin, including the launcher skill:
 ```sh
 printf 'Paste the full versioned Azure Resources Query tag: '
 read -r ARG_TAG
-git clone --depth 1 --branch "$ARG_TAG" https://github.com/Azure/azure-dev-tools.git azure-resources-query-plugin
+git clone --depth 1 --branch "$ARG_TAG" https://github.com/microsoft/azure-dev-tools.git azure-resources-query-plugin
 copilot plugin install ./azure-resources-query-plugin/canvases/azure-resources-query
 ```
 
@@ -42,7 +42,7 @@ choose **Customize > Canvases > Install from gist/URL** in the GitHub Copilot
 App and paste the latest nested canvas extension URL:
 
 ```text
-https://github.com/Azure/azure-dev-tools/tree/azure-resources-query-latest/canvases/azure-resources-query/extensions/azure-resources-query
+https://github.com/microsoft/azure-dev-tools/tree/azure-resources-query-latest/canvases/azure-resources-query/extensions/azure-resources-query
 ```
 
 **This URL installs only the canvas extension**, not the launcher skill. If

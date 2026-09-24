@@ -1,5 +1,5 @@
 {
-  ".github/plugin/plugin.json": "bfb7afc1127fa7360bc368be68cc464d6a4789169b4b71dd656a68bfd8086bef",
+  ".github/plugin/plugin.json": "3cb7769b8ef1a71d6fa8ad7587a44ec1c808dffd546cd6f16ef000d234b0a53e",
   "docs/resources-fixture.png": "593a66c5843b96975252c435606702cb15802e3e4d0f96e586f38061b8350fa3",
   "extensions/azure-resources-query/assets/Resource-Graph-Explorer.provenance.json": "8e7c523673ecc0d5ba9d5281ab3e4f749d64c86ce73da931e5131e8227ec489f",
   "extensions/azure-resources-query/assets/Resource-Graph-Explorer.svg": "6e9262653086bd4e83184ba6abb2e8b39a29e676107540c1fcfa41b4c8c0db37",
@@ -90,9 +90,9 @@
   "extensions/azure-resources-query/ui/client.js": "3513f476c7766fe3f787537952e2c31b723564e21d9ac506b05e042d664059e1",
   "extensions/azure-resources-query/ui/index.html": "fe7ef0b96fe9c486b855f3fac674fe5f736039c4d3f55b38cf4e267c49f61009",
   "extensions/azure-resources-query/ui/styles.css": "c424c33aea3a91d55c66181403f555d949da62d0b1593f8769c3cecd5cfd029b",
-  "package.json": "a35f8bca4a719e4292b227a2475ce27e471f5e233f7e562e596a208dd221fa8f",
-  "README.md": "b914849b73b5713821410f27f4ced032ddb7b95485175fd810d6d378269deb82",
-  "release.json": "ccae54034eaa3eafe2e239e2ac00464ef0cba1e91f251eb4ca642dbed84ebe55",
+  "package.json": "4fc93c48d2893e152d786e0082cde844cb809305a9374fe5ee8f4ef1b477be3c",
+  "README.md": "9585a77d8b5c5862d0b5c9099627408ad1af4cfe303f9eace9341068cdb27d37",
+  "release.json": "6449f0cc82e1d53b8600c0e7309ac5c0f34c0f170592709c0ef58500314e05a6",
   "skills/azure-resources-query/resolve-canvas-launch.mjs": "bffc9f0a955a46883d6e0e1f8485103145746674761ccff961c42ae2a57821a1",
   "skills/azure-resources-query/SKILL.md": "98b2e42938cddfa5b49ed449e1a63d2751766e1211282fba45c1d424f80663e1",
   "THIRD_PARTY_NOTICES.txt": "363c021bc17477e3d37da3b1875d81d1bdf61137f005957de2be8b137d892e57"

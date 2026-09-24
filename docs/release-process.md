@@ -30,6 +30,12 @@ verifier must check that the earlier product release is an ancestor, that
 the skill-only package tree and full checksum inventory match its tag, and
 that it has no extension or canvas. Its package root may be `plugins/<product>`
 with `plugin.json` directly in that directory rather than the canvas layout.
+For a subsequent combined canvas and skill-only patch release, all new
+source-qualified tags point to one later approved merge commit descending
+from the previous builder release. Verify the prior canvas and builder
+immutable tags still identify their original commits. Never move the old
+tags; update marketplace versions, package receipts and source-qualified
+checks for each new package tree.
 
 Release order:
 
@@ -50,12 +56,17 @@ Release order:
 Never move `PRODUCT-latest` to an unmerged branch, candidate commit, or
 unapproved rebuild.
 
-The canvas package directories in this repository retain the reviewed public
-distribution bytes, including customer README links to the public source.
-Production installation links and tag verification use
-`microsoft/azure-dev-tools`; keep channel-specific guidance outside those
-frozen canvas directories. Disclose and checksum any separately reviewed
-skill-only product documentation overlays in its own release PR.
+The original canvas version tags retain the reviewed public distribution bytes,
+including historical README links to the public source. Do not edit those
+immutable versions or move their tags. A later production patch may correct
+customer installation destinations inside a package through a separately
+reviewed, version-bumped source export, complete new receipts, and new immutable
+tags. A private customer-guide overlay retaining previously released
+instructions must be disclosed and separately reviewed; checksum its final
+bytes and preserve source-identical runtime and skills. Production installation
+links and tag verification must point to
+`microsoft/azure-dev-tools`. Disclose and checksum any separately reviewed
+skill-only product documentation overlays in its release PR.
 
 ## Customer README verification
 
@@ -91,7 +102,7 @@ problem and name the fix, for example
    Lead with the outcome, not build provenance or approval boilerplate.
 2. **Release facts and handoff:** Keep a short, labeled list of the source
    revision (full SHA and a commit link if public), the *separate reviewed
-   public package* commit and artifact link, version, and a link to `SHA256SUMS` with
+   source package* commit and artifact link, version, and a link to `SHA256SUMS` with
    the relevant file's SHA-256 digest. Link the nested-folder install URL and
    customer README at the production candidate commit; label them **candidate**,
    not **latest**. After promotion, add the verified immutable-version and

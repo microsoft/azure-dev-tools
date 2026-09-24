@@ -6,17 +6,17 @@
   "plugins": [
     {
       "name": "azure-functions-hosted-skills",
-      "version": "0.5.1",
+      "version": "0.5.2",
       "source": "canvases/azure-functions-hosted-skills"
     },
     {
       "name": "azure-resources-query",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "source": "canvases/azure-resources-query"
     },
     {
       "name": "canvas-authoring",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "source": "plugins/canvas-authoring"
     }
   ]

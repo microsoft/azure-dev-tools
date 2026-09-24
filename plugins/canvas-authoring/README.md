@@ -9,22 +9,15 @@ native `create-canvas` workflow.
 - A canvas-capable GitHub Copilot host with its installed `create-canvas` skill.
   The plugin does not replace or install that host skill.
 - Node.js 22+ (24 recommended) and npm.
-- A compatible toolkit version that exports `@microsoft/canvas-toolkit/build`,
-  or a local `.tgz` containing that API.
+- The exact `@microsoft/canvas-toolkit@0.1.0-preview.2` release exporting
+  `@microsoft/canvas-toolkit/build`, once published, or an approved local
+  `.tgz` containing that API. Do not treat a missing `/build` export as success.
 - For live Azure reads: Azure CLI 2.61+ and permission to read the subscription.
 
 ## Install
 
-**Release hold:** This builder is an unreleased candidate, not a released plugin.
-Do not run the command below against the current production branch. First
-require an approved production merge, a verified source-qualified immutable
-product tag and installation target, and a compatible published toolkit
-version with `@microsoft/canvas-toolkit/build`. Use the exact published
-`@microsoft/canvas-toolkit@0.1.0-preview.2`; `0.1.0-preview.1` lacks `/build`.
-If the default package mirror has not synced, choose the canonical npmjs.org
-registry for that app's npm command rather than changing global npm settings.
-
-Once those gates are complete, install from the approved distribution:
+Install from the released private `microsoft/azure-dev-tools` plugin
+distribution after the 0.1.1 package is published:
 
 ```sh
 copilot plugin install microsoft/azure-dev-tools:plugins/canvas-authoring
@@ -36,6 +29,8 @@ To try a local export instead:
 copilot --plugin-dir "<export-directory>/plugins/canvas-authoring"
 ```
 
+The private 0.1.0 release remains available; this patch does not change its
+immutable tag. Native App/CLI installation of 0.1.1 is not yet verified.
 Use the **exported plugin**, not the source folder `build/canvas-authoring/`.
 This page describes the installed plugin; its bundled documentation links
 resolve after export. Installing it adds a skill, not a running canvas app.
