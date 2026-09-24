@@ -5,42 +5,38 @@ through GitHub Copilot.
 
 ## Install full plugins (primary)
 
+The first three plugins are available from their immutable public release
+tags. Check out the linked tag and follow the package README to install the
+full plugin, including its skills. The authoring companion is a skill-only
+product, not a running canvas. Private marketplace registration and native
+App installation have separate release gates.
+
+| Plugin | Type | Installable public package | Production status |
+| --- | --- | --- | --- |
+| **Azure Functions Hosted Skills** | Canvas with skills | [Immutable release](https://github.com/Azure/azure-dev-tools/tree/azure-functions-hosted-skills-v0-5-1-2bb8354/canvases/azure-functions-hosted-skills) | Pending production approval and tags |
+| **Azure Resources Query** | Canvas with skill | [Immutable release](https://github.com/Azure/azure-dev-tools/tree/azure-resources-query-v0-1-1-be9551d/canvases/azure-resources-query) | Pending production approval and tags |
+| **Canvas Toolkit (Canvas Authoring)** | Skill-only plugin; no canvas | [Immutable release](https://github.com/Azure/azure-dev-tools/tree/canvas-authoring-v0-1-0-23aa6b1/plugins/canvas-authoring) | Pending production approval and tags |
+| **Azure SRE Agent** | Planned | — | **COMING SOON** |
+
 After this repository's marketplace is approved and published, open GitHub
-Copilot App **Customize → Plugins**, use the marketplace gear to add
-`microsoft/azure-dev-tools` once, and install Azure Functions Hosted Skills or
-Azure Resources Query from the `azure-dev-tools` marketplace. Their CLI
-install IDs are `<product>@azure-dev-tools`. Restart Copilot, open the canvas,
-and check that its companion skills are available. Access to this repository
-is required. App installation from this marketplace has not yet been
-verified. See [full-plugin installation and verification
-guidance](docs/plugin-marketplace.md) for CLI commands and release status.
+Copilot App **Customize → Plugins**, add `microsoft/azure-dev-tools` once, and
+select a released plugin from the `azure-dev-tools` marketplace. Its CLI
+install ID is `<product>@azure-dev-tools`. Access to this repository is
+required. Private marketplace and native App installation have not yet been
+verified; the authoring companion does not open a canvas panel. See
+[full-plugin installation and verification guidance](docs/plugin-marketplace.md)
+for release status. The marketplace follows this repository's default branch,
+not a pinned release. Do not treat a production package as released until its
+approved merge and version tags are verified.
 
-## Canvas packages
-
-| Canvas | Package location | Status |
-| --- | --- | --- |
-| **Azure Functions Hosted Skills** | [`canvases/azure-functions-hosted-skills/`](canvases/azure-functions-hosted-skills/) | Release pending approval |
-| **Azure Resources Query** | [`canvases/azure-resources-query/`](canvases/azure-resources-query/) ([install](docs/azure-resources-query/)) | Release pending approval |
-
-The marketplace follows this repository's current default branch, not a
-pinned release. Package READMEs retain the reviewed public distribution links
-and document prerequisites and a canvas-only URL fallback; that fallback
-does not install companion skills. Do not treat a proposed package as released
-until the approved production merge and version tags are verified.
-
-## Canvas authoring companion (release candidate)
-
-[`plugins/canvas-authoring/`](plugins/canvas-authoring/) is a separate,
-skills-only builder proposal with a counter and read-only Azure resource-group
-starter. It adds toolkit setup to the host's native `create-canvas` workflow;
-it is not an installed canvas app or a marketplace product. The proposed
-payload and its [checksums](docs/canvas-authoring/SHA256SUMS) are available for
-review, **not installation**. The production candidate depends on the
-two-product promotion above and must receive its own approval, merge,
-source-qualified immutable product tag, and install verification before any
-install instructions apply. The compatible toolkit
-`@microsoft/canvas-toolkit@0.1.0-preview.2` now provides `/build`; the older
-`0.1.0-preview.1` does not. The default package mirror may lag npmjs.org.
+The [Canvas Toolkit authoring candidate](plugins/canvas-authoring/) and its
+[26-file checksum receipt](docs/canvas-authoring/SHA256SUMS) are available for
+review, **not private production installation**. This skill-only companion
+adds toolkit setup and a read-only Azure starter to the native `create-canvas`
+workflow. It requires `@microsoft/canvas-toolkit@0.1.0-preview.2` for `/build`;
+the older `0.1.0-preview.1` lacks that export. Its production distribution
+requires a separately approved merge, source-qualified tag, and install
+verification.
 
 ## Get involved
 
