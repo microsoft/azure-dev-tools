@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "files": {
     "LICENSE": "d25deed12d803f6c973597348627b1939e2d19bbc28fda83c93ea0cde44702da",
-    "README.md": "f51a3c75c5a092757d99bd479e77c122e1343c14424e10cacae926e236ba45ab",
+    "README.md": "7d7222f5d5ff24620c9c064b1f258f957996fe68aaf36a93ed928064aaae6b8c",
     "auth.md": "d33a60ee92d725c10b4c3b7c958b5b58ed999eb7084da630c333145f8544ae04",
     "examples/README.md": "70d8d6683e31c01ce8538d339f676901ac1332710dc19ff8afbfa443b0ae399b",
     "examples/custom-fetch-client.mjs": "18ea90a17fb7d39104f343b3a53079dfed536bdd9a6dafc71321de5158be61bb",

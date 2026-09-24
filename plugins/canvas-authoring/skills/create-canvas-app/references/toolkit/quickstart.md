@@ -20,7 +20,9 @@ activation; the companion adds toolkit setup.
 install it from the current production branch. Wait for an approved merge, a
 verified source-qualified immutable product tag and install target, and a
 published toolkit version that exports `@microsoft/canvas-toolkit/build`.
-The currently published `0.1.0-preview.1` does not have that export.
+Use the exact published `@microsoft/canvas-toolkit@0.1.0-preview.2`;
+`0.1.0-preview.1` does not have that export. If a package mirror is behind,
+use npmjs.org for the generated app's npm command, not a global config change.
 After those gates are met, install the companion from its approved distribution:
 
 ```sh

@@ -22,10 +22,11 @@ This reference covers [app structure](#canvas-skeleton),
 
 ## Setup and exports
 
-Use Node.js 22 or newer (24 recommended). Install the toolkit in your application:
+Use Node.js 22 or newer (24 recommended). Install the compatible toolkit
+version in your application (the older `0.1.0-preview.1` lacks `/build`):
 
 ```bash
-npm install @microsoft/canvas-toolkit
+npm install --save-exact @microsoft/canvas-toolkit@0.1.0-preview.2
 ```
 
 To install from a downloaded package tarball instead, use its local path:

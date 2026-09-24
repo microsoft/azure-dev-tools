@@ -19,8 +19,10 @@ native `create-canvas` workflow.
 Do not run the command below against the current production branch. First
 require an approved production merge, a verified source-qualified immutable
 product tag and installation target, and a compatible published toolkit
-version with `@microsoft/canvas-toolkit/build`. The currently published
-`0.1.0-preview.1` does not include that export.
+version with `@microsoft/canvas-toolkit/build`. Use the exact published
+`@microsoft/canvas-toolkit@0.1.0-preview.2`; `0.1.0-preview.1` lacks `/build`.
+If the default package mirror has not synced, choose the canonical npmjs.org
+registry for that app's npm command rather than changing global npm settings.
 
 Once those gates are complete, install from the approved distribution:
 

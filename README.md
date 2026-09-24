@@ -38,8 +38,9 @@ payload and its [checksums](docs/canvas-authoring/SHA256SUMS) are available for
 review, **not installation**. The production candidate depends on the
 two-product promotion above and must receive its own approval, merge,
 source-qualified immutable product tag, and install verification before any
-install instructions apply. A compatible `@microsoft/canvas-toolkit` release
-with a `/build` export is also required; `0.1.0-preview.1` does not provide it.
+install instructions apply. The compatible toolkit
+`@microsoft/canvas-toolkit@0.1.0-preview.2` now provides `/build`; the older
+`0.1.0-preview.1` does not. The default package mirror may lag npmjs.org.
 
 ## Get involved
 
