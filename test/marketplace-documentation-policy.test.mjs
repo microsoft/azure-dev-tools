@@ -50,12 +50,27 @@ test("legacy tagged receipts stay historical while each product's docs change on
     }
 
     const runtime = join(clone, products[1], "extensions/azure-resources-query/extension.mjs");
-    writeFileSync(runtime, `${readFileSync(runtime, "utf8")}\n// Tampered runtime\n`);
+    const originalRuntime = readFileSync(runtime);
+    writeFileSync(runtime, Buffer.concat([originalRuntime, Buffer.from("\n// Tampered runtime\n")]));
     git("add", "--", products[1]);
     git("commit", "--quiet", "-m", "Test protected runtime tampering");
     assert.notEqual(git("rev-parse", `HEAD:${products[1]}/extensions/azure-resources-query/extension.mjs`),
       git("rev-parse", "azure-resources-query-v0-1-2-8af10f8:canvases/azure-resources-query/extensions/azure-resources-query/extension.mjs"));
     assert.throws(verify, /immutable package files differ from the reviewed release tag/);
+
+    writeFileSync(runtime, originalRuntime);
+    const unreviewed = join(clone, products[1], "extensions/azure-resources-query/unreviewed.mjs");
+    writeFileSync(unreviewed, "export const unreviewed = true;\n");
+    git("add", "--", products[1]);
+    git("commit", "--quiet", "-m", "Test protected file addition");
+    assert.throws(verify, /immutable package files differ from the reviewed release tag/);
+
+    rmSync(unreviewed);
+    const receipt = join(clone, "docs/azure-resources-query/SHA256SUMS");
+    writeFileSync(receipt, `${readFileSync(receipt, "utf8")}\n`);
+    git("add", "--", products[1], "docs/azure-resources-query/SHA256SUMS");
+    git("commit", "--quiet", "-m", "Test historical receipt tampering");
+    assert.throws(verify, /current checksum receipt differs from immutable release tag/);
   } finally {
     rmSync(checkout, { recursive: true, force: true });
   }
