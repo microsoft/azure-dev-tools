@@ -9,7 +9,10 @@ dropdown to add `microsoft/azure-dev-tools`, then select the
 `azure-resources-query`, or `canvas-authoring` separately **after each
 product's release gates pass**. Access to this repository is required.
 Restart Copilot and verify the installed skills; open a canvas for the first
-two products only.
+two products only. Installation does not automatically display a panel: ask
+Copilot **"Open Azure Resources Query"** or **"Open Azure Functions Hosted
+Skills"**. The builder entry is skill-only: use the host's native
+`create-canvas` workflow instead of expecting a builder canvas.
 [GitHub's App guide](https://docs.github.com/en/copilot/how-tos/github-copilot-app/customize-github-copilot-app#adding-plugins)
 documents the registration workflow, but **this marketplace's App install has
 not yet been verified**.
