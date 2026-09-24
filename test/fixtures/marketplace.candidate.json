@@ -18,6 +18,11 @@
       "name": "canvas-authoring",
       "version": "0.1.1",
       "source": "plugins/canvas-authoring"
+    },
+    {
+      "name": "azure-cost-health-check",
+      "version": "0.4.3",
+      "source": "canvases/azure-cost-health-check"
     }
   ]
 }

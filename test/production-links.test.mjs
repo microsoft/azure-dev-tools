@@ -11,6 +11,7 @@ const customerDocs = [
   "docs/azure-resources-query/README.md",
   "canvases/azure-functions-hosted-skills/README.md",
   "canvases/azure-resources-query/README.md",
+  "canvases/azure-cost-health-check/README.md",
   "canvases/azure-functions-hosted-skills/skills/azure-functions-hosted-skills-canvas/SKILL.md",
   "canvases/azure-functions-hosted-skills/skills/azure-functions-hosted-skills-github-daily-digest/SKILL.md",
 ];
@@ -29,26 +30,44 @@ test("production catalog matches installable plugins in order and leaves planned
   const readme = readFileSync(new URL("README.md", root), "utf8");
   const rows = readme.split("\n").filter((line) => line.startsWith("| **"));
   const expected = [
-    ["Azure Functions Hosted Skills", "canvases/azure-functions-hosted-skills/", "azure-functions-hosted-skills"],
-    ["Azure Resources Query", "canvases/azure-resources-query/", "azure-resources-query"],
-    ["Canvas Toolkit (Canvas Authoring)", "plugins/canvas-authoring/", "canvas-authoring"],
+    ["Azure Functions Hosted Skills", "canvases/azure-functions-hosted-skills/", "azure-functions-hosted-skills", "Production package"],
+    ["Azure Resources Query", "canvases/azure-resources-query/", "azure-resources-query", "Production package"],
+    ["Canvas Toolkit (Canvas Authoring)", "plugins/canvas-authoring/", "canvas-authoring", "Production package"],
+    ["Azure Cost Health Check", "canvases/azure-cost-health-check/", "azure-cost-health-check", "Production package"],
   ];
   assert.equal(rows.length, expected.length + 1);
-  for (const [index, [label, path]] of expected.entries()) {
+  for (const [index, [label, path, name, linkLabel]] of expected.entries()) {
     assert.ok(rows[index].startsWith(`| **${label}** |`), `catalog order: ${label}`);
-    assert.ok(rows[index].includes(`[Production package](${path})`), `${label}: production path`);
+    assert.ok(rows[index].includes(`[${linkLabel}](${path})`), `${label}: package path`);
     assert.ok(existsSync(new URL(path, root)), `${label}: missing package`);
-    const { name, version } = manifest.plugins[index];
+    assert.equal(manifest.plugins[index].name, name);
+    const { version } = manifest.plugins[index];
     const tagPath = `${name}-v${version.replaceAll(".", "-")}-[0-9a-f]{7,40}/${path.slice(0, -1)}`;
     assert.match(
       readme,
       new RegExp(`https://github\\.com/microsoft/azure-dev-tools/tree/${tagPath}`),
-      `${label}: expected a source-qualified private patch tag destination`,
+      `${label}: expected a source-qualified private tag destination`,
     );
   }
   assert.match(rows[2], /Skill-only plugin; no canvas/);
+  assert.match(rows[3], /Immutable tag required; App installation unverified/);
   assert.equal(rows[expected.length], "| **Azure SRE Agent** | Planned | — | **COMING SOON** |");
   assert.deepEqual(manifest.plugins.map(({ name }) => name), expected.map(([, , name]) => name));
+});
+
+test("Cost Health package uses the reviewed Agent Plugins layout and conditional install URLs", () => {
+  const path = "canvases/azure-cost-health-check/";
+  const plugin = JSON.parse(readFileSync(new URL(`${path}.github/plugin/plugin.json`, root)));
+  const release = JSON.parse(readFileSync(new URL(`${path}release.json`, root)));
+  const readme = readFileSync(new URL(`${path}README.md`, root), "utf8");
+  assert.equal(plugin.name, "azure-cost-health-check");
+  assert.equal(plugin.version, "0.4.3");
+  assert.deepEqual(plugin.skills, ["./skills/azure-cost-health-check/"]);
+  assert.equal(plugin.extensions["com.github.copilot"].logo, "assets/preview.png");
+  assert.equal(release.plugin.extension.entry,
+    "com.github.copilot/extensions/azure-cost-health-check/extension.mjs");
+  assert.match(readme, /com\.github\.copilot\/extensions\/azure-cost-health-check/);
+  assert.match(readme, /if the .*latest.* tag is\s+available/i);
 });
 
 test("current builder install and bundled quickstart do not claim an active release hold", () => {

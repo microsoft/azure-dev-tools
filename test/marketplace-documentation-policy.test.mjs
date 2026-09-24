@@ -12,6 +12,7 @@ const products = [
   "canvases/azure-functions-hosted-skills",
   "canvases/azure-resources-query",
   "plugins/canvas-authoring",
+  "canvases/azure-cost-health-check",
 ];
 const pixel = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==",
@@ -32,6 +33,8 @@ test("legacy tagged receipts stay historical while each product's docs change on
     copyFileSync(join(root, verifier), join(clone, verifier));
     git("config", "user.name", "Release policy test");
     git("config", "user.email", "release-policy@example.invalid");
+    git("tag", "azure-cost-health-check-v0-4-3-b355172", "HEAD");
+    assert.doesNotThrow(verify, "all four products pass with a local-only synthetic Cost tag");
 
     for (const path of products) {
       const readme = join(clone, path, "README.md");
@@ -48,6 +51,18 @@ test("legacy tagged receipts stay historical while each product's docs change on
       git("commit", "--quiet", "-m", `Test documentation image removal in ${path}`);
       assert.doesNotThrow(verify, path);
     }
+
+    const costRuntime = join(clone, products[3],
+      "com.github.copilot/extensions/azure-cost-health-check/extension.mjs");
+    const originalCostRuntime = readFileSync(costRuntime);
+    writeFileSync(costRuntime, Buffer.concat([originalCostRuntime, Buffer.from("\n// Tampered runtime\n")]));
+    git("add", "--", products[3]);
+    git("commit", "--quiet", "-m", "Test Cost protected runtime tampering");
+    assert.throws(verify, /immutable package files differ from the reviewed release tag/);
+    writeFileSync(costRuntime, originalCostRuntime);
+    git("add", "--", products[3]);
+    git("commit", "--quiet", "-m", "Restore Cost runtime");
+    assert.doesNotThrow(verify, "restored Cost package matches synthetic release tag");
 
     const runtime = join(clone, products[1], "extensions/azure-resources-query/extension.mjs");
     const originalRuntime = readFileSync(runtime);

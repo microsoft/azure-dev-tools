@@ -1,0 +1,11 @@
+{
+  "name": "azure-cost-health-check",
+  "version": "0.4.3",
+  "private": true,
+  "type": "module",
+  "main": "com.github.copilot/extensions/azure-cost-health-check/extension.mjs",
+  "engines": {
+    "node": ">=22"
+  },
+  "description": "Copilot canvas extension for direct ARM-based Azure Cost Management and AI Foundry usage health checks with native alerts and Flint-powered visualizations."
+}
