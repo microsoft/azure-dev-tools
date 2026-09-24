@@ -47,11 +47,17 @@ The canvas packages must preserve their independently reviewed public source
 bytes. The separately reviewed builder comes from approved source merge
 `23aa6b19a50aca470c759f04f5c657481f6e2d6a` (export receipt
 `332cafd2605df299bd4159655b746baeb75a3e7e0392d473e2bae3d2d5c6a7ab`);
-the production builder's 26-file inventory and checksum receipt include
-disclosed customer-facing compatibility and safety overlays. The marketplace
-is a proposed production catalog until the approved product PRs merge and
-**all three**
-immutable version tags are published. The test fixture in
+the production builder retains 22/26 source files byte-for-byte. Its four
+disclosed documentation/provenance overlays are
+`plugins/canvas-authoring/README.md` (release hold and toolkit version),
+`skills/create-canvas-app/references/toolkit/README.md` (toolkit pin),
+`skills/create-canvas-app/references/toolkit/provenance.json` (matching
+README checksum), and `skills/create-canvas-app/references/toolkit/quickstart.md`
+(release hold and toolkit version), with the latter three paths relative to
+`plugins/canvas-authoring/`. All 26 production plugin bytes are covered by
+`docs/canvas-authoring/SHA256SUMS`. The marketplace is a proposed production
+catalog until the approved product PRs merge and **all three** immutable
+version tags are published. The test fixture in
 `test/fixtures/marketplace.candidate.json` exercises the three-product shape,
 not an installation catalog.
 
