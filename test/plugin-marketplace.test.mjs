@@ -87,6 +87,7 @@ test("target tags must identify each independently reviewed source commit", () =
   ), /does not identify the reviewed source commit/);
   assert.throws(() => verifyMarketplace(modified((m) => {
     m.name = "azure-dev-tools";
+    m.plugins[0].version = "0.5.0";
   })), /versions must match/);
 });
 
