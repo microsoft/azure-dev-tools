@@ -1,0 +1,11 @@
+{
+  "name": "azure-functions-hosted-skills",
+  "version": "0.5.1",
+  "private": true,
+  "type": "module",
+  "main": "extensions/azure-functions-hosted-skills/extension.mjs",
+  "engines": {
+    "node": ">=22"
+  },
+  "description": "Azure Functions Hosted Skills canvas builds Hosted Skills with Timer, HTTP, Queue, and Microsoft 365 Inbox triggers locally or works with an existing Azure Function App."
+}
