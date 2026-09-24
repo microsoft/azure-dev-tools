@@ -110,6 +110,13 @@ export function verifySubsequentReleaseCommit(previousCommit, releaseCommit) {
   }
 }
 
+export function verifyReceiptPin({ receipt, receiptSha256, receiptCount }) {
+  if (!receipt || !/^[0-9a-f]{64}$/.test(receiptSha256) ||
+      !Number.isSafeInteger(receiptCount) || receiptCount < 1) {
+    throw new Error("Every product requires an independently reviewed full-file checksum receipt");
+  }
+}
+
 export function verifyPreviousReleaseCommits(commits) {
   if (Object.keys(commits).length !== Object.keys(previousTags).length ||
       Object.entries(previousTags).some(([tag, expected]) => commits[tag] !== expected)) {
@@ -150,6 +157,11 @@ export function verifyMarketplace(manifest) {
     } catch {
       throw new Error("Refresh this branch onto the reviewed combined patch release commit");
     }
+    for (const name of products.filter((product) => !combinedPatchProducts.includes(product))) {
+      const releaseCommit = git("rev-parse",
+        `${releaseTagFor(name, packages[name].version)}^{commit}`);
+      verifySubsequentReleaseCommit(commits[0], releaseCommit);
+    }
   }
   return results;
 }
@@ -172,6 +184,7 @@ export function verifyPlugin({ source, name, version }) {
   if (!product || version !== product.version) {
     throw new Error(`${name}: expected a reviewed product and version`);
   }
+  verifyReceiptPin(product);
   const path = product.path;
   if (source !== path) {
     throw new Error(`${name}: source must use its own repo-relative path`);
@@ -214,33 +227,31 @@ export function verifyPlugin({ source, name, version }) {
       }
       requireFile(revision, `${path}/${skill.slice(2)}SKILL.md`);
     }
-    if (product.receipt) {
-      const receipt = fileAt(revision, product.receipt);
-      if (!receipt.equals(fileAt(releaseTag, product.receipt))) {
-        throw new Error("current checksum receipt differs from immutable release tag");
+    const receipt = fileAt(revision, product.receipt);
+    if (!receipt.equals(fileAt(releaseTag, product.receipt))) {
+      throw new Error("current checksum receipt differs from immutable release tag");
+    }
+    if (createHash("sha256").update(receipt).digest("hex") !== product.receiptSha256) {
+      throw new Error("production checksum receipt differs from reviewed candidate");
+    }
+    const entries = receipt.toString("utf8").trimEnd().split("\n").map((line) => {
+      const match = /^([0-9a-f]{64})  (.+)$/.exec(line);
+      if (!match) throw new Error(`invalid checksum receipt entry: ${line}`);
+      if (!match[2].startsWith(product.receiptPrefix ?? "")) {
+        throw new Error(`invalid checksum receipt path: ${match[2]}`);
       }
-      if (createHash("sha256").update(receipt).digest("hex") !== product.receiptSha256) {
-        throw new Error("production checksum receipt differs from reviewed candidate");
-      }
-      const entries = receipt.toString("utf8").trimEnd().split("\n").map((line) => {
-        const match = /^([0-9a-f]{64})  (.+)$/.exec(line);
-        if (!match) throw new Error(`invalid checksum receipt entry: ${line}`);
-        if (!match[2].startsWith(product.receiptPrefix ?? "")) {
-          throw new Error(`invalid checksum receipt path: ${match[2]}`);
-        }
-        return { hash: match[1], file: match[2].slice((product.receiptPrefix ?? "").length) };
-      });
-      const expectedFiles = files.filter((file) => file !== "SHA256SUMS");
-      if (entries.length !== product.receiptCount ||
-          new Set(entries.map(({ file }) => file)).size !== expectedFiles.length ||
-          entries.length !== expectedFiles.length ||
-          entries.some(({ file }) => !expectedFiles.includes(file))) {
-        throw new Error(`checksum receipt must cover exactly the ${product.receiptCount} plugin files`);
-      }
-      for (const { hash, file } of entries) {
-        if (createHash("sha256").update(fileAt(revision, `${path}/${file}`)).digest("hex") !== hash) {
-          throw new Error(`plugin file differs from checksum receipt: ${file}`);
-        }
+      return { hash: match[1], file: match[2].slice((product.receiptPrefix ?? "").length) };
+    });
+    const expectedFiles = files.filter((file) => file !== "SHA256SUMS");
+    if (entries.length !== product.receiptCount ||
+        new Set(entries.map(({ file }) => file)).size !== expectedFiles.length ||
+        entries.length !== expectedFiles.length ||
+        entries.some(({ file }) => !expectedFiles.includes(file))) {
+      throw new Error(`checksum receipt must cover exactly the ${product.receiptCount} plugin files`);
+    }
+    for (const { hash, file } of entries) {
+      if (createHash("sha256").update(fileAt(revision, `${path}/${file}`)).digest("hex") !== hash) {
+        throw new Error(`plugin file differs from checksum receipt: ${file}`);
       }
     }
   } catch (error) {

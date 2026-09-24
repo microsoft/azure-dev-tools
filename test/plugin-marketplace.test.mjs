@@ -7,6 +7,7 @@ import {
   verifyMarketplace,
   verifyPlugin,
   verifyPreviousReleaseCommits,
+  verifyReceiptPin,
   verifySubsequentReleaseCommit,
   verifyTagSource,
 } from "../scripts/verify-plugin-marketplace.mjs";
@@ -146,4 +147,22 @@ test("a later product release has a distinct merge descending from the combined 
   assert.doesNotThrow(() => verifySubsequentReleaseCommit(earlierCommit, patchCommit));
   assert.throws(() => verifySubsequentReleaseCommit("HEAD", "HEAD"), /own reviewed merge commit/);
   assert.throws(() => verifySubsequentReleaseCommit(patchCommit, earlierCommit), /descend from the prior/);
+});
+
+test("every new product must pin a complete checksum receipt before publication", () => {
+  const receipt = {
+    receipt: "canvases/azure-cost-health-check-v3/SHA256SUMS",
+    receiptSha256: "a".repeat(64),
+    receiptCount: 32,
+  };
+  assert.doesNotThrow(() => verifyReceiptPin(receipt));
+  for (const incomplete of [
+    { ...receipt, receipt: undefined },
+    { ...receipt, receiptSha256: undefined },
+    { ...receipt, receiptSha256: "unreviewed" },
+    { ...receipt, receiptCount: undefined },
+    { ...receipt, receiptCount: 0 },
+  ]) {
+    assert.throws(() => verifyReceiptPin(incomplete), /full-file checksum receipt/);
+  }
 });
