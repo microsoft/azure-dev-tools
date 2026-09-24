@@ -13,6 +13,10 @@ Canvas Authoring companion. CLI install IDs are
 `<product>@azure-dev-tools`. Restart Copilot and check the installed skills;
 open a canvas only for the two canvas plugins. Access to this repository is
 required. App installation from this marketplace has not yet been verified.
+Installing a canvas plugin does not display its panel automatically: ask
+Copilot **"Open Azure Resources Query"** or **"Open Azure Functions Hosted
+Skills"** after installation. Canvas Authoring is skill-only; use the
+host's native `create-canvas` workflow instead of looking for a builder panel.
 See [full-plugin installation and verification
 guidance](docs/plugin-marketplace.md) for CLI commands and release status.
 
