@@ -13,6 +13,11 @@
       "name": "azure-resources-query",
       "version": "0.1.1",
       "source": "canvases/azure-resources-query"
+    },
+    {
+      "name": "canvas-authoring",
+      "version": "0.1.0",
+      "source": "plugins/canvas-authoring"
     }
   ]
 }

@@ -24,6 +24,12 @@ When one approved production PR contains multiple independently reviewed product
 their distinct source-qualified immutable version tags may all point to that
 same PR's merge commit. Verify each product's source revision, version, and
 package bytes separately; do not create the tags before the PR merges.
+For a separately reviewed skill-only product stacked on that PR, its immutable
+tag instead points to its own later approved merge commit. A marketplace
+verifier must check that the earlier product release is an ancestor, that
+the skill-only package tree and full checksum inventory match its tag, and
+that it has no extension or canvas. Its package root may be `plugins/<product>`
+with `plugin.json` directly in that directory rather than the canvas layout.
 
 Release order:
 
@@ -44,17 +50,19 @@ Release order:
 Never move `PRODUCT-latest` to an unmerged branch, candidate commit, or
 unapproved rebuild.
 
-The package directories in this repository retain the reviewed public
+The canvas package directories in this repository retain the reviewed public
 distribution bytes, including customer README links to the public source.
 Production installation links and tag verification use
-`microsoft/azure-dev-tools`; keep any channel-specific guidance outside the
-checksum-covered package directories.
+`microsoft/azure-dev-tools`; keep channel-specific guidance outside those
+frozen canvas directories. Disclose and checksum any separately reviewed
+skill-only product documentation overlays in its own release PR.
 
 ## Customer README verification
 
 Release verification must fail closed if a package export replaces a
 customer-facing README with internal packaging, build, or provider prose.
-Before approval and again after tagging, verify that the README:
+For an extension-bearing canvas, before approval and again after tagging,
+verify that the README:
 
 - starts with the customer value statement;
 - includes an `## Install` section with the
@@ -67,6 +75,9 @@ Before approval and again after tagging, verify that the README:
 An export may update the README only when the release PR explicitly presents
 the customer-facing change for review. Missing sections, a wrapper-directory
 install URL, a branch URL, or packaging-only prose blocks the release.
+For a skill-only companion, use its approved skill-only install instructions,
+native host-skill prerequisite, and runnable toolkit compatibility gate
+instead of inventing an extension URL.
 
 ## Production release PR communication
 
