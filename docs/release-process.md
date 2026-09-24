@@ -59,9 +59,12 @@ unapproved rebuild.
 The original canvas version tags retain the reviewed public distribution bytes,
 including historical README links to the public source. Do not edit those
 immutable versions or move their tags. A later production patch may correct
-customer installation destinations inside a package only through a separately
+customer installation destinations inside a package through a separately
 reviewed, version-bumped source export, complete new receipts, and new immutable
-tags. Production installation links and tag verification must point to
+tags. A private customer-guide overlay retaining previously released
+instructions must be disclosed and separately reviewed; checksum its final
+bytes and preserve source-identical runtime and skills. Production installation
+links and tag verification must point to
 `microsoft/azure-dev-tools`. Disclose and checksum any separately reviewed
 skill-only product documentation overlays in its release PR.
 

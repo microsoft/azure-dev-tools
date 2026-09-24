@@ -87,15 +87,18 @@ test("unreviewed versions fail before a tag lookup", () => {
   }), /expected a reviewed product and version/);
 });
 
-test("unreviewed patch sources fail closed until approved source SHA and receipt are pinned", () => {
+test("target tags must identify the independently reviewed patch source merge", () => {
   for (const [name, version, suffix] of [
-    ["azure-functions-hosted-skills", "0.5.2", "2bb83548"],
-    ["azure-resources-query", "0.1.2", "be9551d7"],
-    ["canvas-authoring", "0.1.1", "23aa6b19"],
+    ["azure-functions-hosted-skills", "0.5.2", "8af10f8"],
+    ["azure-resources-query", "0.1.2", "8af10f8"],
+    ["canvas-authoring", "0.1.1", "8af10f8"],
   ]) {
-    assert.throws(() => verifyTagSource(
+    assert.doesNotThrow(() => verifyTagSource(
       name, version, `${name}-v${version.replaceAll(".", "-")}-${suffix}`,
-    ), /no independently reviewed source release/);
+    ));
+    assert.throws(() => verifyTagSource(
+      name, version, `${name}-v${version.replaceAll(".", "-")}-deadbeef`,
+    ), /does not identify the reviewed source commit/);
   }
   assert.throws(() => verifyMarketplace(modified((m) => {
     m.name = "azure-dev-tools";

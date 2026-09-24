@@ -15,7 +15,9 @@ test("canvas-authoring 0.1.1 receipt covers the skill-only package and its toolk
   const read = (path) => readFileSync(new URL(path, root));
   const manifest = JSON.parse(read(`${packagePath}plugin.json`));
   assert.equal(manifest.version, "0.1.1");
-  assert.deepEqual(manifest.skills, ["./skills/create-canvas-app/"]);
+  if (manifest.skills !== undefined) {
+    assert.deepEqual(manifest.skills, ["./skills/create-canvas-app/"]);
+  }
   assert.ok(!Object.hasOwn(manifest, "extensions") && !Object.hasOwn(manifest, "canvases"));
   const receipt = "docs/canvas-authoring/SHA256SUMS";
   const entries = read(receipt).toString("utf8").trimEnd().split("\n").map((line) => {
@@ -28,6 +30,10 @@ test("canvas-authoring 0.1.1 receipt covers the skill-only package and its toolk
   }).trimEnd().split("\n");
   assert.equal(entries.length, 26);
   assert.deepEqual(entries.map(({ path }) => path).sort(), files.sort());
+  assert.deepEqual(
+    files.filter((path) => /\/skills\/[^/]+\/SKILL\.md$/.test(path)),
+    [`${packagePath}skills/create-canvas-app/SKILL.md`],
+  );
   for (const { hash, path } of entries) {
     assert.equal(createHash("sha256").update(read(path)).digest("hex"), hash, path);
   }

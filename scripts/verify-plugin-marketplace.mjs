@@ -15,7 +15,10 @@ const packages = {
     ],
     extension: "azure-functions-hosted-skills",
     version: "0.5.2",
-    sha: null,
+    sha: "8af10f8408f69f45fb5137e9b8f5d746f40bc85e",
+    receipt: "canvases/azure-functions-hosted-skills/SHA256SUMS",
+    receiptSha256: "390ed2a003358a9e9125ec7bf593abaae87e3ff13207a298881b8e997ca76873",
+    receiptCount: 48,
   },
   "azure-resources-query": {
     path: "canvases/azure-resources-query",
@@ -23,16 +26,21 @@ const packages = {
     skills: ["./skills/azure-resources-query/"],
     extension: "azure-resources-query",
     version: "0.1.2",
-    sha: null,
+    sha: "8af10f8408f69f45fb5137e9b8f5d746f40bc85e",
+    receipt: "docs/azure-resources-query/SHA256SUMS",
+    receiptSha256: "789c6e79c18ebbb988af24b97b63d8ced12267c62623c460a4bc822d0fea68cb",
+    receiptPrefix: "canvases/azure-resources-query/",
+    receiptCount: 98,
   },
   "canvas-authoring": {
     path: "plugins/canvas-authoring",
     manifest: "plugin.json",
     skills: ["./skills/create-canvas-app/"],
     version: "0.1.1",
-    sha: null,
+    sha: "8af10f8408f69f45fb5137e9b8f5d746f40bc85e",
     receipt: "docs/canvas-authoring/SHA256SUMS",
-    receiptSha256: null,
+    receiptSha256: "d66a82894955dcac9ea072143524c718ea49728d3c947224acdb5fa30fe63c02",
+    receiptCount: 26,
   },
 };
 const products = Object.keys(packages);
@@ -187,23 +195,30 @@ export function verifyPlugin({ source, name, version }) {
     }
     if (product.receipt) {
       const receipt = fileAt(revision, product.receipt);
+      if (!receipt.equals(fileAt(releaseTag, product.receipt))) {
+        throw new Error("current checksum receipt differs from immutable release tag");
+      }
       if (createHash("sha256").update(receipt).digest("hex") !== product.receiptSha256) {
-        throw new Error("builder production checksum receipt differs from reviewed candidate");
+        throw new Error("production checksum receipt differs from reviewed candidate");
       }
       const entries = receipt.toString("utf8").trimEnd().split("\n").map((line) => {
         const match = /^([0-9a-f]{64})  (.+)$/.exec(line);
         if (!match) throw new Error(`invalid checksum receipt entry: ${line}`);
-        return { hash: match[1], file: match[2] };
+        if (!match[2].startsWith(product.receiptPrefix ?? "")) {
+          throw new Error(`invalid checksum receipt path: ${match[2]}`);
+        }
+        return { hash: match[1], file: match[2].slice((product.receiptPrefix ?? "").length) };
       });
-      if (entries.length !== 26 ||
-          new Set(entries.map(({ file }) => file)).size !== files.length ||
-          entries.length !== files.length ||
-          entries.some(({ file }) => !files.includes(file))) {
-        throw new Error("builder checksum receipt must cover exactly the 26 plugin files");
+      const expectedFiles = files.filter((file) => file !== "SHA256SUMS");
+      if (entries.length !== product.receiptCount ||
+          new Set(entries.map(({ file }) => file)).size !== expectedFiles.length ||
+          entries.length !== expectedFiles.length ||
+          entries.some(({ file }) => !expectedFiles.includes(file))) {
+        throw new Error(`checksum receipt must cover exactly the ${product.receiptCount} plugin files`);
       }
       for (const { hash, file } of entries) {
         if (createHash("sha256").update(fileAt(revision, `${path}/${file}`)).digest("hex") !== hash) {
-          throw new Error(`builder file differs from checksum receipt: ${file}`);
+          throw new Error(`plugin file differs from checksum receipt: ${file}`);
         }
       }
     }

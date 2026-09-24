@@ -19,14 +19,14 @@ installation have not yet been verified.
 | **Azure SRE Agent** | Planned | — | **COMING SOON** |
 
 For a reproducible production checkout, use the [Hosted Skills
-tag](https://github.com/microsoft/azure-dev-tools/tree/azure-functions-hosted-skills-v0-5-1-2bb8354/canvases/azure-functions-hosted-skills),
+tag](https://github.com/microsoft/azure-dev-tools/tree/azure-functions-hosted-skills-v0-5-2-8af10f8/canvases/azure-functions-hosted-skills),
 [Azure Resources Query
-tag](https://github.com/microsoft/azure-dev-tools/tree/azure-resources-query-v0-1-1-be9551d/canvases/azure-resources-query),
+tag](https://github.com/microsoft/azure-dev-tools/tree/azure-resources-query-v0-1-2-8af10f8/canvases/azure-resources-query),
 or [Canvas Authoring
-tag](https://github.com/microsoft/azure-dev-tools/tree/canvas-authoring-v0-1-0-23aa6b1/plugins/canvas-authoring).
-Previously tagged package READMEs retain reviewed public source-distribution
-links. For production installation, use this repository's package and tag
-links above rather than those older public links.
+tag](https://github.com/microsoft/azure-dev-tools/tree/canvas-authoring-v0-1-1-8af10f8/plugins/canvas-authoring).
+The older immutable Hosted 0.5.1 and ARG 0.1.1 package READMEs retain
+reviewed public source-distribution links. For production installation, use
+the private 0.5.2 and 0.1.2 package and tag links above instead.
 
 After this repository's marketplace is approved and published, open GitHub
 Copilot App **Customize → Plugins**, use the marketplace gear to add

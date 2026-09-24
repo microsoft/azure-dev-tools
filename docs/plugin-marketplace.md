@@ -31,7 +31,7 @@ copilot skill list
 
 Use this repository's [production package catalog](../README.md) or the
 source-qualified production tag when following install instructions. The
-earlier immutable canvas package READMEs retain public
+older immutable 0.5.1/0.1.1 canvas package READMEs retain public
 source-distribution links, **not** this repository's
 production installation target. Native App installation from this
 marketplace has not yet been verified.
@@ -53,9 +53,28 @@ can build or that native activation was verified.
 
 ## Production release gate
 
-The canvas patches must match their independently reviewed source exports
-and checksum receipts. The original separately reviewed builder came from
-approved source merge
+The canvas patches come from independently reviewed source export merge
+`8af10f8408f69f45fb5137e9b8f5d746f40bc85e`
+(reviewed head `cf1776327462b2ca41cec5bfe269ef9d5155df96`;
+their Git trees match). Hosted 0.5.2 retains the complete previously
+released customer guide as a **private documentation-only overlay**: the
+approved source export's shortened README digest was
+`ef2bdf45b64844b7e5b25f87576dc783112a5e83d4be0225e55cb3fefcc68bb3`,
+while the production README digest is
+`1c948c7ea052b7756ed42c1f04781e05dfa331b4dc8b5f694c16704ae0434d5c`.
+Only `README.md` and `checksums.json` differ among the approved 48 Hosted
+export files; the production package also includes a new in-package
+`SHA256SUMS`. The runtime, manifest, skills and templates remain
+source-identical. The original source receipt
+digest was `7bc1f9cd96bee2b06ccb4b91d145f953b4909309a707a3ed966b35bc5852f7e1`;
+the 48-file production receipt digest is
+`390ed2a003358a9e9125ec7bf593abaae87e3ff13207a298881b8e997ca76873`.
+ARG's 98-file production receipt digest is
+`789c6e79c18ebbb988af24b97b63d8ced12267c62623c460a4bc822d0fea68cb`;
+the builder's 26-file patch receipt digest is
+`d66a82894955dcac9ea072143524c718ea49728d3c947224acdb5fa30fe63c02`.
+
+The original separately reviewed builder came from approved source merge
 `23aa6b19a50aca470c759f04f5c657481f6e2d6a` (export receipt
 `332cafd2605df299bd4159655b746baeb75a3e7e0392d473e2bae3d2d5c6a7ab`);
 the production builder retains 22/26 source files byte-for-byte. Its four
@@ -68,7 +87,8 @@ README checksum), and `skills/create-canvas-app/references/toolkit/quickstart.md
 `plugins/canvas-authoring/`. The original product PRs and marketplace
 catalog are merged and their immutable tags published. This patch release
 replaces the obsolete builder release hold and corrects the canvas packages'
-production install destinations using separately reviewed source exports;
+production install destinations using separately reviewed source exports
+plus the disclosed Hosted customer-guide overlay;
 its three new immutable tags must not be published before merge. Each
 builder version's 26 plugin bytes have their own pinned receipt in
 `docs/canvas-authoring/SHA256SUMS`. Native marketplace/App installation
@@ -115,9 +135,9 @@ profile for smoke tests or mistake that local test for remote App verification.
 For a reproducible full-plugin CLI install, check out the exact published
 source-qualified production version tag in `microsoft/azure-dev-tools` and
 install its local `./canvases/<product>` or `./plugins/canvas-authoring`
-directory with
-`copilot plugin install`. The byte-identical package READMEs retain public
-source-repository links; those links do not identify private production tags.
+directory with `copilot plugin install`. Older immutable 0.5.1/0.1.1 package
+READMEs retain public source-repository links; use the corrected private
+patch READMEs instead.
 Direct CLI installs currently warn that this form may be deprecated in a
 future release.
 The separate App **Customize → Canvases → Install from gist/URL** path is a

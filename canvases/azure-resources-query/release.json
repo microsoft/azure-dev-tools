@@ -2,7 +2,8 @@
   "schemaVersion": 1,
   "format": "plugin",
   "name": "azure-resources-query",
-  "version": "0.1.1",
+  "version": "0.1.2",
+  "publicationRepository": "microsoft/azure-dev-tools",
   "plugin": {
     "manifest": ".github/plugin/plugin.json",
     "extension": {
@@ -131,8 +132,8 @@
   },
   "build": {
     "esbuild": "0.25.12",
-    "lockSha256": "42ef2c44ce0a027c1573fb23678234124f7c1f7c24fcca372dcb755845de5167",
-    "inputSha256": "4c75fb9d750b5e1a9f6efba3800ce98759efc14888ed328d69624e7990e5e34d"
+    "lockSha256": "e2830a779ca54208d42c61ff4ed355980c26f28954f49d55fb58527b64c31676",
+    "inputSha256": "3fb90cf086d5b9da4d0dc7800865e347a85f5680248378272ebb5ebeae7d878d"
   },
   "dependencies": [
     {

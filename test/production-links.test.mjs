@@ -66,6 +66,16 @@ test("current builder install and bundled quickstart do not claim an active rele
   }
 });
 
+test("Hosted customer guide retains its install, launch, and first-run instructions", () => {
+  const readme = readFileSync(new URL("canvases/azure-functions-hosted-skills/README.md", root), "utf8");
+  assert.match(readme, /Build and run Hosted Skills in a local Azure Function App/);
+  for (const heading of ["Install", "Prerequisites", "First local run", "Invoke an existing Azure Function App"]) {
+    assert.ok(readme.includes(`## ${heading}\n`), `Hosted guide missing ${heading}`);
+  }
+  assert.match(readme, /Open Azure Functions Hosted Skills canvas/);
+  assert.match(readme, /https:\/\/github\.com\/microsoft\/azure-dev-tools\/blob\/azure-functions-hosted-skills-latest\/canvases\/azure-functions-hosted-skills\/README\.md/);
+});
+
 test("new canvas patch tags retain production support documentation", () => {
   for (const [name, version] of [
     ["azure-functions-hosted-skills", "0-5-2"],

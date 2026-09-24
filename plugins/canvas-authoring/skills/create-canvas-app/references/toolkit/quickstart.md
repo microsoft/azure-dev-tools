@@ -11,19 +11,16 @@ activation; the companion adds toolkit setup.
 
 - A canvas-capable GitHub Copilot host with its `create-canvas` skill.
 - Node.js 22+ (24 recommended) and npm.
-- A toolkit version with `@microsoft/canvas-toolkit/build`, or a compatible
-  local `.tgz`. See [package setup](README.md#setup-and-exports).
+- The exact published `@microsoft/canvas-toolkit@0.1.0-preview.2` with
+  `@microsoft/canvas-toolkit/build`, or an approved compatible local `.tgz`.
+  If the npm version or `/build` export is unavailable, stop; a local tarball
+  is a separately labeled development path. See [package setup](README.md#setup-and-exports).
 - For live reads, Azure CLI 2.61+ on the provider's PATH and permission to
   read resource groups in your chosen subscription.
 
-**Release hold:** The production companion is an unreleased candidate. Do not
-install it from the current production branch. Wait for an approved merge, a
-verified source-qualified immutable product tag and install target, and a
-published toolkit version that exports `@microsoft/canvas-toolkit/build`.
-Use the exact published `@microsoft/canvas-toolkit@0.1.0-preview.2`;
-`0.1.0-preview.1` does not have that export. If a package mirror is behind,
-use npmjs.org for the generated app's npm command, not a global config change.
-After those gates are met, install the companion from its approved distribution:
+Install the companion from the released private `microsoft/azure-dev-tools`
+distribution after the 0.1.1 package is published (native App/CLI installation
+of that patch has not yet been verified):
 
 ```sh
 copilot plugin install microsoft/azure-dev-tools:plugins/canvas-authoring

@@ -87,9 +87,9 @@ create a second user extension link, or install npm dependencies.
 If recovery fails, report the actual error and give the full-plugin
 reinstallation steps, then stop:
 
-1. When the public `Azure/azure-dev-tools` marketplace lists version 0.5.1,
+1. When the `microsoft/azure-dev-tools` marketplace lists version 0.5.2,
    use GitHub Copilot **Customize → Plugins → marketplace gear → add
-   `Azure/azure-dev-tools` (ID `azure-dev-tools`) → install Azure Functions
+   `microsoft/azure-dev-tools` (ID `azure-dev-tools`) → install Azure Functions
    Hosted Skills**. This installs the canvas and both launcher skills.
 2. Fully quit and reopen GitHub Copilot, start a fresh chat, and confirm
    `azure-functions-hosted-skills-canvas` and
@@ -97,20 +97,20 @@ reinstallation steps, then stop:
 3. Open **Azure Functions Hosted Skills Preview** in a fresh project chat.
 
 After marketplace publication, the equivalent CLI commands are
-`copilot plugin marketplace add Azure/azure-dev-tools` and
+`copilot plugin marketplace add microsoft/azure-dev-tools` and
 `copilot plugin install azure-functions-hosted-skills@azure-dev-tools`.
 If the marketplace is not listed yet, optionally install the full plugin from
-the exact published immutable 0.5.1 versioned/source-qualified tag: set
+the exact published immutable 0.5.2 versioned/source-qualified tag: set
 `HOSTED_SKILLS_TAG` to
-`azure-functions-hosted-skills-v0-5-1-<source-qualifier>` with the release's
+`azure-functions-hosted-skills-v0-5-2-<source-qualifier>` with the release's
 exact qualifier, then run
-`git clone --depth 1 --branch "$HOSTED_SKILLS_TAG" https://github.com/Azure/azure-dev-tools.git azure-functions-hosted-skills-plugin`
+`git clone --depth 1 --branch "$HOSTED_SKILLS_TAG" https://github.com/microsoft/azure-dev-tools.git azure-functions-hosted-skills-plugin`
 and
 `copilot plugin install ./azure-functions-hosted-skills-plugin/canvases/azure-functions-hosted-skills`.
 
 > **Canvas-only fallback:** If the full plugin is unavailable, use
 > **Customize → Canvases → Install from gist/URL** with the nested
-> `https://github.com/Azure/azure-dev-tools/tree/azure-functions-hosted-skills-latest/canvases/azure-functions-hosted-skills/extensions/azure-functions-hosted-skills`
+> `https://github.com/microsoft/azure-dev-tools/tree/azure-functions-hosted-skills-latest/canvases/azure-functions-hosted-skills/extensions/azure-functions-hosted-skills`
 > URL. The `-latest` tag is movable. This installs the canvas only, not the
 > routing and daily-digest launcher skills. New apps still receive the
 > required `.funcignore` exclusions; unsafe deployment is refused.
