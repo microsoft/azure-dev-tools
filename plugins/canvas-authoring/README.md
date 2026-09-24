@@ -15,7 +15,7 @@ native `create-canvas` workflow.
 
 ## Install
 
-**Release hold:** This builder is a draft candidate, not a released plugin.
+**Release hold:** This builder is an unreleased candidate, not a released plugin.
 Do not run the command below against the current production branch. First
 require an approved production merge, a verified source-qualified immutable
 product tag and installation target, and a compatible published toolkit

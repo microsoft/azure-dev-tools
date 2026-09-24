@@ -16,7 +16,7 @@ activation; the companion adds toolkit setup.
 - For live reads, Azure CLI 2.61+ on the provider's PATH and permission to
   read resource groups in your chosen subscription.
 
-**Release hold:** The production companion is only a draft candidate. Do not
+**Release hold:** The production companion is an unreleased candidate. Do not
 install it from the current production branch. Wait for an approved merge, a
 verified source-qualified immutable product tag and install target, and a
 published toolkit version that exports `@microsoft/canvas-toolkit/build`.

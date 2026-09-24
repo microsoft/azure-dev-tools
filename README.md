@@ -28,7 +28,7 @@ and document prerequisites and a canvas-only URL fallback; that fallback
 does not install companion skills. Do not treat a proposed package as released
 until the approved production merge and version tags are verified.
 
-## Canvas authoring companion (draft)
+## Canvas authoring companion (release candidate)
 
 [`plugins/canvas-authoring/`](plugins/canvas-authoring/) is a separate,
 skills-only builder proposal with a counter and read-only Azure resource-group
