@@ -28,6 +28,11 @@ and document prerequisites and a canvas-only URL fallback; that fallback
 does not install companion skills. Do not treat a proposed package as released
 until the approved production merge and version tags are verified.
 
+## Planned
+
+Azure SRE Agent is planned; no package or installation asset is available in
+this repository.
+
 ## Get involved
 
 Watch this repository for updates and see [CONTRIBUTING.md](CONTRIBUTING.md)
