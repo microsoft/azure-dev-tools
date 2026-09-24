@@ -7,6 +7,9 @@ import {
   verifyMarketplace,
   verifyPlugin,
   verifyPreviousReleaseCommits,
+  verifyReceiptPin,
+  verifyRuntimeInventory,
+  verifySubsequentReleaseCommit,
   verifyTagSource,
 } from "../scripts/verify-plugin-marketplace.mjs";
 
@@ -35,13 +38,21 @@ test("requires release tags for full verification, then checks all three plugins
 });
 
 test("rejects missing products and duplicate entries", () => {
-  assert.throws(() => verifyMarketplace(modified((m) => m.plugins.pop())), /exactly the two Azure canvas plugins and the skill-only builder/);
+  assert.throws(() => verifyMarketplace(modified((m) => m.plugins.pop())), /exactly the reviewed production products/);
   assert.throws(() => verifyMarketplace(modified((m) => {
     m.plugins[1] = structuredClone(m.plugins[0]);
-  })), /exactly the two Azure canvas plugins and the skill-only builder/);
+  })), /exactly the reviewed production products/);
   assert.throws(() => verifyMarketplace(modified((m) => {
     m.plugins.push({ name: "unapproved-plugin", version: "1.0.0", source: "canvases/unapproved-plugin" });
-  })), /exactly the two Azure canvas plugins and the skill-only builder/);
+  })), /exactly the reviewed production products/);
+});
+
+test("does not advertise either unreviewed Cost Health identity", () => {
+  for (const name of ["azure-cost-health-check-v3", "azure-cost-health-check"]) {
+    assert.throws(() => verifyMarketplace(modified((m) => {
+      m.plugins.push({ name, version: "0.4.3", source: `canvases/${name}` });
+    })), /exactly the reviewed production products/);
+  }
 });
 
 test("rejects remote, moving, and cross-product sources", () => {
@@ -107,8 +118,10 @@ test("target tags must identify the independently reviewed patch source merge", 
 });
 
 test("three patch tags share one new commit and old tags retain exact historical commits", () => {
-  assert.doesNotThrow(() => verifyCombinedReleaseCommits(["abc", "abc", "abc"]));
+  const combinedPatchCommit = "a6d394bbaa6fb1dc0151257a85cbac0de772b138";
+  assert.doesNotThrow(() => verifyCombinedReleaseCommits(Array(3).fill(combinedPatchCommit)));
   assert.throws(() => verifyCombinedReleaseCommits(["abc", "abc", "def"]), /same reviewed production merge/);
+  assert.throws(() => verifyCombinedReleaseCommits(["abc", "abc", "abc"]), /moved from their reviewed commit/);
   assert.throws(() => verifyCombinedReleaseCommits(["abc"]), /same reviewed production merge/);
   assert.throws(() => verifyCombinedReleaseCommits(["abc", "abc"]), /same reviewed production merge/);
   const previous = {
@@ -123,4 +136,47 @@ test("three patch tags share one new commit and old tags retain exact historical
   assert.throws(() => verifyPreviousReleaseCommits({
     ...previous, "canvas-authoring-v0-1-0-23aa6b1": undefined,
   }), /moved or are missing/);
+});
+
+test("a later product release has a distinct merge descending from the combined patch", () => {
+  const earlierCommit = execFileSync("git", [
+    "rev-parse", "canvas-authoring-v0-1-0-23aa6b1^{commit}",
+  ], { encoding: "utf8" }).trim();
+  const patchCommit = execFileSync("git", [
+    "rev-parse", "azure-resources-query-v0-1-2-8af10f8^{commit}",
+  ], { encoding: "utf8" }).trim();
+  assert.doesNotThrow(() => verifySubsequentReleaseCommit(earlierCommit, patchCommit));
+  assert.throws(() => verifySubsequentReleaseCommit("HEAD", "HEAD"), /own reviewed merge commit/);
+  assert.throws(() => verifySubsequentReleaseCommit(patchCommit, earlierCommit), /descend from the prior/);
+});
+
+test("every product must pin its reviewed receipt scope before publication", () => {
+  const receipt = {
+    receipt: "canvases/unreleased-canvas/SHA256SUMS",
+    receiptSha256: "a".repeat(64),
+    receiptCount: 32,
+  };
+  assert.doesNotThrow(() => verifyReceiptPin(receipt));
+  for (const incomplete of [
+    { ...receipt, receipt: undefined },
+    { ...receipt, receiptSha256: undefined },
+    { ...receipt, receiptSha256: "unreviewed" },
+    { ...receipt, receiptCount: undefined },
+    { ...receipt, receiptCount: 0 },
+  ]) {
+    assert.throws(() => verifyReceiptPin(incomplete), /checksum receipt pin/);
+  }
+});
+
+test("legacy tagged canvas runtime inventories do not load mutable documentation", () => {
+  for (const [name, version] of [
+    ["azure-functions-hosted-skills", "0-5-2"],
+    ["azure-resources-query", "0-1-2"],
+  ]) {
+    const tag = `${name}-v${version}-8af10f8`;
+    const release = JSON.parse(execFileSync("git", [
+      "show", `${tag}:canvases/${name}/release.json`,
+    ], { encoding: "utf8" }));
+    assert.doesNotThrow(() => verifyRuntimeInventory(release), tag);
+  }
 });
