@@ -95,7 +95,10 @@ For the 0.5.3 Hosted Skills and 0.1.3 Azure Resources Query candidates, the
 Agent Plugins v1 manifests, protected previews, namespaced extensions, and
 complete new in-package `SHA256SUMS` receipts are verified with
 `node scripts/verify-plugin-marketplace.mjs --candidate` on the candidate
-commit. Strict verification without `--candidate` still requires real new
+commit. Hosted preserves the full customer guide as a disclosed
+documentation-only README overlay, with its updated checksum and receipt;
+the runtime, skills, manifest and release metadata remain source-identical.
+Strict verification without `--candidate` still requires real new
 immutable tags after an approved merge. The 0.5.2/0.1.2 tags and their original
 receipts remain unchanged; do not replace those tags with synthetic candidates.
 

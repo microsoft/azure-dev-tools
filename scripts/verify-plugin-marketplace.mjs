@@ -18,7 +18,7 @@ const packages = {
     version: "0.5.3",
     sha: "b3551729b5d1e6377283efd1a012fa523e0c8aac",
     receipt: "canvases/azure-functions-hosted-skills/SHA256SUMS",
-    receiptSha256: "96448262b1628003867dec4d5314e638a4c8c56c49816bc7f71778d8439296e0",
+    receiptSha256: "264259ca3530ffeeb97bd52fd704ee3767a563eb5c71a0d0e806200cd80225ad",
     receiptCount: 49,
   },
   "azure-resources-query": {

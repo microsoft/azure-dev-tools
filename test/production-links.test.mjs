@@ -82,13 +82,20 @@ test("current builder install and bundled quickstart do not claim an active rele
   }
 });
 
-test("Hosted customer guide identifies its plugin install, skills, and nested canvas fallback", () => {
+test("Hosted customer guide retains installation, launch, first-run, and safety instructions", () => {
   const readme = readFileSync(new URL("canvases/azure-functions-hosted-skills/README.md", root), "utf8");
-  assert.match(readme, /^## Install the full plugin$/m);
+  assert.match(readme, /Build and run Hosted Skills in a local Azure Function App/);
+  for (const heading of ["Install", "Prerequisites", "First local run", "Invoke an existing Azure Function App", "Troubleshooting", "Safety and authentication"]) {
+    assert.ok(readme.includes(`## ${heading}\n`), `Hosted guide missing ${heading}`);
+  }
   assert.match(readme, /copilot plugin install azure-functions-hosted-skills@azure-dev-tools/);
   assert.match(readme, /azure-functions-hosted-skills-canvas/);
   assert.match(readme, /azure-functions-hosted-skills-github-daily-digest/);
   assert.match(readme, /https:\/\/github\.com\/microsoft\/azure-dev-tools\/tree\/azure-functions-hosted-skills-latest\/canvases\/azure-functions-hosted-skills\/com\.github\.copilot\/extensions\/azure-functions-hosted-skills/);
+  assert.match(readme, /https:\/\/github\.com\/microsoft\/azure-dev-tools\/blob\/azure-functions-hosted-skills-latest\/canvases\/azure-functions-hosted-skills\/README\.md/);
+  assert.match(readme, /^Open Azure Functions Hosted Skills canvas$/m);
+  assert.match(readme, /^1\. Select \*\*Local Function App\*\*/m);
+  assert.match(readme, /^1\. Select \*\*Azure Function App\*\*/m);
   assert.match(readme, /This installs the canvas only, not the/);
 });
 

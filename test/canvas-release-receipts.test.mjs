@@ -26,7 +26,7 @@ const versions = {
 
 for (const [name, version, count, receiptHash] of [
   ["azure-functions-hosted-skills", "0.5.3", 49,
-    "96448262b1628003867dec4d5314e638a4c8c56c49816bc7f71778d8439296e0"],
+    "264259ca3530ffeeb97bd52fd704ee3767a563eb5c71a0d0e806200cd80225ad"],
   ["azure-resources-query", "0.1.3", 99,
     "e33be5430a138e6005781c24153e9e434f311b44ebfd1c219ae242e0079ac05b"],
 ]) {

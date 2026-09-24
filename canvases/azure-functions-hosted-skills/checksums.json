@@ -40,7 +40,7 @@
   "com.github.copilot/extensions/azure-functions-hosted-skills/templates/hosted-skill/src/host.json": "72e7cced040dfe2f556abc05834550497afb1ca62d06cc744d17a58350ad1ef9",
   "com.github.copilot/extensions/azure-functions-hosted-skills/templates/hosted-skill/src/requirements.txt": "fd54776c7924fb24d7e79ebe237521168c505773b6c75ca897c71ceefc09dc95",
   "package.json": "ca62654cd60971c4c5d072cb8ccbabbb11f39f635cc80c26bb30110159631d31",
-  "README.md": "55e3be5146879f63e9a208281ce117111ae147c21adefb5eb3f6dbb61b689c82",
+  "README.md": "01062e9307049145b615e07304f023924f391fa967592d77a19908e8a54232ed",
   "release.json": "c94fd932c0d7e1c629603b894b4a3b385a630292c85ba7fe354a1e2fff12194d",
   "skills/azure-functions-hosted-skills-canvas/resolve-canvas-launch.mjs": "6560bf796abf3a8c8bf84962af88300f5740ab6ef90384732ee7b5314a516fa6",
   "skills/azure-functions-hosted-skills-canvas/SKILL.md": "a64cab29bdae4c254bdab855fed60e38fb2f721df5ce68a7cfe17ee99eab3b25",

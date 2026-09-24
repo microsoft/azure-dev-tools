@@ -90,7 +90,19 @@ in a clean detached checkout. The generated Agent Plugins manifests use
 at `assets/preview.png`, and executable extensions under
 `com.github.copilot/extensions/<product>/extension.mjs`. Hosted's
 [49-file receipt](../canvases/azure-functions-hosted-skills/SHA256SUMS) has
-SHA-256 `96448262b1628003867dec4d5314e638a4c8c56c49816bc7f71778d8439296e0`;
+SHA-256 `264259ca3530ffeeb97bd52fd704ee3767a563eb5c71a0d0e806200cd80225ad`.
+Hosted retains the previously released complete customer guide as a
+**disclosed README-only documentation overlay**, updated for version 0.5.3
+and the namespaced extension URL. Its source-generated README digest is
+`55e3be5146879f63e9a208281ce117111ae147c21adefb5eb3f6dbb61b689c82`;
+the private README digest is
+`01062e9307049145b615e07304f023924f391fa967592d77a19908e8a54232ed`.
+The corresponding `checksums.json` digest changes from source
+`3cfc3da3519f0bd7e0b33f00dca885a62c8eb7f1e1797ee0790b245bd50970fc`
+to private `7ac6a3d8b24083b656066ad3561ff1a485ad7fde2e9b177d9d6c289fe17d97ef`.
+All other 47 source-generated Hosted files, including extension runtime,
+skills, preview, notices, release metadata and manifest, remain byte-identical;
+the private package adds only its in-package `SHA256SUMS`.
 ARG's [99-file receipt](../canvases/azure-resources-query/SHA256SUMS) has
 SHA-256 `e33be5430a138e6005781c24153e9e434f311b44ebfd1c219ae242e0079ac05b`.
 Run `node scripts/verify-plugin-marketplace.mjs --candidate` on a committed
