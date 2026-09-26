@@ -33,8 +33,11 @@ test("legacy tagged receipts stay historical while each product's docs change on
     copyFileSync(join(root, verifier), join(clone, verifier));
     git("config", "user.name", "Release policy test");
     git("config", "user.email", "release-policy@example.invalid");
-    git("tag", "azure-cost-health-check-v0-4-3-b355172", "HEAD");
-    assert.doesNotThrow(verify, "all four products pass with a local-only synthetic Cost tag");
+    const costTag = "azure-cost-health-check-v0-4-3-b355172";
+    if (!git("tag", "-l", costTag)) {
+      git("tag", costTag, "HEAD");
+    }
+    assert.doesNotThrow(verify, "all four products pass with the reviewed or local-only synthetic Cost tag");
 
     for (const path of products) {
       const readme = join(clone, path, "README.md");
