@@ -4,6 +4,10 @@ Build and run a local Hosted Skill, or invoke a supported function in an
 existing Azure Function App. Start with a Timer, HTTP, or Queue trigger and
 inspect its output in the canvas.
 
+![Hosted Skills Copilot canvas showing a repository parameter, Timer invocation, and sample GitHub digest response.](docs/preview.png)
+
+*GitHub Copilot canvas browser fixture: sample repository activity, not a live GitHub or Azure result.*
+
 ## Install
 
 **Install the full plugin.** The production marketplace currently lists the
