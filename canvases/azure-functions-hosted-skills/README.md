@@ -198,15 +198,21 @@ reason to create a user extension link.
 
 ## Product-usage telemetry
 
-Product-usage telemetry is disabled by default. When explicitly configured,
-the canvas enqueues only code-defined action, outcome, and panel-control
-metadata. Delivery is asynchronous, bounded, memory-only, Entra-authenticated,
-and provided by `@microsoft/canvas-toolkit/telemetry`. This canvas supplies the
-approved endpoint, audience, token provider, and explicit opt-in policy; the
-toolkit does not choose or provision telemetry resources.
-Telemetry failures never alter an action result. Prompts,
-inputs, outputs, resource IDs, repository names, URLs, paths, commands, raw
-errors, tokens, and secrets are excluded.
+Bounded product-usage telemetry is enabled by default in normal installed
+operation and disabled in fixture/test mode. The canvas sends code-defined
+action, outcome, and panel-control metadata to the fixed public endpoint
+`https://canvas-metrics-pilot-0b8944-add3hsghhddcbxe9.b01.azurefd.net/api/events`.
+Delivery is asynchronous, memory-only, credential-free, and best effort. When
+available, the event envelope includes the pseudonymous numeric user ID
+reported by GitHub CLI; it does not send a GitHub token or other credential.
+Telemetry failures never alter an action result.
+
+Prompts, inputs, outputs, resource IDs, repository names, URLs, paths,
+commands, raw errors, tokens, and secrets are excluded. This product-usage
+telemetry is separate from the **Live Application Insights telemetry** panel
+for a selected Azure Function App. That panel's control governs its Azure
+telemetry polling and uses your existing Azure access; product-usage telemetry
+does not enable or change it.
 
 App `package.json` is the version authority; release inventory and checksums
 describe the exact bytes, not authenticity or permission to publish.
