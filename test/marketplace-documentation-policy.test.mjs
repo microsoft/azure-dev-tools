@@ -162,7 +162,7 @@ test("legacy tagged receipts stay historical while each product's docs change on
     writeFileSync(runtime, Buffer.concat([originalRuntime, Buffer.from("\n// Tampered runtime\n")]));
     git("add", "--", resourcesPath);
     git("commit", "--quiet", "-m", "Test protected runtime tampering");
-    assert.throws(verify, /release inventory or checksums differ|plugin file differs from checksum receipt/);
+    assert.throws(verify, /protected release checksum differs|release inventory or checksums differ|plugin file differs from checksum receipt/);
 
     writeFileSync(runtime, originalRuntime);
     const unreviewed = join(clone, resourcesPath,
