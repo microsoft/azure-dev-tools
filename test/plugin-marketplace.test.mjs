@@ -72,6 +72,7 @@ test("candidate validates every reviewed package and omits only missing immutabl
     assert.equal(results[index], `${name}@${version} ${tags[0] ?? "(candidate; immutable tag pending)"}`);
   }
   assert.match(results[2], /canvas-authoring-v0-1-1-8af10f8/);
+  assert.match(results[4], /azure-sre-agent@0\.2\.7 azure-sre-agent-v0-2-7-9da2e40/);
 });
 
 test("candidate rejects corrupted protected payloads and checksum receipts", () => {
