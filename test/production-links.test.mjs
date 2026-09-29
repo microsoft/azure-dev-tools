@@ -121,6 +121,7 @@ test("Hosted customer guide retains installation, launch, first-run, and safety 
   assert.match(readme, /Remote invocation sends a real\s+request.*requires your confirmation/);
   assert.match(readme, /\[installation notes\]\(docs\/advanced\.md\)/);
   assert.match(advanced, /git clone --depth 1 --branch "\$HOSTED_SKILLS_TAG" https:\/\/github\.com\/microsoft\/azure-dev-tools\.git/);
+  assert.match(advanced, new RegExp(`azure-functions-hosted-skills-v${manifest.plugins[0].version.replaceAll(".", "-")}-[0-9a-f]{7,40}`));
   assert.match(advanced, /azure-functions-hosted-skills-canvas/);
   assert.match(advanced, /azure-functions-hosted-skills-github-daily-digest/);
   assert.match(advanced, /com\.github\.copilot\/extensions\/azure-functions-hosted-skills/);
@@ -134,6 +135,7 @@ test("customer guides link to full-plugin and canvas-only installation instructi
     const advanced = readFileSync(new URL(`canvases/${name}/docs/advanced.md`, root), "utf8");
     assert.match(readme, /\[installation (?:notes|alternatives)\]\(docs\/advanced\.md\)/);
     assert.match(advanced, /git clone --depth 1 --branch/);
+    assert.match(advanced, new RegExp(`${name}-v${manifest.plugins.find((plugin) => plugin.name === name).version.replaceAll(".", "-")}-[0-9a-f]{7,40}`));
     assert.match(advanced, new RegExp(`${name}-latest`));
     assert.match(advanced, new RegExp(`com\\.github\\.copilot/extensions/${name}`));
     assert.match(advanced, /canvas only|only the canvas extension/i);

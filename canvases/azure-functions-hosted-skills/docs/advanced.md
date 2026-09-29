@@ -2,7 +2,7 @@
 
 ## Install the full plugin
 
-When the `microsoft/azure-dev-tools` marketplace lists version 0.5.3,
+When the `microsoft/azure-dev-tools` marketplace lists version 0.5.4,
 use GitHub Copilot **Customize → Plugins → marketplace gear → add
 `microsoft/azure-dev-tools` (ID `azure-dev-tools`) → install Azure Functions
 Hosted Skills**. This installs the canvas and both launcher skills. Fully quit
@@ -18,9 +18,9 @@ copilot plugin install azure-functions-hosted-skills@azure-dev-tools
 ```
 
 If the marketplace is not listed yet, optionally install the full plugin from
-the exact immutable 0.5.3 versioned/source-qualified tag supplied with the
+the exact immutable 0.5.4 versioned/source-qualified tag supplied with the
 release. Set `HOSTED_SKILLS_TAG` to that published
-`azure-functions-hosted-skills-v0-5-3-<source-qualifier>` tag first:
+`azure-functions-hosted-skills-v0-5-4-7f215a8` tag first:
 
 ```sh
 git clone --depth 1 --branch "$HOSTED_SKILLS_TAG" https://github.com/microsoft/azure-dev-tools.git azure-functions-hosted-skills-plugin
