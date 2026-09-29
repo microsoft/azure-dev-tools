@@ -170,7 +170,7 @@ test("legacy tagged receipts stay historical while each product's docs change on
     writeFileSync(unreviewed, "export const unreviewed = true;\n");
     git("add", "--", resourcesPath);
     git("commit", "--quiet", "-m", "Test protected file addition");
-    assert.throws(verify, /release inventory or checksums differ|checksum receipt must cover/);
+    assert.throws(verify, /mutable-document release metadata must enumerate only protected payload and notices|release inventory or checksums differ|checksum receipt must cover/);
 
     rmSync(unreviewed);
     const receipt = join(clone, resourcesPath, "SHA256SUMS");
