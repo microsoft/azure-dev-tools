@@ -12,7 +12,7 @@ Azure Function App and invoke a supported deployed function.
 If your GitHub Copilot host shows the **awesome-copilot** marketplace, open
 **Customize → Plugins** and install **Azure Functions Hosted Skills**. The
 [listed 0.5.3 package](https://github.com/microsoft/azure-dev-tools/tree/a873dfa42ce8e4420b77e94ddca896e8771e3b0c/canvases/azure-functions-hosted-skills)
-is not this 0.5.4 candidate. The full plugin installs
+is not this 0.5.5 candidate. The full plugin installs
 the canvas and both launcher skills. If the marketplace is missing, add it first:
 
 ```sh

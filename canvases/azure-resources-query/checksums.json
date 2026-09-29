@@ -1,5 +1,5 @@
 {
-  ".github/plugin/plugin.json": "ae100b7ad3b04325836852e95813ff1c70efc0adf2650d772f743c1d11e8d6da",
+  ".github/plugin/plugin.json": "9457ea1854709c12c5c1ca7e76611151e8a2696124c348f36f95665422fd7821",
   "assets/preview.png": "9bf99096a6596000325f426189fd5953afd87c89dc5511ad6bc45bafe9c572c8",
   "com.github.copilot/extensions/azure-resources-query/assets/Resource-Graph-Explorer.provenance.json": "8e7c523673ecc0d5ba9d5281ab3e4f749d64c86ce73da931e5131e8227ec489f",
   "com.github.copilot/extensions/azure-resources-query/assets/Resource-Graph-Explorer.svg": "6e9262653086bd4e83184ba6abb2e8b39a29e676107540c1fcfa41b4c8c0db37",
@@ -90,9 +90,9 @@
   "com.github.copilot/extensions/azure-resources-query/ui/client.js": "3513f476c7766fe3f787537952e2c31b723564e21d9ac506b05e042d664059e1",
   "com.github.copilot/extensions/azure-resources-query/ui/index.html": "fe7ef0b96fe9c486b855f3fac674fe5f736039c4d3f55b38cf4e267c49f61009",
   "com.github.copilot/extensions/azure-resources-query/ui/styles.css": "c424c33aea3a91d55c66181403f555d949da62d0b1593f8769c3cecd5cfd029b",
-  "package.json": "4ebe325e5bbdd551643fb4f69e76e789156e4db9bdfafb1e117e3771a467c2e2",
-  "release.json": "ad881da169e258cb8780e6d89997bcb1aed40ec657f78aa396db31ad713d7412",
+  "package.json": "5d8ec8b56f6019771cb06da1f4552d557a70c7b24506f4a764ea9a64d225797d",
+  "release.json": "4f422aa60a6d5b467fdf74acb325051e8d7c18b7e6a98bffc3c46723768d31cc",
   "skills/azure-resources-query/resolve-canvas-launch.mjs": "bffc9f0a955a46883d6e0e1f8485103145746674761ccff961c42ae2a57821a1",
-  "skills/azure-resources-query/SKILL.md": "98b2e42938cddfa5b49ed449e1a63d2751766e1211282fba45c1d424f80663e1",
+  "skills/azure-resources-query/SKILL.md": "9b2e11ab65e7d32964a478118cb70fa97a36869388b7374e374053f5e6ea0bc9",
   "THIRD_PARTY_NOTICES.txt": "363c021bc17477e3d37da3b1875d81d1bdf61137f005957de2be8b137d892e57"
 }

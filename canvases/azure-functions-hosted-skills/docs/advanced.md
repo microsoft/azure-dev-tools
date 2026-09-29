@@ -21,12 +21,13 @@ For an exact version (or if the marketplace is unavailable), choose a
 published immutable tag from the
 [tag list](https://github.com/microsoft/azure-dev-tools/tags) starting with
 `azure-functions-hosted-skills-v`. Copy the complete name, including its
-source qualifier, and paste it when prompted. For an exact 0.5.4 pin, wait
+source qualifier, and paste it when prompted. For an exact 0.5.5 pin, wait
 until its tag appears in that list; a planned tag is not an installable ref:
 
 ```sh
 printf 'Paste the full versioned Azure Functions Hosted Skills tag: '
 read -r HOSTED_SKILLS_TAG
+git ls-remote --exit-code --refs --tags https://github.com/microsoft/azure-dev-tools.git "refs/tags/$HOSTED_SKILLS_TAG" >/dev/null || { printf 'Tag is not published in production\n' >&2; exit 1; }
 git clone --depth 1 --branch "$HOSTED_SKILLS_TAG" https://github.com/microsoft/azure-dev-tools.git azure-functions-hosted-skills-plugin
 copilot plugin install ./azure-functions-hosted-skills-plugin/canvases/azure-functions-hosted-skills
 ```

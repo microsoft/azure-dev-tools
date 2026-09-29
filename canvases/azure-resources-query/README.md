@@ -11,8 +11,8 @@ the panel, and add selected resources to chat without dumping an inventory.
 
 If your GitHub Copilot host shows the **awesome-copilot** marketplace, open
 **Customize → Plugins** and install **Azure Resources Query**. The
-[listed 0.1.3 package](https://github.com/microsoft/azure-dev-tools/tree/a873dfa42ce8e4420b77e94ddca896e8771e3b0c/canvases/azure-resources-query)
-is not this 0.1.4 candidate.
+[0.1.3 production package](https://github.com/microsoft/azure-dev-tools/tree/a873dfa42ce8e4420b77e94ddca896e8771e3b0c/canvases/azure-resources-query)
+is an earlier build; check the marketplace listing for the version it offers now.
 This installs the full plugin: the canvas and its launcher skill.
 If the marketplace is missing, add it first:
 

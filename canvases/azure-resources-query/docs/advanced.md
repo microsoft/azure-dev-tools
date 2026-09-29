@@ -29,7 +29,7 @@ Check **Plugin skills** for the Azure Resources Query launcher skill.
 
 From the [tag list](https://github.com/microsoft/azure-dev-tools/tags),
 choose a published immutable tag starting with `azure-resources-query-v` and
-copy the complete name, including its source qualifier. For an exact 0.1.4
+copy the complete name, including its source qualifier. For an exact 0.1.5
 pin, wait until its tag appears in that list; a planned tag is not an
 installable ref. The `azure-resources-query-latest` tag moves and is not an
 exact pin. Paste the published versioned tag when prompted; this terminal path
