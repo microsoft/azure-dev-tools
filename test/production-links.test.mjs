@@ -144,6 +144,25 @@ test("customer guides link to full-plugin and canvas-only installation instructi
   }
 });
 
+for (const skill of [
+  "azure-functions-hosted-skills-canvas",
+  "azure-functions-hosted-skills-github-daily-digest",
+]) {
+  test(`${skill} recovery does not pin the unpublished 0.5.3 release`, () => {
+    const path = `canvases/azure-functions-hosted-skills/skills/${skill}/SKILL.md`;
+    const content = readFileSync(new URL(path, root), "utf8");
+    assert.ok(!/(?:version\s+0\.5\.3|azure-functions-hosted-skills-v0-5-3-)/.test(content),
+      `${path}: recovery must not depend on the unpublished 0.5.3 release`);
+  });
+}
+
+test("Resources recovery does not claim a released package is still a candidate", () => {
+  const path = "canvases/azure-resources-query/skills/azure-resources-query/SKILL.md";
+  const content = readFileSync(new URL(path, root), "utf8");
+  assert.ok(!/this is a packaged candidate,\s+not a publicly released marketplace install/i.test(content),
+    `${path}: recovery must not claim a released package is still a candidate`);
+});
+
 test("new canvas patch tags retain production support documentation", () => {
   for (const [name, version] of [
     ["azure-functions-hosted-skills", "0-5-2"],
