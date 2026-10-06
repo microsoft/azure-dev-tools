@@ -2,6 +2,49 @@
 
 Diagnose failing Azure applications with an existing Azure SRE Agent.
 
+## Stay in standalone Copilot CLI
+
+This extension registers `sre_personal_*` tools separately from its canvas.
+In a compatible standalone Copilot CLI extension runtime, Copilot can invoke
+them directly without Azure MCP. Start with `sre_personal_get_diagnostics_context`;
+personal source setup, query preparation and bounded reads use the same
+conversation-bound tools and native permissions as the app. Do not execute an
+unprepared draft or bypass a declined confirmation.
+
+The terminal has no visual panel, inline query buttons or app editor.
+Without a canvas renderer, `open_canvas`, `invoke_canvas_action` and `ask_agent`
+are not offered. Selecting an SRE Agent, connecting its investigation and
+canvas-based SRE actions require a canvas-capable host; app connections do not
+transfer to a CLI conversation. Personal tools are not standalone SRE thread
+read/send tools. Registered-provider execution also needs the host's actual
+native execute capability; an older SDK without it fails explicitly.
+
+Isolated native testing used Copilot CLI 1.0.91 and the installed SDK over
+stdio. Headless sessions registered the personal tools and refused missing
+`open_canvas`; renderer-capable sessions exercised approved synthetic
+context/source callbacks and rejected unprepared reads and unapproved writes.
+The configured model was `qualification-no-model`, with zero model requests.
+This proves runtime registration and those callbacks, not a particular model's
+tool selection, real Azure queries, provider consent or Teams delivery.
+
+For SRE thread operations without a renderer, the separate official
+[Azure MCP Server CLI setup](https://learn.microsoft.com/azure/developer/azure-mcp-server/how-to/github-copilot-cli)
+is an option, not a prerequisite for personal tools: start `copilot`, run `/mcp add`, and configure the documented local
+server `npx -y @azure/mcp@latest server start`. Run `/mcp show`, then ask:
+
+```text
+Show details for SRE Agent <agent> in resource group <group> and subscription <subscription>.
+Get thread <thread-id> on that SRE Agent.
+```
+
+When you intend a write, ask **Send the message "Summarize the current
+investigation" to that thread** and review the host confirmation. The
+[official SRE tools](https://learn.microsoft.com/azure/developer/azure-mcp-server/tools/azure-sre-agent)
+provide thread reads and message sends, not this canvas's conversation connection.
+Supply the target agent/subscription/thread in your CLI conversation; an app
+selection or connected investigation does not transfer to it. Setup does not require
+automatic approvals or yolo mode.
+
 ## Install the full plugin
 
 When the **Azure Dev Tools** marketplace lists **Azure SRE Agent** in GitHub
@@ -89,11 +132,36 @@ Investigate issues in <yourappname>
 Investigate why Function App orders-api returns 503 after deployment
 ```
 
-Choose your subscription and SRE Agent in **Azure Configuration**, then open
+Choose your subscription and SRE Agent in **Azure Configuration** (subscription
+changes take effect immediately; choose **Done** when finished), then open
 **Apps** to diagnose a failing resource. Select a thread in **Threads** to
 inspect its evidence and status in **Active thread**. Choose
-**Focus this thread** before operational follow-ups in chat, then **Unfocus**
-when finished.
+**Connect This Thread** before SRE follow-ups in the same Copilot conversation,
+then **Disconnect** when finished. Try **Summarize the current investigation**
+to read existing evidence; **Ask my SRE Agent to continue the investigation**
+sends a real message. Browsing another thread does not change the connection:
+use **Switch to This Thread** deliberately. If you need a
+new conversation, choose **New thread**, edit the draft, and **Send** before
+connecting it. Creating a thread and sending messages are writes.
+
+The connection is saved in this Copilot session's workspace, keyed by the
+conversation ID, not by panel ID or user home. It stores the canonical agent
+resource/endpoint, thread ID and label, real incident ID if supplied, tenant,
+cloud and an opaque caller-account binding, not transcripts or credentials.
+Panels in the same conversation synchronize through the provider's state
+events. If session storage is unavailable, connection changes fail explicitly.
+URL-backed thread selection is independent of this record.
+
+`focus_thread`, `unfocus_thread` and `ask_agent` keep their existing action
+schemas. The native `get_connected_thread` action reads the connection without
+changing selection, including when another agent is being browsed. It
+revalidates the tenant/account and the exact thread. Resolved investigations
+remain connected. Deleted/inaccessible/unavailable targets retain their name
+and error; fresh reads can recover them, but never select a replacement.
+Switch/disconnect affects later requests; an already-sent operation keeps its
+original target and cannot overwrite a later selection. Short follow-ups use
+prior SRE conversation context; ambiguous intent needs clarification. The
+extension does not intercept all chat, send automatically, or approve actions.
 
 Active-thread replies, scheduled-task descriptions and expanded instructions,
 and tool/query result prose share the host's body typography. Callout borders
@@ -111,6 +179,10 @@ agent row in the picker to save/remove **Favorites** without connecting;
 select the saved agent row later to reconnect without repeating the lookup.
 **By subscription** contains native discovery only. Switching tabs preserves
 the current connection, investigation, and entered reference.
+Ordinary Azure portal resource links and encoded ARM IDs open the matching
+known subscription's discovery without connecting an arbitrary agent.
+Metadata alone does not prove access. If discovery cannot list the exact
+resource, use **Connect by resource ID** for a resource-scoped share.
 
 **Automation** uses the connected agent's authenticated, read-only
 `GET /api/v1/scheduledtasks` and `GET /api/v1/httptriggers` collections.
