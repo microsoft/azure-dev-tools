@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "format": "plugin",
   "name": "azure-sre-agent",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "mutableDocumentation": true,
   "publicationRepository": "microsoft/azure-dev-tools",
   "plugin": {
@@ -46,6 +46,14 @@
     "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/telemetry.mjs",
     "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/theme.mjs",
     "com.github.copilot/extensions/azure-sre-agent/extension.mjs",
+    "com.github.copilot/extensions/azure-sre-agent/personal/connectors-sdk.mjs",
+    "com.github.copilot/extensions/azure-sre-agent/personal/diagnostics-transport.mjs",
+    "com.github.copilot/extensions/azure-sre-agent/personal/identity-sdk.mjs",
+    "com.github.copilot/extensions/azure-sre-agent/personal/kusto-endpoints.mjs",
+    "com.github.copilot/extensions/azure-sre-agent/personal/kusto-sdk.mjs",
+    "com.github.copilot/extensions/azure-sre-agent/personal/logs-sdk.mjs",
+    "com.github.copilot/extensions/azure-sre-agent/personal/m365-transport.mjs",
+    "com.github.copilot/extensions/azure-sre-agent/personal/runtime.mjs",
     "com.github.copilot/extensions/azure-sre-agent/studio-package.json",
     "package.json",
     "skills/azure-sre-agent-canvas/SKILL.md"
@@ -58,10 +66,80 @@
   },
   "build": {
     "esbuild": "0.25.12",
-    "lockSha256": "677479f7de7870550b61f1cdeea1b71f78c60f099dad8d0341a8b207043e9875",
-    "inputSha256": "4c3843c9116a0cbd39090dd506ebbc729e58956d33f0d6567ce99b4227256436"
+    "lockSha256": "9d7df955178a80acaeb96eaa06816458fdf721443811fcd1c890d6ca8e9387c3",
+    "inputSha256": "154010899e2f9bc43db58f4c6e8a4c845f587f748d0d78bdb05c016859a2a42b"
   },
   "dependencies": [
+    {
+      "name": "@azure-rest/core-client",
+      "version": "2.9.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/abort-controller",
+      "version": "2.2.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/connectors",
+      "version": "0.2.0-preview",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-auth",
+      "version": "1.11.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-client",
+      "version": "1.11.1",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-process",
+      "version": "1.0.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-rest-pipeline",
+      "version": "1.25.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-tracing",
+      "version": "1.4.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-util",
+      "version": "1.14.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/identity",
+      "version": "4.13.3",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/logger",
+      "version": "1.4.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/monitor-query-logs",
+      "version": "1.0.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/msal-common",
+      "version": "16.14.1",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/msal-node",
+      "version": "6.0.1",
+      "license": "MIT"
+    },
     {
       "name": "@cloud-foundation/sre-agent-core",
       "version": "0.1.0",
@@ -74,6 +152,301 @@
     },
     {
       "name": "@microsoft/canvas-toolkit",
+      "version": "0.1.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@typespec/ts-http-runtime",
+      "version": "0.3.9",
+      "license": "MIT"
+    },
+    {
+      "name": "agent-base",
+      "version": "6.0.2",
+      "license": "MIT"
+    },
+    {
+      "name": "agent-base",
+      "version": "7.1.4",
+      "license": "MIT"
+    },
+    {
+      "name": "asynckit",
+      "version": "0.4.0",
+      "license": "MIT"
+    },
+    {
+      "name": "axios",
+      "version": "1.20.0",
+      "license": "MIT"
+    },
+    {
+      "name": "azure-kusto-data",
+      "version": "7.2.0",
+      "license": "ISC"
+    },
+    {
+      "name": "buffer-equal-constant-time",
+      "version": "1.0.1",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "bundle-name",
+      "version": "4.1.0",
+      "license": "MIT"
+    },
+    {
+      "name": "call-bind-apply-helpers",
+      "version": "1.0.2",
+      "license": "MIT"
+    },
+    {
+      "name": "combined-stream",
+      "version": "1.0.8",
+      "license": "MIT"
+    },
+    {
+      "name": "debug",
+      "version": "4.4.3",
+      "license": "MIT"
+    },
+    {
+      "name": "default-browser",
+      "version": "5.5.1",
+      "license": "MIT"
+    },
+    {
+      "name": "default-browser-id",
+      "version": "5.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "define-lazy-prop",
+      "version": "3.0.0",
+      "license": "MIT"
+    },
+    {
+      "name": "delayed-stream",
+      "version": "1.0.0",
+      "license": "MIT"
+    },
+    {
+      "name": "dunder-proto",
+      "version": "1.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "ecdsa-sig-formatter",
+      "version": "1.0.11",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "es-define-property",
+      "version": "1.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "es-errors",
+      "version": "1.3.0",
+      "license": "MIT"
+    },
+    {
+      "name": "es-object-atoms",
+      "version": "1.1.2",
+      "license": "MIT"
+    },
+    {
+      "name": "es-set-tostringtag",
+      "version": "2.1.0",
+      "license": "MIT"
+    },
+    {
+      "name": "follow-redirects",
+      "version": "1.16.0",
+      "license": "MIT"
+    },
+    {
+      "name": "form-data",
+      "version": "4.0.6",
+      "license": "MIT"
+    },
+    {
+      "name": "function-bind",
+      "version": "1.1.2",
+      "license": "MIT"
+    },
+    {
+      "name": "get-intrinsic",
+      "version": "1.3.0",
+      "license": "MIT"
+    },
+    {
+      "name": "get-proto",
+      "version": "1.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "gopd",
+      "version": "1.2.0",
+      "license": "MIT"
+    },
+    {
+      "name": "has-flag",
+      "version": "4.0.0",
+      "license": "MIT"
+    },
+    {
+      "name": "has-symbols",
+      "version": "1.1.0",
+      "license": "MIT"
+    },
+    {
+      "name": "has-tostringtag",
+      "version": "1.0.2",
+      "license": "MIT"
+    },
+    {
+      "name": "hasown",
+      "version": "2.0.4",
+      "license": "MIT"
+    },
+    {
+      "name": "http-proxy-agent",
+      "version": "7.0.2",
+      "license": "MIT"
+    },
+    {
+      "name": "https-proxy-agent",
+      "version": "5.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "https-proxy-agent",
+      "version": "7.0.6",
+      "license": "MIT"
+    },
+    {
+      "name": "is-docker",
+      "version": "3.0.0",
+      "license": "MIT"
+    },
+    {
+      "name": "is-inside-container",
+      "version": "1.0.0",
+      "license": "MIT"
+    },
+    {
+      "name": "is-wsl",
+      "version": "3.1.1",
+      "license": "MIT"
+    },
+    {
+      "name": "jsonwebtoken",
+      "version": "9.0.3",
+      "license": "MIT"
+    },
+    {
+      "name": "jwa",
+      "version": "2.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "jws",
+      "version": "4.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.includes",
+      "version": "4.3.0",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.isboolean",
+      "version": "3.0.3",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.isinteger",
+      "version": "4.0.4",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.isnumber",
+      "version": "3.0.3",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.isplainobject",
+      "version": "4.0.6",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.isstring",
+      "version": "4.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.once",
+      "version": "4.1.1",
+      "license": "MIT"
+    },
+    {
+      "name": "math-intrinsics",
+      "version": "1.1.0",
+      "license": "MIT"
+    },
+    {
+      "name": "mime-db",
+      "version": "1.52.0",
+      "license": "MIT"
+    },
+    {
+      "name": "mime-types",
+      "version": "2.1.35",
+      "license": "MIT"
+    },
+    {
+      "name": "ms",
+      "version": "2.1.3",
+      "license": "MIT"
+    },
+    {
+      "name": "open",
+      "version": "10.2.0",
+      "license": "MIT"
+    },
+    {
+      "name": "proxy-from-env",
+      "version": "2.1.0",
+      "license": "MIT"
+    },
+    {
+      "name": "run-applescript",
+      "version": "7.1.0",
+      "license": "MIT"
+    },
+    {
+      "name": "safe-buffer",
+      "version": "5.2.1",
+      "license": "MIT"
+    },
+    {
+      "name": "semver",
+      "version": "7.8.5",
+      "license": "ISC"
+    },
+    {
+      "name": "supports-color",
+      "version": "7.2.0",
+      "license": "MIT"
+    },
+    {
+      "name": "uuid",
+      "version": "11.1.1",
+      "license": "MIT"
+    },
+    {
+      "name": "wsl-utils",
       "version": "0.1.0",
       "license": "MIT"
     }
@@ -113,6 +486,38 @@
     },
     {
       "file": "com.github.copilot/extensions/azure-sre-agent/extension.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/personal/connectors-sdk.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/personal/diagnostics-transport.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/personal/identity-sdk.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/personal/kusto-endpoints.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/personal/kusto-sdk.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/personal/logs-sdk.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/personal/m365-transport.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/personal/runtime.mjs",
       "platform": "node"
     }
   ],
