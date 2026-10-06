@@ -16,7 +16,7 @@ copilot plugin marketplace add github/awesome-copilot
 copilot plugin install azure-sre-agent@awesome-copilot
 ```
 
-Browse the [Awesome Copilot plugin catalog](https://github.com/github/awesome-copilot/blob/main/docs/README.plugins.md).
+Browse the [Awesome Copilot marketplace](https://github.com/github/awesome-copilot/tree/main#install-a-plugin).
 The plugin source remains in
 [microsoft/azure-dev-tools](https://github.com/microsoft/azure-dev-tools/tree/main/canvases/azure-sre-agent).
 
