@@ -1,0 +1,11 @@
+{
+  "name": "containers",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "main": "com.github.copilot/extensions/containers/extension.mjs",
+  "engines": {
+    "node": ">=22"
+  },
+  "description": "Copilot canvas extension for local Docker and Podman: sortable container and image lists, live log streaming, CPU and memory charts, a filesystem browser, image layer size breakdown, and Dockerfile provenance."
+}

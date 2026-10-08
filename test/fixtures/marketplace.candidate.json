@@ -33,6 +33,11 @@
       "name": "azure-storage-canvas",
       "version": "0.1.1",
       "source": "canvases/azure-storage-canvas"
+    },
+    {
+      "name": "containers",
+      "version": "0.1.1",
+      "source": "canvases/containers"
     }
   ]
 }

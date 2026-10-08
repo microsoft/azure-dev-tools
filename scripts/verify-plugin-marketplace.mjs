@@ -55,6 +55,14 @@ const packages = {
     extensionPath: "com.github.copilot/extensions/azure-storage-canvas",
     receipt: "canvases/azure-storage-canvas/SHA256SUMS",
   },
+  "containers": {
+    path: "canvases/containers",
+    manifest: ".github/plugin/plugin.json",
+    skills: ["./skills/containers/"],
+    extension: "containers",
+    extensionPath: "com.github.copilot/extensions/containers",
+    receipt: "canvases/containers/SHA256SUMS",
+  },
 };
 const combinedPatchProducts = [
   "azure-functions-hosted-skills",

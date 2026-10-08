@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "containers",
+  "version": "0.1.1",
+  "description": "Copilot canvas extension for local Docker and Podman: sortable container and image lists, live log streaming, CPU and memory charts, a filesystem browser, image layer size breakdown, and Dockerfile provenance.",
+  "extensions": {
+    "com.github.copilot": {
+      "logo": "assets/preview.png"
+    }
+  },
+  "skills": [
+    "./skills/containers/"
+  ]
+}
