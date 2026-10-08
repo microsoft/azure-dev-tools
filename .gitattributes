@@ -2,5 +2,6 @@
 canvases/azure-resources-query/** -text
 docs/azure-resources-query/SHA256SUMS -text
 canvases/azure-cost-health-check/** -text
+canvases/containers/** -text whitespace=-blank-at-eol
 # The generated Azure SDK template literal contains a significant trailing space.
 canvases/azure-cost-health-check/com.github.copilot/extensions/azure-cost-health-check/azure-access.mjs whitespace=-blank-at-eol

@@ -2,7 +2,7 @@
 
 Install Azure-focused GitHub Copilot plugins that help you build Hosted Skills,
 inspect Azure resources, diagnose apps with SRE Agent, review cost health,
-browse Azure Storage, and create canvas apps.
+browse Azure Storage, operate local containers, and create canvas apps.
 
 ## Install a plugin
 
@@ -20,6 +20,7 @@ copilot plugin install azure-resources-query@azure-dev-tools
 copilot plugin install azure-cost-health-check@azure-dev-tools
 copilot plugin install azure-sre-agent@azure-dev-tools
 copilot plugin install azure-storage-canvas@azure-dev-tools
+copilot plugin install containers@azure-dev-tools
 copilot plugin install canvas-authoring@azure-dev-tools
 ```
 
@@ -39,6 +40,7 @@ the reproducible install points:
 | [Azure Cost Health Check](canvases/azure-cost-health-check/) | Review spend, forecasts, budgets, alerts, recommendations, and AI billing. | 0.4.5 is tagged; `azure-cost-health-check-latest` points to that release. |
 | [Azure SRE Agent](canvases/azure-sre-agent/) | Connect to your SRE Agent, diagnose failing apps, and investigate incident threads. | 0.2.7 is tagged; `azure-sre-agent-latest` points to that release. |
 | [Azure Storage canvas](canvases/azure-storage-canvas/) | Browse blobs, inspect statistics, download files, and plan storage transfers with Copilot. | 0.1.1; immutable and `azure-storage-canvas-latest` install links become usable after the reviewed merge and tag verification. |
+| [Containers](canvases/containers/) | Browse and operate local Docker or Podman containers and images. | 0.1.1 candidate; immutable and `containers-latest` install links become usable after the reviewed merge and tag verification. |
 
 Native App marketplace installation has not been verified for every product;
 a source package or direct CLI install alone does not establish that the
@@ -71,6 +73,10 @@ native listing is live.
 **Azure Storage**
 
 > Open Azure Storage canvas.
+
+**Containers**
+
+> Open Containers canvas.
 
 Each product README lists its prerequisites, safe prompts, first-run workflow,
 version-pinned installation options, and product-specific safety behavior.

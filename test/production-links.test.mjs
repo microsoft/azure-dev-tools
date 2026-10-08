@@ -37,6 +37,7 @@ test("production catalog matches all installable plugins in order", () => {
     "canvas-authoring": ["Canvas Authoring", "plugins/canvas-authoring/"],
     "azure-cost-health-check": ["Azure Cost Health Check", "canvases/azure-cost-health-check/"],
     "azure-sre-agent": ["Azure SRE Agent", "canvases/azure-sre-agent/"],
+    "containers": ["Containers", "canvases/containers/"],
   };
   assert.equal(rows.length, manifest.plugins.length);
   for (const [index, { name, version }] of manifest.plugins.entries()) {
@@ -48,6 +49,8 @@ test("production catalog matches all installable plugins in order", () => {
   assert.match(rows[2], /Skill-only plugin, with no canvas panel/);
   assert.match(readme, /copilot plugin install azure-sre-agent@azure-dev-tools/);
   assert.match(readme, /\[Azure SRE Agent\]\(canvases\/azure-sre-agent\/\)/);
+  assert.match(readme, /copilot plugin install containers@azure-dev-tools/);
+  assert.match(readme, /\[Containers\]\(canvases\/containers\/\)/);
 });
 
 test("SRE package has its catalog identity, official preview logo and customer connection steps", () => {

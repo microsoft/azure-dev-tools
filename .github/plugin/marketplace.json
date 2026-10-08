@@ -43,6 +43,12 @@
       "description": "Azure Storage canvas — browse blobs and containers, bulk transfer with live progress, filter with aggregate statistics, mint and open SAS links, preview blobs, and plan account to account copies, all agent-drivable on one live surface.",
       "version": "0.3.0",
       "source": "canvases/azure-storage"
+    },
+    {
+      "name": "containers",
+      "version": "0.1.1",
+      "description": "Copilot canvas extension for local Docker and Podman: sortable container and image lists, live log streaming, CPU and memory charts, a filesystem browser, image layer size breakdown, and Dockerfile provenance.",
+      "source": "canvases/containers"
     }
   ]
 }
