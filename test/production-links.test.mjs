@@ -37,17 +37,22 @@ test("production catalog matches all installable plugins in order", () => {
     "canvas-authoring": ["Canvas Authoring", "plugins/canvas-authoring/"],
     "azure-cost-health-check": ["Azure Cost Health Check", "canvases/azure-cost-health-check/"],
     "azure-sre-agent": ["Azure SRE Agent", "canvases/azure-sre-agent/"],
+    "azure-storage": ["Azure Storage", "canvases/azure-storage/"],
   };
   assert.equal(rows.length, manifest.plugins.length);
   for (const [index, { name, version }] of manifest.plugins.entries()) {
     const [label, path] = products[name];
     assert.ok(rows[index].startsWith(`| [${label}](${path}) |`), `catalog order: ${label}`);
     assert.ok(existsSync(new URL(path, root)), `${label}: missing package`);
-    assert.ok(rows[index].includes(version), `${label}: current catalog version`);
+    assert.ok(rows[index].includes(`| ${version} is tagged; \`${name}-latest\` points to that release.`),
+      `${label}: current catalog version and latest alias`);
+    assert.ok(readme.includes(`copilot plugin install ${name}@azure-dev-tools`),
+      `${label}: catalog install name`);
   }
   assert.match(rows[2], /Skill-only plugin, with no canvas panel/);
   assert.match(readme, /copilot plugin install azure-sre-agent@azure-dev-tools/);
   assert.match(readme, /\[Azure SRE Agent\]\(canvases\/azure-sre-agent\/\)/);
+  assert.doesNotMatch(readme, /azure-storage-canvas/);
 });
 
 test("SRE package has its catalog identity, official preview logo and customer connection steps", () => {
