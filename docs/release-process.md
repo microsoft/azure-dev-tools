@@ -84,7 +84,8 @@ checks for each new package tree.
 Release order:
 
 1. Start with content cleared for public distribution in this repository.
-2. Run the package's required tests and release checks.
+2. Run the package's required tests and release checks, including the root
+   catalog check described below.
 3. Produce an inventory of the package files and record their SHA-256 digests
    in `SHA256SUMS`.
 4. Obtain explicit approval for the candidate and its customer-facing
@@ -99,6 +100,23 @@ Release order:
 
 Never move `PRODUCT-latest` to an unmerged branch, candidate commit, or
 unapproved rebuild.
+
+### Keeping the root catalog current
+
+Update authoritative marketplace metadata and product release documentation for
+each release. Keep versions, immutable tags, and checksums in those release
+records and product installation instructions, not in the root README.
+Update the root README only when a product is added, renamed, or removed, or
+its capabilities, install name, or product README path change.
+
+Run `node --test --test-name-pattern='^root catalog:' test/production-links.test.mjs`.
+The `Root README catalog` workflow in `.github/workflows/root-catalog.yml` runs
+this guard on every pull request to `main` and every push to `main`, including
+product release changes. It checks current catalog identities, install commands,
+product README paths, and the skill-only and native marketplace qualifications.
+Version-only updates need no root edit. This guard is separate from package
+integrity, tag verification, and required release approvals; it replaces none
+of them.
 
 For the 0.5.3 Hosted Skills and 0.1.3 Azure Resources Query candidates, the
 Agent Plugins v1 manifests, protected previews, namespaced extensions, and
