@@ -47,13 +47,13 @@ const packages = {
     extensionPath: "com.github.copilot/extensions/azure-sre-agent",
     receipt: "canvases/azure-sre-agent/SHA256SUMS",
   },
-  "azure-storage-canvas": {
-    path: "canvases/azure-storage-canvas",
+  "azure-storage": {
+    path: "canvases/azure-storage",
     manifest: ".github/plugin/plugin.json",
-    skills: ["./skills/azure-storage-canvas/"],
-    extension: "azure-storage-canvas",
-    extensionPath: "com.github.copilot/extensions/azure-storage-canvas",
-    receipt: "canvases/azure-storage-canvas/SHA256SUMS",
+    skills: ["./skills/azure-storage/"],
+    extension: "azure-storage",
+    extensionPath: "com.github.copilot/extensions/azure-storage",
+    receipt: "canvases/azure-storage/SHA256SUMS",
   },
   "containers": {
     path: "canvases/containers",

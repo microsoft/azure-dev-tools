@@ -39,6 +39,10 @@ The verifier compares all protected files on the default branch to those
 tags, including additions and deletions, and pins each original tag to its
 reviewed commit. Do not rewrite or move old receipts, tags, or versions.
 
+Storage's canonical product identity is `azure-storage`, with its package under
+`canvases/azure-storage`. The verifier uses that same identity for its launcher,
+extension, receipt and release tags; `azure-storage-canvas` is obsolete.
+
 A new candidate for any canvas uses the reviewed
 `schemaVersion: 2`, `mutableDocumentation: true` contract: `release.json` and
 `checksums.json` enumerate protected files only, and its `SHA256SUMS` covers
