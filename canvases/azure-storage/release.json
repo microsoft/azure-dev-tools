@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "format": "plugin",
   "name": "azure-storage",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "mutableDocumentation": true,
   "publicationRepository": "microsoft/azure-dev-tools",
   "plugin": {
@@ -49,8 +49,8 @@
   },
   "build": {
     "esbuild": "0.25.12",
-    "lockSha256": "45c8ab04053992765129382fdb4fa2fab86666fcbb1303f59032d6eb39b8edaa",
-    "inputSha256": "06b977f1268eebbc7e41b7a4a570c0530c44beae82601fb3689a3dfe2499aa7b"
+    "lockSha256": "ffdee59f88a0ed526f96fb6bc3272e82d3a3c24b495d3384b5b8c5bbb1866eb3",
+    "inputSha256": "74c2bc787682b373dad3bb3c7b56355a29965b7379b3626c5d0cf9025235ab83"
   },
   "dependencies": [
     {
