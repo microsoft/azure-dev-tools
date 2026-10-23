@@ -28,29 +28,94 @@ test("customer installation docs identify the production repository, not public 
   }
 });
 
-test("production catalog matches all installable plugins in order", () => {
-  const readme = readFileSync(new URL("README.md", root), "utf8");
-  const rows = readme.split("\n").filter((line) => line.startsWith("| ["));
-  const products = {
-    "azure-functions-hosted-skills": ["Azure Functions Hosted Skills", "canvases/azure-functions-hosted-skills/"],
-    "azure-resources-query": ["Azure Resources Query", "canvases/azure-resources-query/"],
-    "canvas-authoring": ["Canvas Authoring", "plugins/canvas-authoring/"],
-    "azure-cost-health-check": ["Azure Cost Health Check", "canvases/azure-cost-health-check/"],
-    "azure-sre-agent": ["Azure SRE Agent", "canvases/azure-sre-agent/"],
-    "containers": ["Containers", "canvases/containers/"],
-  };
-  assert.equal(rows.length, manifest.plugins.length);
-  for (const [index, { name, version }] of manifest.plugins.entries()) {
-    const [label, path] = products[name];
-    assert.ok(rows[index].startsWith(`| [${label}](${path}) |`), `catalog order: ${label}`);
-    assert.ok(existsSync(new URL(path, root)), `${label}: missing package`);
-    assert.ok(rows[index].includes(version), `${label}: current catalog version`);
+function verifyRootCatalog(readme, catalog) {
+  const rows = readme.split("\n").filter((line) => line.startsWith("|"));
+  assert.equal(rows.shift(), "| Plugin | What it does |");
+  assert.equal(rows.shift(), "| --- | --- |");
+  const paths = rows.map((row) => {
+    const match = /^\| \[([^\]]+)\]\(([^)]+)\) \| ([^|]+) \|$/.exec(row);
+    assert.ok(match, `root product row: ${row}`);
+    return match[2];
+  });
+  assert.equal(new Set(catalog.plugins.map(({ name }) => name)).size,
+    catalog.plugins.length, "unique catalog identities");
+  assert.deepEqual(paths, catalog.plugins.map(({ source }) => `${source}/`),
+    "root product paths match the current catalog in order");
+  const installs = [...readme.matchAll(/copilot plugin install (\S+)/g)]
+    .map((match) => match[1]).sort();
+  assert.deepEqual(installs, catalog.plugins.map(({ name }) => `${name}@${catalog.name}`).sort(),
+    "root install commands match the current catalog exactly");
+  for (const { source } of catalog.plugins) {
+    assert.ok(existsSync(new URL(`${source}/README.md`, root)),
+      `${source}: missing product README`);
   }
-  assert.match(rows[2], /Skill-only plugin, with no canvas panel/);
-  assert.match(readme, /copilot plugin install azure-sre-agent@azure-dev-tools/);
-  assert.match(readme, /\[Azure SRE Agent\]\(canvases\/azure-sre-agent\/\)/);
-  assert.match(readme, /copilot plugin install containers@azure-dev-tools/);
-  assert.match(readme, /\[Containers\]\(canvases\/containers\/\)/);
+  const authoring = catalog.plugins.find(({ name }) => name === "canvas-authoring");
+  assert.ok(authoring, "skill-only companion remains in the catalog");
+  assert.match(rows[paths.indexOf(`${authoring.source}/`)],
+    /Skill-only plugin, with no canvas panel/);
+  assert.match(readme, /Native App marketplace installation has not been verified for every product/);
+  assert.match(readme, /a source package or direct CLI install alone does not establish that the\s+native listing is live/);
+  assert.match(readme, /Each product README lists its prerequisites, safe prompts, first-run workflow,\s+version-pinned installation options, and product-specific safety behavior/);
+  assert.doesNotMatch(readme, /\b\d+\.\d+\.\d+\b|-latest\b|-v\d|\b[0-9a-f]{7,64}\b/,
+    "release versions, tag aliases, and hashes belong in product release docs");
+}
+
+const rootReadme = readFileSync(new URL("README.md", root), "utf8");
+
+test("root catalog: matches all current install names and product README paths", () => {
+  verifyRootCatalog(rootReadme, manifest);
+});
+
+test("root catalog: version-only updates need no root README edit", () => {
+  const bumped = structuredClone(manifest);
+  for (const plugin of bumped.plugins) plugin.version = "99.99.99";
+  assert.doesNotThrow(() => verifyRootCatalog(rootReadme, bumped));
+});
+
+test("root catalog: rejects added, removed, renamed, duplicate, or relocated catalog identities", () => {
+  for (const update of [
+    (catalog) => catalog.plugins.push({ name: "new-plugin", source: "canvases/new-plugin" }),
+    (catalog) => catalog.plugins.pop(),
+    (catalog) => { catalog.plugins[0].name = "renamed-plugin"; },
+    (catalog) => catalog.plugins.push(structuredClone(catalog.plugins[0])),
+    (catalog) => { catalog.plugins[0].source = "canvases/relocated-plugin"; },
+  ]) {
+    const changed = structuredClone(manifest);
+    update(changed);
+    assert.throws(() => verifyRootCatalog(rootReadme, changed),
+      /root product paths|root install commands|unique catalog identities/);
+  }
+});
+
+test("root catalog: rejects missing, obsolete, extra, or incorrect README installs and paths", () => {
+  const row = rootReadme.split("\n").find((line) =>
+    line.startsWith("| [Azure Storage]"));
+  for (const changed of [
+    rootReadme.replace("copilot plugin install azure-storage@azure-dev-tools\n", ""),
+    rootReadme.replace("azure-storage@azure-dev-tools", "azure-storage-canvas@azure-dev-tools"),
+    rootReadme.replace("azure-storage@azure-dev-tools", "azure-storage@wrong-marketplace"),
+    `${rootReadme}\ncopilot plugin install extra-plugin@azure-dev-tools\n`,
+    rootReadme.replace(row, `${row}\n${row}`),
+    rootReadme.replace(`${row}\n`, ""),
+    rootReadme.replace("](canvases/azure-storage/)", "](canvases/azure-storage-canvas/)"),
+  ]) {
+    assert.throws(() => verifyRootCatalog(changed, manifest),
+      /root product paths|root install commands/);
+  }
+});
+
+test("root catalog: retains skill-only, pinned-install, and native marketplace qualifications", () => {
+  for (const changed of [
+    rootReadme.replace("Skill-only plugin, with no canvas panel.", ""),
+    rootReadme.replace("Native App marketplace installation has not been verified for every product;", ""),
+    rootReadme.replace("version-pinned installation options", "installation options"),
+    `${rootReadme}\n0.4.1 is tagged; azure-sre-agent-latest points to that release.\n`,
+    `${rootReadme}\nSource revision: abcdef0\n`,
+    `${rootReadme}\nRelease commit: bc8c3349df123c56eea4a957f8d63d3a4a8fd6e4\n`,
+    `${rootReadme}\nSHA-256 checksum: ${"a".repeat(64)}\n`,
+  ]) {
+    assert.throws(() => verifyRootCatalog(changed, manifest), assert.AssertionError);
+  }
 });
 
 test("SRE package has its catalog identity, official preview logo and customer connection steps", () => {

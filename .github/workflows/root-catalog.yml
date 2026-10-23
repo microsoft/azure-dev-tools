@@ -1,0 +1,23 @@
+name: Root README catalog
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  root-catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check root README against the marketplace catalog
+        run: node --test --test-name-pattern='^root catalog:' test/production-links.test.mjs
