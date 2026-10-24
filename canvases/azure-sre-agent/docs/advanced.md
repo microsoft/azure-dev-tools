@@ -83,6 +83,9 @@ the current investigation rather than the selected-agent inbox.
 ## Stay in standalone Copilot CLI
 
 This extension registers `sre_personal_*` tools separately from its canvas.
+Use those native tools for personal diagnostics, queries, Teams and evidence,
+including in canvas-capable hosts; they are not `invoke_canvas_action` actions.
+The panel's Private Connectors and query controls use their own HTTP routes.
 In a compatible standalone Copilot CLI extension runtime, Copilot can invoke
 them directly without Azure MCP. Start with `sre_personal_get_diagnostics_context`;
 personal source setup, query preparation and bounded reads use the same
