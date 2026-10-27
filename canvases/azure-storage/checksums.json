@@ -1,15 +1,15 @@
 {
-  ".github/plugin/plugin.json": "3a262e33c0e21381bd1a4f51edb8ffaf6d823d3a1516e4ef510ca3aff95da9b0",
+  ".github/plugin/plugin.json": "396925277edf6f794be74d0cd02f64226dbfa26abe6b2453a8fd0b3a44a58917",
   "assets/preview.png": "5fb6a9018aecd7aede2a8937f78d81867bf00c5550f30ab071d158b3852ccaca",
-  "com.github.copilot/extensions/azure-storage/extension.mjs": "45fcd18ae09de9b5542e7a113556482105da42419b1c603fcc69ace3be1a55b4",
+  "com.github.copilot/extensions/azure-storage/extension.mjs": "9f75b0541587faa2854f99718c5a028e13a4a2f7d2c6c46a0fd8f29bee548a2d",
   "com.github.copilot/extensions/azure-storage/sdk/blob.mjs": "f7d102239138f46038f9fbbc576d6a34e2f03370f27c282dc7b59dbe470f791d",
   "com.github.copilot/extensions/azure-storage/sdk/file.mjs": "88d23b0a1a226385486aade505b086c7bf524ef0bd5b031bac4df0351e8a20f6",
   "com.github.copilot/extensions/azure-storage/sdk/identity.mjs": "fa0526b9488b0e797bfa79044b632edb53483e9e2dc12fe672d093bfb9ace670",
   "com.github.copilot/extensions/azure-storage/sdk/queue.mjs": "6553c36dad97992722dd5d1320889ec09038847c31f2a04cf8756930f725c169",
   "com.github.copilot/extensions/azure-storage/sdk/tables.mjs": "cf4b43961f200d9d73f1158aa28b628863274d33e66f53457afa7f6a16562202",
-  "com.github.copilot/extensions/azure-storage/studio-package.json": "5520dc6cc7535a61cae0fe0c5764746837e96ecc5a431b360deca6d2534d0f3f",
-  "package.json": "be4affe6bd79ceb663389d03dc47fc1e55a8223d7075b370dc0f78853825faaf",
-  "release.json": "e534abc17ed846674eeb89b13b1bf1da5efa3aad6e35fbc0fa9454b12eec118b",
+  "com.github.copilot/extensions/azure-storage/studio-package.json": "c0865cfca79c90f8ebf75e11d0cf9c61bda757b4f03160b89fd3ebb6622b7725",
+  "package.json": "1434b589e284ae951a0ca236c237b936288959b6013af84119c8b0691c686aab",
+  "release.json": "5a3b3801d5ace7180420f28c2d4658046ca30da52fe4062dadb27980bd91d80f",
   "skills/azure-storage/SKILL.md": "27a2fce06a96abfd4a76405a78ff80b3be2cacf50f9dd4bde49649cfea84942f",
   "THIRD_PARTY_NOTICES.txt": "a813071223c79d70046ffde6cd6de1d52eecf7b7b3ce174a3e1bcb2c2ebb283d"
 }

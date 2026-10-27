@@ -41,7 +41,7 @@
     {
       "name": "azure-storage",
       "description": "Azure Storage canvas — browse blobs and containers, bulk transfer with live progress, filter with aggregate statistics, mint and open SAS links, preview blobs, and plan account to account copies, all agent-drivable on one live surface.",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "source": "canvases/azure-storage"
     },
     {

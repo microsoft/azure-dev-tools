@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "format": "plugin",
   "name": "azure-storage",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "mutableDocumentation": true,
   "publicationRepository": "microsoft/azure-dev-tools",
   "plugin": {
@@ -49,8 +49,8 @@
   },
   "build": {
     "esbuild": "0.25.12",
-    "lockSha256": "2e1e8312ac618fc822ed8ae6f6c836b0a8939417db3b291459d9bacb9f3abcf7",
-    "inputSha256": "96237f35544ee31a4069222b7c14e09354250668be0bcd9999e96cb63f558f5b"
+    "lockSha256": "58506251f648905700430510e8bb76f1151e345d4ab5bfeb2d49a429039b2469",
+    "inputSha256": "a232022935bd48209a2f787d73b5d5386b2be678eb084b4ec05d3aa63fd51438"
   },
   "dependencies": [
     {
@@ -154,9 +154,19 @@
       "license": "MIT"
     },
     {
+      "name": "@cloud-foundation/azure-storage-core",
+      "version": "0.1.0",
+      "license": null
+    },
+    {
       "name": "@cloud-foundation/studio-runtime",
       "version": "0.1.0",
       "license": null
+    },
+    {
+      "name": "@microsoft/canvas-toolkit",
+      "version": "0.1.0",
+      "license": "MIT"
     },
     {
       "name": "@typespec/ts-http-runtime",

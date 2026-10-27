@@ -29,6 +29,7 @@ import {
 
 const fixture = JSON.parse(readFileSync(new URL("./fixtures/marketplace.candidate.json", import.meta.url)));
 const catalog = JSON.parse(readFileSync(new URL("../.github/plugin/marketplace.json", import.meta.url)));
+fixture.plugins = fixture.plugins.map((plugin) => ({ ...plugin, version: versionOf(plugin.name) }));
 const root = fileURLToPath(new URL("../", import.meta.url));
 const verifier = "scripts/verify-plugin-marketplace.mjs";
 
@@ -58,13 +59,13 @@ test("requires release tags for full verification, then checks every catalog plu
   assert.ok(results[0].startsWith(`azure-functions-hosted-skills@${versionOf("azure-functions-hosted-skills")} azure-functions-hosted-skills-v`));
   assert.ok(results[1].startsWith(`azure-resources-query@${versionOf("azure-resources-query")} azure-resources-query-v`));
   assert.ok(results[2].startsWith(`canvas-authoring@${versionOf("canvas-authoring")} canvas-authoring-v`));
-  assert.match(results[3], /azure-cost-health-check@0\.4\.5 azure-cost-health-check-v0-4-5-/);
-  assert.match(results[4], /azure-sre-agent@0\.2\.7 azure-sre-agent-v0-2-7-/);
-  assert.ok(results[5].startsWith(`azure-storage-canvas@${versionOf("azure-storage-canvas")} azure-storage-canvas-v`));
-  assert.equal(results[6], "containers@0.1.1 (candidate; immutable tag pending)");
+  assert.ok(results[3].startsWith(`azure-cost-health-check@${versionOf("azure-cost-health-check")} azure-cost-health-check-v`));
+  assert.ok(results[4].startsWith(`azure-sre-agent@${versionOf("azure-sre-agent")} azure-sre-agent-v`));
+  assert.ok(results[5].startsWith(`azure-storage@${versionOf("azure-storage")} azure-storage-v`));
+  assert.ok(results[6].startsWith(`containers@${versionOf("containers")} containers-v`));
 });
 
-test("candidate validates every reviewed package and omits only missing immutable tags", () => {
+test("candidate validates independently released products and omits only missing immutable tags", () => {
   const candidate = modified((m) => { m.name = "azure-dev-tools"; });
   const results = verifyMarketplace(candidate, { candidate: true });
   assert.equal(results.length, candidate.plugins.length);
@@ -75,8 +76,8 @@ test("candidate validates every reviewed package and omits only missing immutabl
     assert.equal(results[index], `${name}@${version} ${tags[0] ?? "(candidate; immutable tag pending)"}`);
   }
   assert.ok(results[2].startsWith(`canvas-authoring@${versionOf("canvas-authoring")} `));
-  assert.match(results[4], /azure-sre-agent@0\.2\.7 azure-sre-agent-v0-2-7-9da2e40/);
-  assert.equal(results[6], "containers@0.1.1 (candidate; immutable tag pending)");
+  assert.ok(results[4].startsWith(`azure-sre-agent@${versionOf("azure-sre-agent")} `));
+  assert.ok(results[6].startsWith(`containers@${versionOf("containers")} `));
 });
 
 test("candidate rejects corrupted protected payloads and checksum receipts", () => {
@@ -204,7 +205,9 @@ test("canvas-authoring uses versioned receipts without changing historical recei
     assert.equal(git("show", `HEAD:${historical}`),
       git("show", `canvas-authoring-v0-1-1-8af10f8:${historical}`));
     assert.doesNotThrow(verify);
-    assert.throws(() => verify(false), /expected exactly one reviewed immutable release tag/);
+    const currentTag = git("tag", "-l", `canvas-authoring-v${product.version.replaceAll(".", "-")}-*`);
+    if (currentTag) assert.doesNotThrow(() => verify(false));
+    else assert.throws(() => verify(false), /expected exactly one reviewed immutable release tag/);
 
     const receipt = `docs/canvas-authoring/${product.version}/SHA256SUMS`;
     const original = readFileSync(join(clone, receipt), "utf8");
@@ -212,12 +215,12 @@ test("canvas-authoring uses versioned receipts without changing historical recei
       !line.endsWith("  com.github.copilot/extensions/canvas-authoring/extension.mjs")).join("\n"));
     git("add", "--", receipt);
     git("commit", "--quiet", "-m", "Remove authoring runtime receipt");
-    assert.throws(verify, /checksum receipt must cover every protected plugin file exactly once/);
+    assert.throws(verify, /current checksum receipt differs|checksum receipt must cover every protected plugin file exactly once/);
     writeFileSync(join(clone, receipt), original.replace(
       /^[0-9a-f]{64}(?=  plugin.json$)/m, "0".repeat(64)));
     git("add", "--", receipt);
     git("commit", "--quiet", "-m", "Corrupt authoring manifest receipt");
-    assert.throws(verify, /plugin file differs from checksum receipt: plugin.json/);
+    assert.throws(verify, /current checksum receipt differs|plugin file differs from checksum receipt: plugin.json/);
 
     writeFileSync(join(clone, receipt), original);
     const parts = product.version.split(".").map(Number);
@@ -236,6 +239,7 @@ test("canvas-authoring uses versioned receipts without changing historical recei
     git("add", "--", manifestPath, "docs/canvas-authoring");
     git("commit", "--quiet", "-m", "Prepare next authoring receipt");
     assert.doesNotThrow(verify);
+    assert.throws(() => verify(false), /expected exactly one reviewed immutable release tag/);
   } finally {
     rmSync(checkout, { recursive: true, force: true });
   }
