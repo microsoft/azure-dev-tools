@@ -199,6 +199,7 @@ test("canvas-authoring uses versioned receipts without changing historical recei
   };
   try {
     execFileSync("git", ["clone", "--quiet", "--local", "--no-hardlinks", root, clone]);
+    copyFileSync(join(root, verifier), join(clone, verifier));
     git("config", "user.name", "Release policy test");
     git("config", "user.email", "release-policy@example.invalid");
     const historical = "docs/canvas-authoring/SHA256SUMS";
@@ -231,15 +232,37 @@ test("canvas-authoring uses versioned receipts without changing historical recei
     manifest.version = product.version;
     const bytes = `${JSON.stringify(manifest, null, 2)}\n`;
     writeFileSync(join(clone, manifestPath), bytes);
+    const skillPath = `${product.source}/skills/create-canvas-app/SKILL.md`;
+    const skill = `${readFileSync(join(clone, skillPath), "utf8")}\n`
+      + "[Product-usage telemetry](references/toolkit/README.md#product-usage-telemetry).\n";
+    writeFileSync(join(clone, skillPath), skill);
     const nextReceipt = `docs/canvas-authoring/${product.version}/SHA256SUMS`;
     mkdirSync(join(clone, `docs/canvas-authoring/${product.version}`), { recursive: true });
-    writeFileSync(join(clone, nextReceipt), original.replace(
-      /^[0-9a-f]{64}(?=  plugin.json$)/m,
-      createHash("sha256").update(bytes).digest("hex")));
-    git("add", "--", manifestPath, "docs/canvas-authoring");
-    git("commit", "--quiet", "-m", "Prepare next authoring receipt");
+    const linkedReadme = "skills/create-canvas-app/references/toolkit/README.md";
+    const nextReceiptBytes = original
+      .replace(/^[0-9a-f]{64}(?=  plugin.json$)/m,
+        createHash("sha256").update(bytes).digest("hex"))
+      .replace(/^[0-9a-f]{64}(?=  skills\/create-canvas-app\/SKILL\.md$)/m,
+        createHash("sha256").update(skill).digest("hex"));
+    writeFileSync(join(clone, nextReceipt), nextReceiptBytes);
+    git("add", "--", manifestPath, skillPath, "docs/canvas-authoring");
+    git("commit", "--quiet", "-m", "Prepare linked full-receipt authoring candidate");
     assert.doesNotThrow(verify);
     assert.throws(() => verify(false), /expected exactly one reviewed immutable release tag/);
+
+    const linkedReadmePath = join(clone, product.source, linkedReadme);
+    const linkedReadmeBytes = readFileSync(linkedReadmePath);
+    writeFileSync(linkedReadmePath, Buffer.concat([linkedReadmeBytes, Buffer.from("\nChanged after receipt\n")]));
+    git("add", "--", linkedReadmePath);
+    git("commit", "--quiet", "-m", "Tamper with linked authoring guide");
+    assert.throws(verify, new RegExp(`plugin file differs from checksum receipt: ${linkedReadme}`));
+
+    writeFileSync(linkedReadmePath, linkedReadmeBytes);
+    writeFileSync(join(clone, nextReceipt), nextReceiptBytes.split("\n")
+      .filter((line) => !line.endsWith(`  ${linkedReadme}`)).join("\n"));
+    git("add", "--", linkedReadmePath, nextReceipt);
+    git("commit", "--quiet", "-m", "Remove linked authoring guide receipt");
+    assert.throws(verify, /checksum receipt must cover every protected plugin file exactly once/);
   } finally {
     rmSync(checkout, { recursive: true, force: true });
   }

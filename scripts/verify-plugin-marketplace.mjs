@@ -30,6 +30,7 @@ const packages = {
     manifest: "plugin.json",
     skills: ["./skills/create-canvas-app/"],
     receipt: "docs/canvas-authoring/{version}/SHA256SUMS",
+    protectReferencedDocumentation: true,
   },
   "azure-cost-health-check": {
     path: "canvases/azure-cost-health-check",
@@ -144,7 +145,8 @@ function isMutableDocument(file) {
   return (inDocDirectory || isReadme) && !noticeName.test(file);
 }
 
-function referencesMutableDocument(file, content) {
+function mutableDocumentReferences(file, content) {
+  const references = new Set();
   const patterns = [
     /\b(?:import|export)\s+(?:[^;\n"'`]*?\bfrom\s*)?["'`]([^"'`]+)["'`]/g,
     /\b(?:import|require|readFileSync|readFile|createReadStream|fetch|new\s+URL)\s*\(\s*["'`]([^"'`]+)["'`]/g,
@@ -154,11 +156,12 @@ function referencesMutableDocument(file, content) {
     for (const match of content.matchAll(pattern)) {
       const target = match[1].replaceAll("\\", "/");
       if (/^[a-z][a-z0-9+.-]*:/i.test(target)) continue;
-      if (isMutableDocument(posix.normalize(posix.join(posix.dirname(file), target))) ||
-          isMutableDocument(target)) return true;
+      const resolved = posix.normalize(posix.join(posix.dirname(file), target));
+      if (isMutableDocument(resolved)) references.add(resolved);
+      else if (isMutableDocument(target)) references.add(target);
     }
   }
-  return false;
+  return [...references];
 }
 
 function verifyInertDocument(file, content) {
@@ -185,7 +188,8 @@ function verifyInertDocument(file, content) {
   }
 }
 
-export function verifyMutableDocumentationTrees(current, tagged, readCurrent, readTagged) {
+export function verifyMutableDocumentationTrees(current, tagged, readCurrent, readTagged,
+  { protectReferencedDocumentation = false } = {}) {
   const pinned = (tree, readFile) => {
     const files = new Map();
     for (const entry of tree) {
@@ -194,13 +198,14 @@ export function verifyMutableDocumentationTrees(current, tagged, readCurrent, re
         throw new Error(`unsafe package file or mode: ${entry.file}`);
       }
       files.set(entry.file, entry);
+      const mutable = isMutableDocument(entry.file);
       const docPath = /^docs?\//i.test(entry.file) || /(^|\/)README/i.test(entry.file);
       const protectedReadme = !/^docs?\//i.test(entry.file) &&
         isInertReadmeName(entry.file.split("/").at(-1));
-      if (docPath && !isMutableDocument(entry.file) && !protectedReadme) {
+      if (docPath && !mutable && !protectedReadme) {
         throw new Error(`executable or legal content cannot hide in mutable documentation: ${entry.file}`);
       }
-      if (isMutableDocument(entry.file)) {
+      if (mutable) {
         if (entry.mode !== "100644" || !documentExtensions.test(entry.file) &&
             !/^README$/i.test(entry.file)) {
           throw new Error(`unsafe mutable documentation file: ${entry.file}`);
@@ -208,22 +213,36 @@ export function verifyMutableDocumentationTrees(current, tagged, readCurrent, re
         verifyInertDocument(entry.file, readFile(entry.file));
       }
     }
+    const protectedDocuments = new Set();
     for (const entry of tree) {
       if (!isMutableDocument(entry.file) &&
           (executablePath.test(entry.file) || /^skills\/.*\/SKILL\.md$/.test(entry.file)) &&
-          /^(?:(?:com\.github\.copilot\/)?extensions|skills)\//.test(entry.file) &&
-          referencesMutableDocument(entry.file, readFile(entry.file).toString("utf8"))) {
-        throw new Error(`runtime or skill references mutable documentation: ${entry.file}`);
+          /^(?:(?:com\.github\.copilot\/)?extensions|skills)\//.test(entry.file)) {
+        const references = mutableDocumentReferences(
+          entry.file, readFile(entry.file).toString("utf8"));
+        if (references.length && !protectReferencedDocumentation) {
+          throw new Error(`runtime or skill references mutable documentation: ${entry.file}`);
+        }
+        for (const reference of references) {
+          if (!files.has(reference)) {
+            throw new Error(`runtime or skill references missing documentation: ${reference}`);
+          }
+          protectedDocuments.add(reference);
+        }
       }
     }
-    return files;
+    return { files, protectedDocuments };
   };
-  const currentFiles = pinned(current, readCurrent);
-  const taggedFiles = pinned(tagged, readTagged);
+  const currentPinned = pinned(current, readCurrent);
+  const taggedPinned = pinned(tagged, readTagged);
+  const currentFiles = currentPinned.files;
+  const taggedFiles = taggedPinned.files;
   const immutableFiles = [...currentFiles.keys()].filter((file) =>
-    file !== "SHA256SUMS" && !isMutableDocument(file));
+    file !== "SHA256SUMS" &&
+    (!isMutableDocument(file) || currentPinned.protectedDocuments.has(file)));
   const taggedImmutableFiles = [...taggedFiles.keys()].filter((file) =>
-    file !== "SHA256SUMS" && !isMutableDocument(file));
+    file !== "SHA256SUMS" &&
+    (!isMutableDocument(file) || taggedPinned.protectedDocuments.has(file)));
   if (immutableFiles.length !== taggedImmutableFiles.length ||
       immutableFiles.some((file) => {
         const now = currentFiles.get(file);
@@ -443,6 +462,7 @@ export function verifyPlugin({ source, name, version }, { candidate = false } = 
       packageTree(releaseTag ?? revision, path),
       (file) => fileAt(revision, `${path}/${file}`),
       (file) => fileAt(releaseTag ?? revision, `${path}/${file}`),
+      { protectReferencedDocumentation: product.protectReferencedDocumentation === true },
     );
     if (files.includes("release.json")) {
       verifyRuntimeInventory(JSON.parse(fileAt(releaseTag ?? revision, `${path}/release.json`)));
@@ -544,7 +564,7 @@ export function verifyPlugin({ source, name, version }, { candidate = false } = 
       throw new Error("schema 2 checksum receipt must contain only protected plugin files");
     }
     for (const { hash, file } of entries) {
-      if (isMutableDocument(file)) continue;
+      if (isMutableDocument(file) && !expectedFiles.includes(file)) continue;
       const fileRevision = mutableDocumentation ? revision : releaseTag ?? revision;
       if (createHash("sha256").update(fileAt(fileRevision, `${path}/${file}`)).digest("hex") !== hash) {
         throw new Error(`plugin file differs from checksum receipt: ${file}`);

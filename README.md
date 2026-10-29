@@ -36,10 +36,10 @@ the reproducible install points:
 | --- | --- | --- |
 | [Azure Functions Hosted Skills](canvases/azure-functions-hosted-skills/) | Build and run local Hosted Skills or invoke supported functions in an existing Function App. | 0.5.5 is tagged; `azure-functions-hosted-skills-latest` points to that release. |
 | [Azure Resources Query](canvases/azure-resources-query/) | Find and inspect Azure resources with read-only Resource Graph queries. | 0.1.6 candidate narrows inventory activation; `azure-resources-query-latest` remains on 0.1.5 until reviewed promotion. |
-| [Canvas Authoring](plugins/canvas-authoring/) | Add toolkit setup and starter apps to the native `create-canvas` workflow. | 0.1.1 is tagged; `canvas-authoring-latest` points to that release. Skill-only plugin, with no canvas panel. |
+| [Canvas Authoring](plugins/canvas-authoring/) | Add toolkit setup and starter apps to the native `create-canvas` workflow. | 0.1.2 is tagged; `canvas-authoring-latest` points to that release. Skill-only plugin, with no canvas panel. |
 | [Azure Cost Health Check](canvases/azure-cost-health-check/) | Review spend, forecasts, budgets, alerts, recommendations, and AI billing. | 0.4.5 is tagged; `azure-cost-health-check-latest` points to that release. |
-| [Azure SRE Agent](canvases/azure-sre-agent/) | Connect to your SRE Agent, diagnose failing apps, and investigate incident threads. | 0.2.7 is tagged; `azure-sre-agent-latest` points to that release. |
-| [Azure Storage canvas](canvases/azure-storage-canvas/) | Browse blobs, inspect statistics, download files, and plan storage transfers with Copilot. | 0.1.1; immutable and `azure-storage-canvas-latest` install links become usable after the reviewed merge and tag verification. |
+| [Azure SRE Agent](canvases/azure-sre-agent/) | Connect to your SRE Agent, diagnose failing apps, and investigate incident threads. | 0.4.2 is tagged; `azure-sre-agent-latest` points to that release. |
+| [Azure Storage canvas](canvases/azure-storage/) | Browse blobs, inspect statistics, download files, and plan storage transfers with Copilot. | 0.3.4 is tagged; `azure-storage-latest` points to that release. |
 | [Containers](canvases/containers/) | Browse and operate local Docker or Podman containers and images. | 0.1.1 candidate; immutable and `containers-latest` install links become usable after the reviewed merge and tag verification. |
 
 Native App marketplace installation has not been verified for every product;

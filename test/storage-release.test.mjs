@@ -19,13 +19,16 @@ const catalog = JSON.parse(readFileSync(
 const root = fileURLToPath(new URL("../", import.meta.url));
 
 test("Storage enforces the latest immutable version without pinning future versions", () => {
-  for (const version of ["0.3.2", "0.3.3", "0.3.4"]) {
+  const current = catalog.plugins.find((entry) => entry.name === name).version;
+  const parts = current.split(".").map(Number);
+  const nextPatch = `${parts[0]}.${parts[1]}.${parts[2] + 1}`;
+  for (const version of [current, nextPatch]) {
     assert.doesNotThrow(() => verifyCurrentVersion(name, version));
     assert.doesNotThrow(() => verifyTagSource(
       name, version, `${name}-v${version.replaceAll(".", "-")}-1234567`,
     ));
   }
-  for (const version of ["0.1.0", "0.1.1", "0.2.0", "0.3.1"]) {
+  for (const version of ["0.1.0", "0.1.1", "0.2.0", "0.3.2"]) {
     assert.throws(() => verifyCurrentVersion(name, version),
       /must not precede the latest immutable release/);
   }

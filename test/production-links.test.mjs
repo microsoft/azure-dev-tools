@@ -37,6 +37,7 @@ test("production catalog matches all installable plugins in order", () => {
     "canvas-authoring": ["Canvas Authoring", "plugins/canvas-authoring/"],
     "azure-cost-health-check": ["Azure Cost Health Check", "canvases/azure-cost-health-check/"],
     "azure-sre-agent": ["Azure SRE Agent", "canvases/azure-sre-agent/"],
+    "azure-storage": ["Azure Storage canvas", "canvases/azure-storage/"],
     "containers": ["Containers", "canvases/containers/"],
   };
   assert.equal(rows.length, manifest.plugins.length);
@@ -67,8 +68,9 @@ test("SRE package has its catalog identity, official preview logo and customer c
   assert.equal(release.publicationRepository, "microsoft/azure-dev-tools");
   assert.equal(release.plugin.extension.entry,
     "com.github.copilot/extensions/azure-sre-agent/extension.mjs");
-  assert.match(readme, /Open an agent by URL or resource ID/);
-  assert.match(readme, /Save connected agent/);
+  assert.match(readme, /\*\*External URL or Resource ID\*\*/);
+  assert.match(readme, /\*\*Favorites\*\*/);
+  assert.match(readme, /\*\*Connect This Thread\*\*/);
   assert.match(readme, /My app is failing/);
   assert.match(readme, /microsoft\/azure-dev-tools/);
 });
