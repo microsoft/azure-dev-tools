@@ -18,7 +18,12 @@ Already have an app? Choose an [entry point](#entry-points) below or browse the
 
 This reference covers [app structure](#canvas-skeleton),
 [Azure access](#azure-access), [UI and packaging](#shared-ui), and optional
-[telemetry](#product-usage-telemetry) and [command logs](#commands-log).
+[telemetry](#product-usage-telemetry), [shared UI components](#shared-interactive-components),
+and [command logs](#commands-log).
+
+For the shared UI migration set, see the compact
+[component guide](ui-components.md): when to use each component, when not to,
+and how to compose it without taking over product behavior.
 
 ## Setup and exports
 
@@ -69,6 +74,11 @@ They do not require access to a source repository.
 | `@microsoft/canvas-toolkit/commands` | `createCommandLog`; server-side, DOM-free, redaction-safe command-activity record log |
 | `@microsoft/canvas-toolkit/ui/commands-log` | `createCommandsLog` (browser module); the read-only command-activity panel |
 | `@microsoft/canvas-toolkit/ui/commands-log.css` | Command-activity panel styles |
+| `@microsoft/canvas-toolkit/ui/components` | Vanilla DOM header/footer/navigation, cards, composer, list/detail, shell, feedback, filters, and overlays |
+| `@microsoft/canvas-toolkit/ui/components.css` | Scoped styles for the shared interactive components |
+| `@microsoft/canvas-toolkit/ui/react` | Host-themed Fluent Headless components, canvas chrome and layouts; use for new UI |
+| `@microsoft/canvas-toolkit/ui/dom` | `mountCanvasComponent`, React element helpers and the same Fluent Headless components for vanilla consumers |
+| `@microsoft/canvas-toolkit/ui/base.css` | Alex's Workbench styling for the Fluent Headless components; load after `ui/styles.css` |
 | `@microsoft/canvas-toolkit/telemetry` | `createPublicCanvasUsageMetrics` for the release-owned collector; default-off `createCanvasUsageMetrics` for caller-owned collection; action instrumentation helpers |
 | `@microsoft/canvas-toolkit/ui/telemetry` | `observeCanvasUsage`; trusted panel interactions from a static control allowlist |
 
@@ -125,7 +135,7 @@ public collector or the lower-level client for your own collection policy.
 
 The toolkit exposes two layers:
 
-- `createPublicCanvasUsageMetrics` is always enabled, credential-free, and uses
+- `createPublicCanvasUsageMetrics` is enabled by default, credential-free, and uses
   the release-owned public endpoint. It rejects consumer enablement,
   destination, transport, clock, event-ID generator, audience, and
   token-provider options.
@@ -137,8 +147,10 @@ registered public canvas. It owns one service ID, schema version, data
 classification, and event endpoint; canvases do not define per-canvas
 destinations. `PUBLIC_CANVAS_USAGE_ENDPOINT` remains an alias for compatibility.
 
-Neither API reads environment variables. Never reuse a customer's Application
-Insights connection for product-usage events.
+Customers can [disable usage telemetry](https://github.com/microsoft/azure-dev-tools#disable-usage-telemetry)
+for canvas and skill collectors. The preference is read at startup; restart
+the provider after changing it. Never reuse a customer's
+Application Insights connection for product-usage events.
 
 ```js
 import { createPublicCanvasUsageMetrics } from "@microsoft/canvas-toolkit/telemetry";
@@ -150,8 +162,9 @@ const metrics = createPublicCanvasUsageMetrics({
 });
 ```
 
-Public canvases expose no customer setting that disables or redirects this
-collector. The shared client asks the stored `github.com` GitHub CLI account for
+Customers can disable collection but cannot redirect the public collector or
+supply its credentials. When collection is enabled, the shared client asks the
+stored `github.com` GitHub CLI account for
 its numeric user ID without exporting a GitHub token. That ID crosses the
 TLS-protected request path and is HMACed by the gateway; only the stable
 server-derived key and key version are persisted for the 30-day repeat-customer
@@ -164,6 +177,10 @@ subscription, or Azure resource identifier. Front Door/WAF separately process
 source network information. Credential-free traffic and claimed GitHub IDs are
 spoofable, so these counts must not drive billing, entitlement, compliance, or
 security decisions.
+
+When adding collection, update **Usage data** in the public and packaged
+README with the actual default, data, receiver and public disable link.
+Review the emitted notice and test opt-out behavior, not README phrases.
 
 Use the lower-level API when collection policy and transport are explicitly
 owned by the caller:
@@ -482,6 +499,282 @@ The CSS includes `.canvas-header`, button styles, and `.canvas-list` row
 primitives. `hydrateIcons()` replaces marked elements such as
 `<span data-canvas-icon="refresh"></span>` with decorative SVGs.
 Consumers still implement accessible labels, keyboard interaction, and state.
+
+### Shared interactive components
+
+For new UI, use **`ui/react`**: Fluent Headless controls with host-themed
+Workbench styling and bundled Microsoft focusgroup support for keyboard navigation.
+React applications wrap a subtree in `CanvasProvider`; plain JavaScript uses
+`mountCanvasComponent` from **`ui/dom`**. The [component guide](ui-components.md)
+has both examples and short use/avoid guidance for all components.
+
+Load `ui/styles.css` and `ui/base.css`. App bundlers use the application's
+React/React DOM peer dependencies. For native browser ESM, `canvasUiAssets`
+includes `canvas-ui/base.mjs` and its shared `react-runtime.mjs` chunk; both
+prepared browser entry points map to the same implementation. Keep the complete
+asset map and its third-party notices when packaging. Do not mix bundled React with an application's
+separate React runtime. No CDN, import map or unsafe evaluation is required.
+Non-UI entry points do not import React.
+
+**Legacy factory compatibility.** The examples below describe `ui/components`,
+which remains unchanged for existing consumers. It does not become React-backed
+just by loading the new stylesheet. Migrate a self-contained subtree to the new
+entry points; do not place a React root inside another React-owned subtree.
+
+The optional `ui/components` entry point adds lifecycle-managed browser DOM
+primitives without importing React, React DOM, Fluent Headless, or product services.
+Load both shared stylesheets and mount these components in a host-owned element:
+
+```js
+import {
+    createActionCard, createCanvasShell, createListDetail, createPromptComposer,
+} from "@microsoft/canvas-toolkit/ui/components";
+import "@microsoft/canvas-toolkit/ui/styles.css";
+import "@microsoft/canvas-toolkit/ui/components.css";
+
+const shell = createCanvasShell({ mount, title: "Resources" });
+const card = createActionCard({
+    mount: shell.content,
+    label: "Refresh resources",
+    description: "Load the latest resource list",
+    onAction: () => refresh(),
+});
+const list = createListDetail({
+    mount: shell.content,
+    items: [{ id: "one", label: "Resource one", description: "Ready" }],
+    onSelect: item => selectResource(item.id),
+    renderDetail: item => {
+        const detail = document.createElement("p");
+        detail.textContent = item.description ?? "";
+        return detail;
+    },
+});
+const composer = createPromptComposer({
+    mount: shell.content,
+    onSubmit: async message => sendMessage(message),
+});
+
+// On rerender, update props without replacing the surrounding application.
+list.update({ items: nextItems, selectedId: currentSelection });
+// At the owning view's teardown:
+for (const component of [composer, list, card, shell]) component.dispose();
+```
+
+`createPromptComposer` submits with its button or Ctrl/⌘+Enter by default. Set
+`submitKey: "enter"` for Enter-to-send with Shift+Enter for a newline.
+It ignores IME
+composition, prevents duplicate sends while pending, and clears only after an
+accepted send. Return `false` or throw to keep the draft; thrown errors appear
+beside the composer. The callback is only a UI intent: the canvas owns transport,
+authorization, retries, and persistent state. `createListDetail` owns only the
+displayed items and current selection; queries, paging, and domain semantics
+remain with the app. Text is rendered as text, not parsed HTML.
+
+Legacy React integrations can retain this ref/effect boundary. New React views
+should use the React components directly rather than mounting legacy factories:
+
+```jsx
+import { useEffect, useRef } from "react";
+import { createPromptComposer } from "@microsoft/canvas-toolkit/ui/components";
+
+export function PromptComposer({ onSubmit }) {
+    const host = useRef(null);
+    const submit = useRef(onSubmit);
+    submit.current = onSubmit;
+    useEffect(() => {
+        const composer = createPromptComposer({
+            mount: host.current,
+            onSubmit: value => submit.current(value),
+        });
+        return () => composer.dispose();
+    }, []);
+    return <div ref={host} />;
+}
+```
+
+For a gradual migration, start with one self-contained card or composer inside
+an existing React view. Keep app state and authorized operations in their
+current owner, then adopt list/detail or the shell only when it reduces real
+duplication. Existing Workbench React components and product canvases remain
+supported; this entry point does not imply a broad migration or replace their
+current behavior.
+
+#### Cohesive canvas header, footer, and navigation
+
+Use these three components independently or compose them through the shell.
+They share the same typography, 32px controls, theme tokens, wrapping, and
+update/dispose lifecycle. Optional features leave no empty control groups.
+
+```js
+import {
+    createCanvasHeader, createCanvasFooter, createNavigationControls,
+} from "@microsoft/canvas-toolkit/ui/components";
+
+const navigation = createNavigationControls({
+    canGoBack: history.canGoBack,
+    onBack: () => history.back(),
+    onForward: () => history.forward(),
+    onJump: () => openDestinationPicker(),
+});
+const header = createCanvasHeader({
+    mount,
+    title: "Operations",
+    navigation: navigation.element,
+    context: { label: selectedName, onSelect: () => openContextPicker() },
+    actions: [{ label: "Refresh", onClick: () => refresh() }],
+});
+const footer = createCanvasFooter({
+    mount,
+    docs: { label: "Docs", href: "https://example.com/docs", newTab: true },
+    feedback: { label: "Feedback", onClick: () => openFeedback() },
+    version: "1.0.0",
+});
+
+navigation.update({ canGoBack: true, canGoForward: false });
+header.update({ context: null }); // Remove context and its separator together.
+// At the owning view's teardown:
+navigation.dispose();
+header.dispose();
+footer.dispose();
+```
+
+| Factory | Initial contract |
+|---|---|
+| `createCanvasHeader` | Required `title`; optional decorative `icon` element, `description`, `onHome`/`homeLabel`, selected `context`, `navigation` element, and `actions` |
+| `createCanvasFooter` | Optional `docs`, `feedback`, `language`, `actions`, `actionGroups`, and `version`; an entirely empty footer is hidden |
+| `createNavigationControls` | Optional `onBack`, `onForward`, `onJump`; caller-supplied `canGoBack`/`canGoForward`; independently localized labels |
+
+Header context is `{ label, disabled?, onSelect? }`; without a callback it is
+displayed as unavailable, not as a working picker. The icon slot is decorative;
+do not put interactive controls inside it. Navigation is caller-owned: disposing
+the header does not dispose the component mounted into its navigation slot.
+`shortcutLabel` on navigation is a visual hint, not a registered keyboard
+shortcut. Set `jumpControls` only when the caller provides the associated
+destination dialog. No router, history store, or command palette is installed.
+
+The footer's `language` option is
+`{ label, value, options: [{ value, label }], onChange, disabled? }`.
+It uses a native select rather than a custom translation menu. The async
+`onChange(value)` callback owns translation: selection is locked while pending;
+failure restores the prior locale and displays the error. Replacing the
+language configuration or disposing the footer invalidates late completions.
+Omit `language` when translation is not supported.
+
+Footer action groups use `{ label, items: [{ label, disabled?, onSelect? }] }`
+and reuse the shared menu component. Docs links support HTTP(S) or relative URLs;
+`newTab` adds the appropriate opener protection. Version is displayed exactly
+as supplied; `versionLabel`, `label`, and `actionsLabel` localize its accessible
+copy and footer/action landmarks.
+
+`createCanvasShell` uses these same header/footer factories. Its existing
+`title`, `description`, `headerActions`, and `footerActions` options remain
+supported. Pass additional chrome options through `header` and `footer`:
+
+```js
+const shell = createCanvasShell({
+    mount,
+    title: "Operations",
+    header: { navigation: navigation.element },
+    footer: { docs: { label: "Docs", href: "/docs" }, version: "1.0.0" },
+});
+shell.update({ header: { context: { label: selectedName } } });
+```
+
+The returned `shell.header` and `shell.footer` also expose their individual
+update APIs. Shell disposal cleans up its header and footer, but callers still
+dispose components they supply in slots. Product routes, selected resources,
+connection state, feedback destinations, and language services remain outside
+the toolkit.
+
+For incremental adoption, replace the footer first, then supply the existing
+navigation callbacks to the header. React consumers use the same ref/effect
+boundary shown above: React owns the host, the toolkit owns its children.
+Keep the navigation instance alongside the header and dispose both on cleanup;
+pass new state through `update` rather than rebuilding the host.
+
+#### Feedback and empty states
+
+All factories expose `element`, `update(patch)`, and `dispose()` (also `destroy()`).
+Text options are plain text, never HTML. Labels and callbacks stay caller-owned.
+
+| Factory | Options and behavior |
+|---|---|
+| `createSpinner` | `label`, `paused`; labeled status with reduced-motion support |
+| `createProgressBar` | `label`, optional `value` from 0–100; omit value for indeterminate progress |
+| `createSkeleton` | `label`, `lines` from 1–20; decorative placeholder lines with one accessible status |
+| `createMessageBar` | Required `title`, optional `message`, `intent`: `info`, `success`, `warning`, or `error`; errors use alert semantics |
+| `createBlankslate` | Required `title`, optional `description` and `actions`; actions use the shell's label/primary/disabled/onClick shape |
+
+Progress limits and skeleton line counts are checked, not silently clamped.
+Update feedback in place rather than recreating it on every state push.
+
+#### Search and filters
+
+```js
+import { createFilterToolbar } from "@microsoft/canvas-toolkit/ui/components";
+
+const filters = createFilterToolbar({
+    mount,
+    searchLabel: "Search resources",
+    facets: [{
+        id: "status",
+        label: "Status",
+        options: [
+            { value: "active", label: "Active" },
+            { value: "closed", label: "Closed" },
+        ],
+        values: [],
+    }],
+    onChange: ({ search, values }) => applyQuery({ search, values }),
+});
+// After the caller's query completes:
+filters.update({ resultCount: 12 });
+```
+
+Changes emit a full `{ search, values }` snapshot. Values are arrays keyed by
+facet ID; empty arrays mean unrestricted. The caller implements query semantics
+(typically OR within a facet and AND across facets), debouncing, paging, and
+request cancellation. The control does not fetch or filter a resource inventory.
+`getValue()` returns a copy; programmatic `update()` does not emit changes.
+When replacing `facets`, include their selected `values` explicitly.
+
+Selected values appear as removable pills; `createFilterPill` is also available
+separately with `label`, `removeLabel`, and `onRemove`. Search remains visible
+while measured facet triggers overflow, in priority order, into More filters.
+Overflow preserves selection and uses the same facet controls, not duplicate
+filter state. `searchLabel`, `moreLabel`, `clearLabel`, and `removeLabel`
+customize control copy; `formatResultCount(count)` localizes the count announcement.
+`resultCount` is caller-supplied; omit it when unknown rather than implying zero.
+
+#### Dialogs, popovers, menus, and tooltips
+
+| Factory | Contract |
+|---|---|
+| `createDialog` | Required `title`; `content` and `footer` slots, `open()`, `close()`, optional `onClose` and `closeLabel` |
+| `createPopover` | Caller-owned `trigger` and required `label`; `content` slot, `open()`, `close(returnFocus?)`, `isOpen()` |
+| `createMenuButton` | Required `label`, `items: [{ label, disabled?, onSelect? }]`; owns its `trigger`, supports arrow keys, Home, End, type-to-focus, and Escape |
+| `createTooltip` | Caller-owned focusable `trigger` and required `text`; supplementary description on hover/focus, dismissed with Escape |
+
+Dialogs use native `showModal()` for modal focus and Escape behavior. Popovers
+and menus use the native Popover API for top-layer rendering and outside-click
+dismissal; they are not modal. Unsupported browsers fail explicitly at creation.
+Mount overlays into the connected document before opening them. Popovers clamp
+to the iframe viewport and reposition on scroll/resize. Tooltips contain text
+only; use a popover for interactive content.
+
+Slots accept DOM nodes authored by the caller. Keep authorization and service
+operations in the application; opening a dialog or selecting a menu item grants
+no permission. Dispose caller-owned children before disposing their container.
+Disposal removes overlay listeners and restores trigger accessibility attributes,
+so React effects can safely unmount and remount. A programmatic popover `open()`
+does not move focus; activating its trigger focuses the first control or panel.
+
+For adoption, replace loading/empty/error blocks first, then connect the filter
+snapshot to the existing query controller. Adopt overlays independently of the
+shell. Keep investigation selection, draft persistence, confirmation workflows,
+and creation/deployment operations in their current owners. The composer’s
+`submitKey: "enter"` supports existing Enter-to-send experiences without changing
+the default for other consumers.
 
 ### Packaging shared UI
 

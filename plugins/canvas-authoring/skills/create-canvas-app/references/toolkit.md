@@ -44,6 +44,9 @@ An unavailable version must fail installation, not trigger a source fallback.
 | `@microsoft/canvas-toolkit/state` | The optional store is in-memory, not durable persistence. Choose ownership through the host lifecycle. |
 | `@microsoft/canvas-toolkit/server` | [Serve the app](toolkit/README.md#canvas-skeleton) through the shared loopback transport, with an explicit asset allowlist. |
 | `@microsoft/canvas-toolkit/ui/styles.css` | [Use shared styles](toolkit/README.md#styling-and-themes) and link the emitted CSS from HTML. |
+| `@microsoft/canvas-toolkit/ui/dom` | Mount toolkit controls (`Button`, `MessageBar`, `ActionGroup`) in plain-JavaScript views with `mountCanvasComponent`; load `ui/styles.css`, then `ui/base.css`. Use `ui/react` in React apps. See the [component guide](toolkit/ui-components.md). |
+| `@microsoft/canvas-toolkit/ui/theme` | `readCanvasTheme` and `observeCanvasTheme` for renderers that cannot use CSS tokens. Otherwise rely on `--canvas-*` tokens. |
+| `@microsoft/canvas-toolkit/telemetry` | Product-usage helpers. The starters omit them: the public collector is release-owned and always on. Add usage metadata and instrumentation only for a registered product canvas. |
 | Azure auth/subscriptions | [Bind explicit scope](toolkit/auth.md) and keep credentials in Node. These helpers are optional for non-Azure apps. |
 
 `effect: "write"` describes an action; it does not authorize a cloud mutation.

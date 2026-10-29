@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "canvas-authoring",
-  "version": "0.1.2",
-  "description": "A toolkit setup companion to the GitHub Copilot app's installed create-canvas skill, with an Azure starter, safe asset packaging and a focused browser smoke."
+  "version": "0.1.3",
+  "description": "Create canvas apps with guided setup and reusable UI components from the Microsoft Canvas Toolkit. Includes a background extension used only for skill-usage telemetry."
 }

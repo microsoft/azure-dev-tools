@@ -1,6 +1,8 @@
 import "@microsoft/canvas-toolkit/ui/styles.css";
+import "@microsoft/canvas-toolkit/ui/base.css";
 import "@microsoft/canvas-toolkit/ui/subscription-picker.css";
 import { createAzureSubscriptionPicker } from "@microsoft/canvas-toolkit/ui/azure-subscription-picker";
+import { Button, MessageBar, mountCanvasComponent } from "@microsoft/canvas-toolkit/ui/dom";
 import { formatAzureLocation } from "@microsoft/canvas-toolkit/ui/locations";
 import "./app.css";
 
@@ -10,16 +12,24 @@ let model;
 let pending = 0;
 let ready = false;
 let fileBuild;
+const errorBar = mountCanvasComponent(element("error"), MessageBar, { intent: "error" });
 function showError(error) {
-    element("error").textContent = error.message;
+    errorBar.update({ children: error.message });
     element("error").hidden = false;
 }
+const buttons = Object.fromEntries([
+    ["profile", "Load profile", "secondary", "reload_profile"],
+    ["list", "List resource groups", "primary", "list_resource_groups"],
+    ["cancel", "Cancel", "secondary", "cancel"],
+].map(([id, label, appearance, action]) => [id, mountCanvasComponent(element(id + "-slot"), Button, {
+    id, appearance, disabled: true, children: label, onClick: () => act(action, {}).catch(showError),
+})]));
 function controls() {
     const loading = model?.status === "loading";
-    element("profile").disabled = !ready || pending > 0 || model?.status === "loading-profile";
+    buttons.profile.update({ disabled: !ready || pending > 0 || model?.status === "loading-profile" });
     element("scope").disabled = !ready || model?.profile !== "connected" || model?.status === "loading-profile";
-    element("list").disabled = !ready || pending > 0 || !model?.scope;
-    element("cancel").disabled = !ready || !loading;
+    buttons.list.update({ disabled: !ready || pending > 0 || !model?.scope });
+    buttons.cancel.update({ disabled: !ready || !loading });
 }
 const picker = createAzureSubscriptionPicker({
     id: "builder-subscription", trigger: element("scope"), selectionMode: "single",
@@ -86,9 +96,6 @@ async function act(name, input) {
         controls();
     }
 }
-for (const [id, name] of [["profile", "reload_profile"], ["list", "list_resource_groups"], ["cancel", "cancel"]]) {
-    element(id).addEventListener("click", () => act(name, {}).catch(showError));
-}
 const events = new EventSource(new URL("events", location.href));
 events.addEventListener("change", refresh);
 events.onopen = () => { element("connection").textContent = "Connected"; };
@@ -97,7 +104,9 @@ events.onerror = () => {
     controls();
     element("connection").textContent = "Connection lost; reconnecting...";
 };
-window.addEventListener("pagehide", () => { events.close(); picker.destroy(); });
+window.addEventListener("pagehide", () => { events.close(); picker.destroy(); errorBar.dispose();
+    for (const button of Object.values(buttons)) button.dispose();
+});
 try {
     fileBuild = await request("build.json");
     await refresh();

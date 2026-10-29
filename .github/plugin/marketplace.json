@@ -22,8 +22,8 @@
     },
     {
       "name": "canvas-authoring",
-      "description": "Build canvas apps with the native create-canvas skill and a toolkit setup companion.",
-      "version": "0.1.2",
+      "description": "Create canvas apps with guided setup and reusable UI components from the Microsoft Canvas Toolkit. Includes a background extension used only for skill-usage telemetry.",
+      "version": "0.1.3",
       "source": "plugins/canvas-authoring"
     },
     {

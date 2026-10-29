@@ -1,9 +1,13 @@
 # Canvas authoring plugin
 
-Create a canvas app with the Microsoft Canvas Toolkit. This **skill-only
-companion** gives the host's native `create-canvas` workflow toolkit setup
-and a counter or read-only Azure resource-group starter; installing it does
-not open a canvas.
+Create a canvas app with the Microsoft Canvas Toolkit.
+
+## What you can do
+
+- Turn an app idea into a canvas project with guided setup.
+- Build interfaces with reusable components that match Copilot's theme.
+- Share actions and state between the canvas and your agent.
+- Connect to Azure with authentication, subscription selection and read-only resource access.
 
 ## Install
 
@@ -37,12 +41,6 @@ groups. Use the native create-canvas skill and the create-canvas-app
 companion's Azure starter.** Choose a compatible toolkit package and project
 location when prompted. For a non-Azure example, ask for the counter starter.
 
-## What you can do
-
-- Generate a native canvas scaffold with a working counter starter.
-- Start a read-only Azure resource-group viewer with explicit subscription choice.
-- Build and smoke-test the generated app before installing its complete output.
-
 ## Prompts to try
 
 > Use the native create-canvas skill and the create-canvas-app companion to build a counter canvas.
@@ -61,11 +59,16 @@ location when prompted. For a non-Azure example, ask for the counter starter.
 
 ## Usage data
 
-The plugin counts how often its `create-canvas-app` skill is invoked. Each
-count records the skill name, how it was invoked, the plugin name and version,
-and a timestamp. Usage telemetry may include a pseudonymous account identifier
-to understand usage over time; it is retained for up to 30 days. The plugin
-does not send prompts, project files or source code.
+The plugin includes a background extension only for skill-usage telemetry.
+It does not add a canvas, tools or hooks.
+
+Usage telemetry is enabled by default to help improve this plugin. It sends
+basic skill-usage data and, when available, your numeric GitHub user ID to the
+[usage metrics service](https://canvas-metrics-pilot-0b8944-add3hsghhddcbxe9.b01.azurefd.net/api/events).
+Prompts, tool inputs/outputs and credentials are excluded.
+
+You can [disable usage telemetry](https://github.com/microsoft/azure-dev-tools#disable-usage-telemetry).
+Copilot's own telemetry is separate.
 
 ## Create an app
 

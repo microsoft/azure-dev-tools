@@ -52,12 +52,15 @@ does not demonstrate live Azure access.
 
 | File | Purpose |
 | --- | --- |
-| `src/browser/` | UI, styles and subscription picker. |
+| `src/browser/` | UI built from toolkit `ui/dom` controls, shared styles and the subscription picker. |
 | `src/resource-groups.mjs` | Azure reader copied from the toolkit example. |
 | `src/domain.mjs` | Shared actions, scope, cancellation and stale-result checks. |
 | `src/canvas.mjs` | Per-panel ownership, transport and assets. |
 | `src/toolkit.mjs` | Native adapter and shutdown. |
 | `scripts/build.mjs` | Node/browser builds, toolkit assets and build ID. |
+
+Reuse toolkit components (`ui/dom`, `ui/base.css`) for new controls instead of custom
+buttons or alerts. The starter sends no product telemetry.
 
 Start with a local location filter, preserving raw IDs and loaded counts.
 Keep the generated asset layout: bundling JavaScript alone does not copy icons.

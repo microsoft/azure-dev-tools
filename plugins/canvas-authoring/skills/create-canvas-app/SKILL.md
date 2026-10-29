@@ -82,10 +82,22 @@ install the whole `dist/`, reload the provider and verify the actual panel.
 - Keep credentials server-side, cancel obsolete work and reject stale results.
   Empty success, missing scope, errors and cancellation must remain distinct.
 - Use labelled `{"mode":"fixture"}` data for tests. Do not report it as live Azure.
+- Use toolkit controls (`ui/dom`, with `ui/styles.css` then `ui/base.css`) and host
+  type tokens for new UI. Keep body text normal weight and headings modest; avoid
+  hand-styled buttons. The Azure starter adds no product telemetry.
 - Keep the generated build's dependencies and asset layout. Check decoded
   images as well as controls; do not replace missing assets with SVG rewrites.
 - State is ephemeral. Follow the host skill for persistence and shutdown.
   A panel refresh is not a provider reload; check the displayed build ID.
+
+### When adding product telemetry
+
+Do not add telemetry by default to generated apps. If requested, use the
+shared toolkit collector and follow
+[Product-usage telemetry](references/toolkit/README.md#product-usage-telemetry).
+Update **Usage data** in the public and packaged README, link to the shared
+disable instructions, and review the emitted notice. Test opt-out behavior,
+not README phrases.
 
 Use the [integration reference](references/toolkit.md) for adapter/build details
 and the [Azure quickstart](references/toolkit/quickstart.md) for customization.
