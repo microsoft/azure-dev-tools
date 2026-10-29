@@ -75,6 +75,16 @@ refine the same view.
 - An Azure account signed in with read access to the subscriptions and resource
   details you need. Opening the canvas does not sign in automatically.
 
+## Usage data
+
+Usage telemetry is enabled by default to help improve this plugin. It sends
+basic usage data and, when available, your numeric GitHub user ID to the
+[usage metrics service](https://canvas-metrics-pilot-0b8944-add3hsghhddcbxe9.b01.azurefd.net/api/events).
+Prompts, tool inputs/outputs and credentials are excluded.
+
+You can [disable usage telemetry](https://github.com/microsoft/azure-dev-tools#disable-usage-telemetry).
+Copilot's own telemetry is separate.
+
 ## Troubleshooting and safety
 
 | Symptom | What to check |

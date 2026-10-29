@@ -2966,10 +2966,10 @@ var require_truncate = __commonJS({
   "node_modules/semver/functions/truncate.js"(exports, module) {
     "use strict";
     var parse = require_parse();
-    var constants3 = require_constants();
+    var constants4 = require_constants();
     var SemVer = require_semver();
     var truncate = (version2, truncation, options) => {
-      if (!constants3.RELEASE_TYPES.includes(truncation)) {
+      if (!constants4.RELEASE_TYPES.includes(truncation)) {
         return null;
       }
       const clonedVersion = cloneInputVersion(version2, options);
@@ -4018,7 +4018,7 @@ var require_semver2 = __commonJS({
   "node_modules/semver/index.js"(exports, module) {
     "use strict";
     var internalRe = require_re();
-    var constants3 = require_constants();
+    var constants4 = require_constants();
     var SemVer = require_semver();
     var identifiers = require_identifiers();
     var parse = require_parse();
@@ -4102,8 +4102,8 @@ var require_semver2 = __commonJS({
       re: internalRe.re,
       src: internalRe.src,
       tokens: internalRe.t,
-      SEMVER_SPEC_VERSION: constants3.SEMVER_SPEC_VERSION,
-      RELEASE_TYPES: constants3.RELEASE_TYPES,
+      SEMVER_SPEC_VERSION: constants4.SEMVER_SPEC_VERSION,
+      RELEASE_TYPES: constants4.RELEASE_TYPES,
       compareIdentifiers: identifiers.compareIdentifiers,
       rcompareIdentifiers: identifiers.rcompareIdentifiers
     };
@@ -6325,7 +6325,7 @@ var require_state_cjs2 = __commonJS({
 });
 
 // canvases/azure-resources-query/src/extension.mjs
-import path7 from "node:path";
+import path8 from "node:path";
 import { joinSession, createCanvas, CanvasError } from "@github/copilot-sdk/extension";
 
 // canvases/azure-resources-query/src/azure.mjs
@@ -13166,8 +13166,8 @@ function normalizeAssets(assets) {
       map.set(route, { provider: source, contentType: contentType ?? "text/html; charset=utf-8" });
       continue;
     }
-    const path8 = typeof source === "string" && source.startsWith("file:") ? fileURLToPath2(source) : source instanceof URL ? fileURLToPath2(source) : source;
-    map.set(route, { path: path8, contentType: contentType ?? contentTypeFor(path8) });
+    const path9 = typeof source === "string" && source.startsWith("file:") ? fileURLToPath2(source) : source instanceof URL ? fileURLToPath2(source) : source;
+    map.set(route, { path: path9, contentType: contentType ?? contentTypeFor(path9) });
   }
   return map;
 }
@@ -13177,11 +13177,11 @@ function normalizeRoutes(routes, reserved) {
   const list = routes instanceof Map ? [...routes.entries()].map(([k, v]) => ({ ...parseKey(k), handler: v })) : routes ?? [];
   for (const item of list) {
     const method = (item.method ?? "GET").toUpperCase();
-    const path8 = (item.path ?? "").replace(/^\//, "");
+    const path9 = (item.path ?? "").replace(/^\//, "");
     const handler = item.handler;
-    if (typeof handler !== "function") throw new TypeError(`Route "${method} ${path8}" needs a handler function.`);
-    if (reserved.has(path8)) throw new TypeError(`Route "${path8}" ${RESERVED_ROUTE_MESSAGE}.`);
-    map.set(`${method} ${path8}`, handler);
+    if (typeof handler !== "function") throw new TypeError(`Route "${method} ${path9}" needs a handler function.`);
+    if (reserved.has(path9)) throw new TypeError(`Route "${path9}" ${RESERVED_ROUTE_MESSAGE}.`);
+    map.set(`${method} ${path9}`, handler);
   }
   return map;
 }
@@ -13371,6 +13371,9 @@ import { azureIconAssets } from "./assets/toolkit/icons.mjs";
 // packages/canvas-toolkit/src/telemetry.mjs
 import { randomUUID as randomUUID4 } from "node:crypto";
 import { execFile as execFile4 } from "node:child_process";
+import { closeSync, constants as constants3, fstatSync, openSync, readSync } from "node:fs";
+import { homedir } from "node:os";
+import path7 from "node:path";
 var ID = /^[a-z][a-z0-9_.-]{0,79}$/;
 var VERSION = /^[a-zA-Z0-9][a-zA-Z0-9.+_-]{0,39}$/;
 var SOURCES = /* @__PURE__ */ new Set(["model", "panel", "system", "unknown"]);
@@ -13393,6 +13396,29 @@ var PUBLIC_CANVAS_USAGE_SERVICE = Object.freeze({
 });
 var PUBLIC_CANVAS_USAGE_ENDPOINT = PUBLIC_CANVAS_USAGE_SERVICE.endpoint;
 var GITHUB_USER_ID = /^[1-9][0-9]{0,19}$/;
+function telemetryPreference() {
+  let fd;
+  try {
+    try {
+      const home = process.env.COPILOT_HOME || path7.join(homedir(), ".copilot");
+      if (!path7.isAbsolute(home)) return { disabled: true, invalid: true };
+      fd = openSync(path7.join(home, "canvases", "telemetry.json"), constants3.O_RDONLY | constants3.O_NONBLOCK);
+      const stat = fstatSync(fd);
+      if (!stat.isFile() || stat.size > 4096) return { disabled: true, invalid: true };
+      const bytes = Buffer.alloc(4097);
+      let size = 0, count;
+      while (size < bytes.length && (count = readSync(fd, bytes, size, bytes.length - size, null)) > 0) size += count;
+      if (size > 4096) return { disabled: true, invalid: true };
+      const value = JSON.parse(bytes.toString("utf8", 0, size));
+      if (!value || Array.isArray(value) || typeof value.enabled !== "boolean") return { disabled: true, invalid: true };
+      return { disabled: !value.enabled, invalid: false };
+    } finally {
+      if (fd !== void 0) closeSync(fd);
+    }
+  } catch (error) {
+    return error.code === "ENOENT" ? { disabled: false, invalid: false } : { disabled: true, invalid: true };
+  }
+}
 function githubCliEnvironment(source) {
   const env = { ...source };
   for (const key of Object.keys(env)) {
@@ -13464,7 +13490,7 @@ function createUsageMetrics(options, skillContract) {
     contract,
     canvasVersion,
     releaseChannel = "development",
-    enabled: enabled2 = false,
+    enabled: requestedEnabled = false,
     endpoint: destination,
     audience,
     getAccessToken,
@@ -13504,7 +13530,9 @@ function createUsageMetrics(options, skillContract) {
   if (!["development", "internal", "preview", "stable"].includes(releaseChannel)) {
     throw new TypeError("Unsupported telemetry release channel.");
   }
-  if (typeof enabled2 !== "boolean") throw new TypeError("enabled must be a boolean.");
+  if (typeof requestedEnabled !== "boolean") throw new TypeError("enabled must be a boolean.");
+  const preference = requestedEnabled ? telemetryPreference() : void 0;
+  const enabled2 = requestedEnabled && !preference.disabled;
   const url = destination === void 0 && (!enabled2 || transport !== void 0) ? void 0 : endpoint2(destination);
   for (const [name2, fn] of Object.entries({ now, randomId })) {
     if (typeof fn !== "function") throw new TypeError(`${name2} must be a function.`);
@@ -13574,6 +13602,7 @@ function createUsageMetrics(options, skillContract) {
     diagnose2("invalid_event");
     return false;
   }
+  if (preference?.invalid) diagnose2("preference_unavailable");
   async function githubIdentity(signal) {
     if (resolvedGitHubUserId) return resolvedGitHubUserId;
     try {
@@ -13715,6 +13744,10 @@ function createUsageMetrics(options, skillContract) {
     activeController?.abort("delivery_cancelled");
   }
   function close({ flush: drain = true } = {}) {
+    if (!enabled2) {
+      closing = true;
+      return closePromise ??= Promise.resolve({ delivered: 0, dropped: 0 });
+    }
     if (!drain) {
       closing = true;
       stats.dropped += queue.length;
@@ -13939,14 +13972,14 @@ function instrumentActionDispatch(dispatch, metrics, {
   };
 }
 
-// packages/azure-resources-query-core/src/usage-contract.mjs
+// packages/usage-contracts/azure-resources-query-core/src/usage-contract.mjs
 function usage(featureId, featureArea, usageClass = "intentional") {
   return Object.freeze({ featureId, featureArea, usageClass, mutates: false });
 }
 var AZURE_RESOURCES_QUERY_USAGE_CONTRACT = Object.freeze({
   canvasId: "azure-resources-query",
   host: "copilot_app",
-  versions: Object.freeze(["0.1.6"]),
+  versions: Object.freeze(["0.1.7"]),
   actions: Object.freeze({
     get_state: usage("state.read", "navigation", "excluded"),
     accounts: usage("azure.subscription.search", "azure"),
@@ -14000,7 +14033,7 @@ var AZURE_RESOURCES_QUERY_USAGE_CONTRACT = Object.freeze({
 });
 
 // canvases/azure-resources-query/src/usage-metrics.mjs
-var AZURE_RESOURCES_QUERY_VERSION = "0.1.6";
+var AZURE_RESOURCES_QUERY_VERSION = "0.1.7";
 function createResourceQueryUsageMetrics({
   env = process.env,
   fetchImpl,
@@ -14174,7 +14207,7 @@ var usageMetrics = createResourceQueryUsageMetrics();
 function ready() {
   if (store) return;
   if (!session?.workspacePath) throw new CanvasError("workspace_unavailable", "A session workspace is required to persist resource-browser views.");
-  const directory = path7.join(session.workspacePath, "files", "azure-resource-browser");
+  const directory = path8.join(session.workspacePath, "files", "azure-resource-browser");
   store = new BrowserStore({
     directory,
     azure: createAzure(),
