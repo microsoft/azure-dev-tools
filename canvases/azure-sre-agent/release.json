@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "format": "plugin",
   "name": "azure-sre-agent",
-  "version": "0.4.2",
+  "version": "0.4.4",
   "mutableDocumentation": true,
   "publicationRepository": "microsoft/azure-dev-tools",
   "plugin": {
@@ -35,10 +35,22 @@
     "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/icons/Subscription.svg",
     "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui.mjs",
     "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/azure-subscription-picker.mjs",
+    "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/base.css",
+    "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/browser/THIRD_PARTY_NOTICES.txt",
+    "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/browser/base.mjs",
+    "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/browser/fluent.mjs",
+    "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/browser/react-runtime.mjs",
     "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/commands-log.css",
     "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/commands-log.mjs",
+    "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/component-helpers.mjs",
+    "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/components.css",
+    "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/components.mjs",
+    "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/content.mjs",
+    "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/fluent.css",
+    "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/forms.mjs",
     "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/icons.mjs",
     "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/locations.mjs",
+    "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/navigation.mjs",
     "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/profiles/coreai-azure.css",
     "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/styles.css",
     "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/subscription-picker.css",
@@ -66,8 +78,8 @@
   },
   "build": {
     "esbuild": "0.25.12",
-    "lockSha256": "4b266aa943330e35c9660aad785b6da7e2cf1c24d66bcde04ca5e185d37b557e",
-    "inputSha256": "aeca27691c4da05a6e6d527972ced6e5deb3464c3a8f50f4a9ff4ec682372546"
+    "lockSha256": "dc739f8b20e9c27f4a8ada34d00cf110f6bd8cec50a4295bd893e1c2a3d9050b",
+    "inputSha256": "8360b8ff137887d804aa51c34548f58e8ba647f332d15bbda593dd941bbba83b"
   },
   "dependencies": [
     {
@@ -267,7 +279,7 @@
     },
     {
       "name": "follow-redirects",
-      "version": "1.16.0",
+      "version": "1.16.1",
       "license": "MIT"
     },
     {
@@ -466,7 +478,35 @@
       "platform": "browser"
     },
     {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/browser/base.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/browser/fluent.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/browser/react-runtime.mjs",
+      "platform": "browser"
+    },
+    {
       "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/commands-log.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/component-helpers.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/components.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/content.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/forms.mjs",
       "platform": "browser"
     },
     {
@@ -475,6 +515,10 @@
     },
     {
       "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/locations.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/navigation.mjs",
       "platform": "browser"
     },
     {
@@ -538,6 +582,31 @@
       "mime": "text/javascript; charset=utf-8"
     },
     {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/base.css",
+      "route": "canvas-ui/base.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/browser/base.mjs",
+      "route": "canvas-ui/base.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/browser/fluent.mjs",
+      "route": "canvas-ui/fluent.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/browser/react-runtime.mjs",
+      "route": "canvas-ui/react-runtime.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/browser/THIRD_PARTY_NOTICES.txt",
+      "route": "canvas-ui/THIRD_PARTY_NOTICES.txt",
+      "mime": "text/plain; charset=utf-8"
+    },
+    {
       "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/commands-log.css",
       "route": "canvas-ui/commands-log.css",
       "mime": "text/css; charset=utf-8"
@@ -548,6 +617,36 @@
       "mime": "text/javascript; charset=utf-8"
     },
     {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/component-helpers.mjs",
+      "route": "canvas-ui/component-helpers.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/components.css",
+      "route": "canvas-ui/components.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/components.mjs",
+      "route": "canvas-ui/components.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/content.mjs",
+      "route": "canvas-ui/content.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/fluent.css",
+      "route": "canvas-ui/fluent.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/forms.mjs",
+      "route": "canvas-ui/forms.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
       "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/icons.mjs",
       "route": "canvas-ui/icons.mjs",
       "mime": "text/javascript; charset=utf-8"
@@ -555,6 +654,11 @@
     {
       "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/locations.mjs",
       "route": "canvas-ui/locations.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-sre-agent/assets/toolkit/ui/navigation.mjs",
+      "route": "canvas-ui/navigation.mjs",
       "mime": "text/javascript; charset=utf-8"
     },
     {

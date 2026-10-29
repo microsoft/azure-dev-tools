@@ -1276,7 +1276,7 @@ SOFTWARE.
 
 --------------------
 
-follow-redirects@1.16.0
+follow-redirects@1.16.1
 License: MIT
 
 --------------------

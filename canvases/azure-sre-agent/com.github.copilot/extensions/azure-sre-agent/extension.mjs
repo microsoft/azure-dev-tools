@@ -2,12 +2,12 @@ import { createRequire as __canvasCreateRequire } from "node:module";
 const require = __canvasCreateRequire(import.meta.url);
 
 // canvases/azure-sre-agent/src/extension.mjs
-import { execFile as execFile2 } from "node:child_process";
+import { execFile as execFile3 } from "node:child_process";
 import { createHash as createHash11 } from "node:crypto";
 import { createServer } from "node:http";
 import { mkdirSync as mkdirSync5, readdirSync, readFileSync as readFileSync6, statSync as statSync5, writeFileSync as writeFileSync5, renameSync as renameSync5, unlinkSync as unlinkSync5 } from "node:fs";
-import { randomUUID as randomUUID6 } from "node:crypto";
-import { homedir } from "node:os";
+import { randomUUID as randomUUID7 } from "node:crypto";
+import { homedir as homedir2 } from "node:os";
 import { dirname as dirname2, join as join5, relative } from "node:path";
 import { promisify } from "node:util";
 import { createCanvas, joinSession } from "@github/copilot-sdk/extension";
@@ -138,9 +138,9 @@ function createComposerCompletion() {
     if (kind !== "skill" && kind !== "agent") throw new TypeError("Catalog kind must be skill or agent.");
     if (!Array.isArray(records) || records.length > 200) throw new TypeError("Catalog must be an array of at most 200 entries.");
     const seen = /* @__PURE__ */ new Set();
-    return records.map((record2) => {
-      if (!record2 || typeof record2 !== "object" || Array.isArray(record2)) throw new TypeError("Catalog entries must be objects.");
-      const { name, description } = record2;
+    return records.map((record3) => {
+      if (!record3 || typeof record3 !== "object" || Array.isArray(record3)) throw new TypeError("Catalog entries must be objects.");
+      const { name, description } = record3;
       if (typeof name !== "string" || name.length > 128 || !/^[A-Za-z0-9_][A-Za-z0-9_-]*$/.test(name)) {
         throw new TypeError("Catalog entry name must be a bounded command token.");
       }
@@ -543,10 +543,10 @@ function projectSkillCatalog(payload) {
   const seen = /* @__PURE__ */ new Set();
   let excluded = 0;
   let omitted = 0;
-  for (const record2 of records) {
-    const name = record2?.name;
-    const description = record2?.properties?.description;
-    if (!record2 || typeof record2 !== "object" || Array.isArray(record2) || typeof name !== "string" || name.length > 128 || !/^[A-Za-z0-9_][A-Za-z0-9_-]*$/.test(name) || description != null && typeof description !== "string" || seen.has(name.toLowerCase())) {
+  for (const record3 of records) {
+    const name = record3?.name;
+    const description = record3?.properties?.description;
+    if (!record3 || typeof record3 !== "object" || Array.isArray(record3) || typeof name !== "string" || name.length > 128 || !/^[A-Za-z0-9_][A-Za-z0-9_-]*$/.test(name) || description != null && typeof description !== "string" || seen.has(name.toLowerCase())) {
       excluded++;
       continue;
     }
@@ -581,13 +581,13 @@ function projectSkillCatalog(payload) {
 }
 function projectEnabledSkillCatalog(payload) {
   if (!Array.isArray(payload?.data)) throw new Error("The enabled skill catalog returned an unsupported response shape.");
-  if (payload.data.some((record2) => typeof record2?.enabled !== "boolean")) {
+  if (payload.data.some((record3) => typeof record3?.enabled !== "boolean")) {
     throw new Error("The enabled skill catalog returned unsupported enabled-state metadata.");
   }
-  const enabled = payload.data.filter((record2) => record2.enabled === true);
-  const result = projectSkillCatalog(enabled.map((record2) => ({
-    name: record2.skillId,
-    properties: { description: record2.description }
+  const enabled = payload.data.filter((record3) => record3.enabled === true);
+  const result = projectSkillCatalog(enabled.map((record3) => ({
+    name: record3.skillId,
+    properties: { description: record3.description }
   })));
   const disabled = payload.data.length - enabled.length;
   result.notice = result.notice.replace(
@@ -601,7 +601,7 @@ function projectCustomAgentCatalog(payload) {
     throw new Error("The custom-agent catalog returned an unsupported response shape or pagination metadata.");
   }
   const result = projectSkillCatalog({
-    value: payload.data.map((record2) => ({ name: record2?.name, properties: { description: record2?.handoffDescription } })),
+    value: payload.data.map((record3) => ({ name: record3?.name, properties: { description: record3?.handoffDescription } })),
     nextLink: payload.has_next_page ? "more" : ""
   });
   result.notice = result.notice.replace(
@@ -817,7 +817,7 @@ function createAutomationModel() {
   const AUTOMATION_MODEL_BUDGET2 = 16e3;
   const AUTOMATION_API_REFERENCE2 = "https://learn.microsoft.com/en-us/azure/sre-agent/api-reference";
   const readStates = ["available", "unavailable", "failed", "stale", "unsupported"];
-  const record2 = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+  const record3 = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
   const identity = (value) => typeof value === "string" && value.trim() && value.length <= 1024 ? value : null;
   const scopedIdentity = (value) => typeof value === "string" && value.length <= 8192 ? value : null;
   const itemIdentity = (value) => identity(value) && !/https?:\/\//i.test(value) ? value : null;
@@ -825,13 +825,13 @@ function createAutomationModel() {
   const text4 = (value) => typeof value === "string" ? value.slice(0, AUTOMATION_TEXT_LIMIT2).replace(/https?:\/\/[^\s<>"']+/gi, "[URL omitted]").slice(0, AUTOMATION_TEXT_LIMIT2) : null;
   const count = (value) => Number.isSafeInteger(value) && value >= 0 ? value : null;
   function automationAgentKey2(agent, subscription = "") {
-    if (!record2(agent)) return null;
+    if (!record3(agent)) return null;
     if (agent.external) {
       try {
         if (!identity(agent.endpoint)) return null;
-        const endpoint = new URL(agent.endpoint);
-        if (endpoint.protocol !== "https:" || endpoint.username || endpoint.password || endpoint.search || endpoint.hash) return null;
-        return JSON.stringify(["external", endpoint.href.replace(/\/$/, "")]);
+        const endpoint2 = new URL(agent.endpoint);
+        if (endpoint2.protocol !== "https:" || endpoint2.username || endpoint2.password || endpoint2.search || endpoint2.hash) return null;
+        return JSON.stringify(["external", endpoint2.href.replace(/\/$/, "")]);
       } catch {
         return null;
       }
@@ -854,7 +854,7 @@ function createAutomationModel() {
     return { status: enabled === true ? "on" : enabled === false ? "off" : "unknown", rawStatus, enabled };
   }
   function normalizeItem(raw, type, agentKey) {
-    if (!record2(raw)) return null;
+    if (!record3(raw)) return null;
     if (type === "scheduled" && raw.triggerType && raw.triggerType !== "ScheduledTask") return null;
     const id = itemIdentity(raw.id) || (type === "scheduled" ? itemIdentity(raw.name) : null);
     return {
@@ -878,7 +878,7 @@ function createAutomationModel() {
     if (payload === void 0 || payload === null) {
       return { status: "unavailable", reason: "Automation discovery has not completed.", items: [], received: null, truncated: false };
     }
-    const rows = Array.isArray(payload) ? payload : record2(payload) && Array.isArray(payload.value) ? payload.value : null;
+    const rows = Array.isArray(payload) ? payload : record3(payload) && Array.isArray(payload.value) ? payload.value : null;
     if (!rows) return { status: "failed", reason: "Unsupported automation list response shape.", items: [], received: null, truncated: false };
     const items = [];
     const keys = /* @__PURE__ */ new Set();
@@ -1004,7 +1004,7 @@ function createAutomationModel() {
     const runs = [];
     const keys = /* @__PURE__ */ new Set();
     for (const raw of observation.runs.slice(0, maximum)) {
-      if (!record2(raw)) continue;
+      if (!record3(raw)) continue;
       const id = itemIdentity(raw[contract.idField]);
       if (!id || keys.has(id)) continue;
       keys.add(id);
@@ -1031,7 +1031,7 @@ function createAutomationModel() {
     return run.association === "verified-id" && run.threadId ? { status: "available", threadId: run.threadId } : { status: "unsupported", threadId: null };
   }
   function projectAutomation2(item) {
-    if (!record2(item)) return null;
+    if (!record3(item)) return null;
     return {
       key: scopedIdentity(item.key),
       agentKey: scopedIdentity(item.agentKey),
@@ -1094,7 +1094,7 @@ function createAutomationModel() {
       result.automationKey = null;
     }
     for (const row of rows.slice(0, AUTOMATION_MODEL_LIMIT2)) {
-      if (!record2(row)) continue;
+      if (!record3(row)) continue;
       const threadId2 = itemIdentity(row.threadId);
       result.runs.push({
         key: scopedIdentity(row.key),
@@ -2335,7 +2335,7 @@ function createApprovalsAdapter(entry, {
       return readFullThread(selected.agent, selected.subscription, threadId2, entry);
     },
     currentIdentity: verifyIdentity,
-    postExecution: ({ scope, path: path2, body }) => {
+    postExecution: ({ scope, path: path3, body }) => {
       const selectedTarget = () => {
         try {
           return target2(scope);
@@ -2353,7 +2353,7 @@ function createApprovalsAdapter(entry, {
           throw Object.assign(error, { deliveryStarted: false });
         }
       };
-      return fetchImpl(selected.agent, selected.subscription, "POST", path2, body, entry, {
+      return fetchImpl(selected.agent, selected.subscription, "POST", path3, body, entry, {
         title: body.action === "run" ? "authorize reviewed execution" : "cancel reviewed execution",
         beforeDispatch,
         expectedApprovalCredential: expectedCredential
@@ -2467,11 +2467,11 @@ var MAX_TOOL_OUTPUT_CHARS = 4e3;
 var MAX_ERROR_CHARS = 2e3;
 function dataPlaneEndpoint(agent) {
   if (!agent) throw new Error("Select an SRE Agent first.");
-  const endpoint = String(agent.endpoint || "").trim();
-  if (!endpoint) {
+  const endpoint2 = String(agent.endpoint || "").trim();
+  if (!endpoint2) {
     throw new Error("The selected SRE Agent does not expose a data-plane endpoint yet. Wait for provisioning to complete, then refresh agents.");
   }
-  return endpoint.replace(/\/$/, "");
+  return endpoint2.replace(/\/$/, "");
 }
 function threadId(thread) {
   return thread && (thread.id || thread.threadId) || "";
@@ -2579,9 +2579,9 @@ function messagePage(payload) {
   }
   return { messages, next: next || "", hasMore: payload?.hasMore === true, partial: incomplete(payload) };
 }
-function continuationPath(next, endpoint, messagesPath, expectedSkip) {
-  const url = new URL(next, endpoint);
-  if (url.origin !== new URL(endpoint).origin || url.pathname !== messagesPath || url.username || url.password || url.hash) {
+function continuationPath(next, endpoint2, messagesPath, expectedSkip) {
+  const url = new URL(next, endpoint2);
+  if (url.origin !== new URL(endpoint2).origin || url.pathname !== messagesPath || url.username || url.password || url.hash) {
     throw new Error("The agent returned a cross-scope message continuation. No continuation request was sent.");
   }
   const keys = [...url.searchParams.keys()];
@@ -2600,21 +2600,21 @@ async function readApprovalThread(agent, subscription, threadId2, entry, {
   if (!Number.isInteger(maxPages) || maxPages < 1 || maxPages > MAX_PAGES || !Number.isInteger(maxMessageBytes) || maxMessageBytes < 1 || maxMessageBytes > MAX_MESSAGE_BYTES) {
     throw new Error("Raw approval thread read bounds are invalid.");
   }
-  const endpoint = dataPlaneEndpoint(agent);
+  const endpoint2 = dataPlaneEndpoint(agent);
   const generation = entry.selectionGeneration;
-  const current = () => entry.agent === agent && entry.subscription === subscription && entry.selectionGeneration === generation && dataPlaneEndpoint(agent) === endpoint;
+  const current = () => entry.agent === agent && entry.subscription === subscription && entry.selectionGeneration === generation && dataPlaneEndpoint(agent) === endpoint2;
   const assertCurrent = () => {
     if (!current()) throw new Error("Agent or selection scope changed during the raw approval read.");
   };
-  const path2 = `/api/v1/threads/${encodeURIComponent(threadId2)}`;
-  const messagesPath = `${path2}/messages`;
+  const path3 = `/api/v1/threads/${encodeURIComponent(threadId2)}`;
+  const messagesPath = `${path3}/messages`;
   const read = async (route, title) => {
     assertCurrent();
     const value = await fetchImpl(agent, subscription, "GET", route, void 0, entry, { title });
     assertCurrent();
     return value;
   };
-  const thread = await read(path2, "read exact approval thread");
+  const thread = await read(path3, "read exact approval thread");
   if (thread?.id !== threadId2 || incomplete(thread)) {
     throw new Error("The agent did not return the exact unprojected approval thread.");
   }
@@ -2649,10 +2649,10 @@ async function readApprovalThread(agent, subscription, threadId2, entry, {
     messages.push(...page.messages);
     bytes += pageBytes;
     skip += page.messages.length;
-    nextPath = page.next ? continuationPath(page.next, endpoint, messagesPath, skip) : `${messagesPath}?skip=${skip}&top=${PAGE_SIZE}&orderby=timestamp`;
+    nextPath = page.next ? continuationPath(page.next, endpoint2, messagesPath, skip) : `${messagesPath}?skip=${skip}&top=${PAGE_SIZE}&orderby=timestamp`;
   }
   if (exhausted) {
-    const latest = await read(path2, "verify approval thread revision");
+    const latest = await read(path3, "verify approval thread revision");
     if (latest?.id !== threadId2 || incomplete(latest) || threadRevision(latest) !== threadRevision(thread)) {
       throw new Error("The approval thread changed or declared incomplete history during the read. Refresh and review again.");
     }
@@ -2745,12 +2745,12 @@ function createChatConnectionStore({ sessionId, workspacePath }) {
   const key = createHash5("sha256").update(sessionId).digest("hex");
   const directory = workspacePath ? join(workspacePath, "files", "azure-sre-agent") : null;
   const file = directory ? join(directory, `chat-connection-${key}.json`) : null;
-  let record2 = { sessionId, revision: 0, connection: null };
+  let record3 = { sessionId, revision: 0, connection: null };
   if (file) {
     try {
       if (statSync(file).size > 8192) throw new Error("The saved SRE chat connection exceeds its size limit.");
-      record2 = validateRecord(JSON.parse(readFileSync(file, "utf8")), sessionId);
-      if (record2.connection) record2.connection = { ...record2.connection, availability: "unchecked", error: "" };
+      record3 = validateRecord(JSON.parse(readFileSync(file, "utf8")), sessionId);
+      if (record3.connection) record3.connection = { ...record3.connection, availability: "unchecked", error: "" };
     } catch (error) {
       if (error.code !== "ENOENT") throw error;
     }
@@ -2760,19 +2760,19 @@ function createChatConnectionStore({ sessionId, workspacePath }) {
     sessionId,
     file,
     get revision() {
-      return record2.revision;
+      return record3.revision;
     },
     get connection() {
-      return record2.connection ? structuredClone(record2.connection) : null;
+      return record3.connection ? structuredClone(record3.connection) : null;
     },
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    update(connection, expectedRevision = record2.revision) {
-      if (record2.revision !== expectedRevision) throw new Error("The Copilot chat connection changed. Review the current connection and try again.");
+    update(connection, expectedRevision = record3.revision) {
+      if (record3.revision !== expectedRevision) throw new Error("The Copilot chat connection changed. Review the current connection and try again.");
       if (!file) throw new Error("Copilot session storage is unavailable. A conversation-scoped SRE chat connection cannot be saved.");
-      const next = validateRecord({ sessionId, revision: record2.revision + 1, connection }, sessionId);
+      const next = validateRecord({ sessionId, revision: record3.revision + 1, connection }, sessionId);
       mkdirSync(directory, { recursive: true });
       const temporary = `${file}.${randomUUID()}.tmp`;
       try {
@@ -2786,7 +2786,7 @@ function createChatConnectionStore({ sessionId, workspacePath }) {
         }
         throw error;
       }
-      record2 = next;
+      record3 = next;
       for (const listener of listeners) listener();
       return this.connection;
     }
@@ -3619,10 +3619,10 @@ function installPersonalUi({ request, loadSubscriptionPicker, state = () => ({})
     element.dataset.connectorKind = get("personal-source-kind").value;
     element.dataset.errorCode = /^[a-z0-9_]{1,80}$/i.test(error.code || "") ? error.code : "request_failed";
   }
-  function bind(id, handler, { disable = true } = {}) {
+  function bind(id, handler, { disable = true, allowPending = false } = {}) {
     get(id).addEventListener("click", async (event) => {
       const button = event.currentTarget;
-      if (button.dataset.pending === "true") return;
+      if (button.dataset.pending === "true" && !allowPending) return;
       const epoch = dialogEpoch;
       if (disable) button.disabled = true;
       button.dataset.pending = "true";
@@ -4025,6 +4025,9 @@ function installPersonalUi({ request, loadSubscriptionPicker, state = () => ({})
   async function open() {
     const epoch = ++dialogEpoch;
     if (!dialog.open) {
+      profileLoad = null;
+      listLoad = null;
+      listGeneration++;
       text4("personal-confirm-status", "");
       dialog.showModal();
     }
@@ -4044,9 +4047,10 @@ function installPersonalUi({ request, loadSubscriptionPicker, state = () => ({})
       setMode("existing", false);
     } else fields();
     return open();
-  }, { disable: false });
+  }, { disable: false, allowPending: true });
   bind("personal-close", () => dialog.close());
   dialog.addEventListener("close", () => {
+    if (dialog.open) return;
     cancelConfirmation();
     rememberEditor();
     dialogEpoch++;
@@ -4593,6 +4597,7 @@ Direct API. Saved in this chat only; nothing runs or receives SRE access.`
         ...context.diagnostics,
         connections: result.connections.map((connection2) => ({ ...connection2, namespaceId }))
       } });
+      text4("personal-error", "");
     } catch (error) {
       if (active !== generation || epoch !== dialogEpoch || !dialog.open || namespaceId !== get("personal-namespace-picker").value) return;
       connectionDiscovery = { namespaceId, status: "failed" };
@@ -4904,6 +4909,717 @@ ${mail.preview || mail.bodyPreview || mail.body || ""}`;
 }
 var personalUiBrowserSource = [validatePersonalConsentUrl, normalizePersonalKustoEndpoint, installPersonalUi].map((value) => value.toString()).join("\n");
 
+// packages/canvas-toolkit/src/telemetry.mjs
+import { randomUUID as randomUUID3 } from "node:crypto";
+import { execFile } from "node:child_process";
+import { closeSync, constants, fstatSync, openSync, readSync } from "node:fs";
+import { homedir } from "node:os";
+import path from "node:path";
+var ID = /^[a-z][a-z0-9_.-]{0,79}$/;
+var VERSION = /^[a-zA-Z0-9][a-zA-Z0-9.+_-]{0,39}$/;
+var SOURCES = /* @__PURE__ */ new Set(["model", "panel", "system", "unknown"]);
+var CONTROL_TYPES = /* @__PURE__ */ new Set(["button", "link", "select", "input", "textarea", "details", "other"]);
+var INTERACTIONS = /* @__PURE__ */ new Set(["click", "change", "submit"]);
+var FAILURE_CODES = Object.freeze({
+  succeeded: "",
+  failed: "action_error",
+  rejected: "action_rejected",
+  cancelled: "action_cancelled"
+});
+var RESERVED = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
+var USAGE_ENVELOPE_SCHEMA_VERSION = 2;
+var DEFAULT_REQUEST_TIMEOUT_MS = 1e4;
+var PUBLIC_CANVAS_USAGE_SERVICE = Object.freeze({
+  serviceId: "public-canvas-product-usage",
+  schemaVersion: USAGE_ENVELOPE_SCHEMA_VERSION,
+  dataClassification: "pseudonymous_product_usage",
+  endpoint: "https://canvas-metrics-pilot-0b8944-add3hsghhddcbxe9.b01.azurefd.net/api/events"
+});
+var PUBLIC_CANVAS_USAGE_ENDPOINT = PUBLIC_CANVAS_USAGE_SERVICE.endpoint;
+var GITHUB_USER_ID = /^[1-9][0-9]{0,19}$/;
+function telemetryPreference() {
+  let fd;
+  try {
+    try {
+      const home = process.env.COPILOT_HOME || path.join(homedir(), ".copilot");
+      if (!path.isAbsolute(home)) return { disabled: true, invalid: true };
+      fd = openSync(path.join(home, "canvases", "telemetry.json"), constants.O_RDONLY | constants.O_NONBLOCK);
+      const stat2 = fstatSync(fd);
+      if (!stat2.isFile() || stat2.size > 4096) return { disabled: true, invalid: true };
+      const bytes = Buffer.alloc(4097);
+      let size = 0, count;
+      while (size < bytes.length && (count = readSync(fd, bytes, size, bytes.length - size, null)) > 0) size += count;
+      if (size > 4096) return { disabled: true, invalid: true };
+      const value = JSON.parse(bytes.toString("utf8", 0, size));
+      if (!value || Array.isArray(value) || typeof value.enabled !== "boolean") return { disabled: true, invalid: true };
+      return { disabled: !value.enabled, invalid: false };
+    } finally {
+      if (fd !== void 0) closeSync(fd);
+    }
+  } catch (error) {
+    return error.code === "ENOENT" ? { disabled: false, invalid: false } : { disabled: true, invalid: true };
+  }
+}
+function githubCliEnvironment(source2) {
+  const env = { ...source2 };
+  for (const key of Object.keys(env)) {
+    if (["GH_TOKEN", "GITHUB_TOKEN"].includes(key.toUpperCase())) delete env[key];
+  }
+  return env;
+}
+function runFile(command, args, options, execFileImpl) {
+  return new Promise((resolve, reject) => {
+    execFileImpl(command, args, options, (error, stdout) => {
+      if (error) reject(error);
+      else resolve(stdout);
+    });
+  });
+}
+async function resolveGitHubCliUserId({
+  signal,
+  env = process.env,
+  execFileImpl = execFile
+} = {}) {
+  if (typeof execFileImpl !== "function") throw new TypeError("GitHub CLI executor must be a function.");
+  let stdout;
+  try {
+    stdout = await runFile("gh", ["api", "--hostname", "github.com", "user", "--jq", ".id"], {
+      env: githubCliEnvironment(env),
+      signal,
+      timeout: 5e3,
+      maxBuffer: 1024,
+      windowsHide: true
+    }, execFileImpl);
+  } catch {
+    throw new Error("GitHub identity is unavailable.");
+  }
+  const githubUserId = String(stdout).trim();
+  if (!GITHUB_USER_ID.test(githubUserId)) throw new Error("GitHub identity is unavailable.");
+  return githubUserId;
+}
+function identifier(value, label2, pattern = ID) {
+  if (typeof value !== "string" || !pattern.test(value) || RESERVED.has(value)) {
+    throw new TypeError(`${label2} must be a bounded, code-defined identifier.`);
+  }
+  return value;
+}
+function record2(value, label2) {
+  if (!value || typeof value !== "object" || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) {
+    throw new TypeError(`${label2} must be a plain record.`);
+  }
+  return value;
+}
+function integer(value, min, max, label2) {
+  if (!Number.isSafeInteger(value) || value < min || value > max) {
+    throw new TypeError(`${label2} must be an integer from ${min} to ${max}.`);
+  }
+  return value;
+}
+function endpoint(value) {
+  try {
+    const url = new URL(value);
+    if (url.protocol === "https:" && !url.username && !url.password && !url.search && !url.hash) return url.href;
+  } catch {
+  }
+  throw new TypeError("Telemetry endpoint must be credential-free HTTPS without a query or fragment.");
+}
+function createCanvasUsageMetrics(options = {}) {
+  return createUsageMetrics(options);
+}
+function createUsageMetrics(options, skillContract) {
+  const {
+    contract,
+    canvasVersion,
+    releaseChannel = "development",
+    enabled: requestedEnabled = false,
+    endpoint: destination,
+    audience,
+    getAccessToken,
+    transport,
+    fetchImpl = globalThis.fetch,
+    getGitHubUserId,
+    now = Date.now,
+    randomId = randomUUID3,
+    onDiagnostic,
+    batchSize = 20,
+    maxQueueSize = 100,
+    flushIntervalMs = 1e3,
+    requestTimeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
+    closeTimeoutMs = DEFAULT_REQUEST_TIMEOUT_MS
+  } = options;
+  if (contract !== void 0) {
+    record2(contract, "contract");
+    if (["canvasId", "host", "actionUsage", "controls"].some((key) => Object.hasOwn(options, key))) {
+      throw new TypeError("Contract identity and registries cannot be overridden.");
+    }
+  }
+  const canvasId = contract?.canvasId ?? options.canvasId;
+  const host = contract?.host ?? options.host ?? "copilot_app";
+  const actionUsage = contract?.actions ?? options.actionUsage ?? {};
+  const controls = contract?.controls ?? options.controls ?? {};
+  identifier(canvasId, "canvasId");
+  identifier(canvasVersion, "canvasVersion", VERSION);
+  if (!["copilot_app", "mcp_app"].includes(host)) throw new TypeError("Unsupported telemetry host.");
+  if (contract !== void 0) {
+    if (!Array.isArray(contract.versions) || !contract.versions.length || contract.versions.some((version) => typeof version !== "string" || !VERSION.test(version))) {
+      throw new TypeError("Contract versions must be bounded version identifiers.");
+    }
+    if (!contract.versions.includes(canvasVersion)) {
+      throw new TypeError("Canvas version is not registered by the telemetry contract.");
+    }
+  }
+  if (!["development", "internal", "preview", "stable"].includes(releaseChannel)) {
+    throw new TypeError("Unsupported telemetry release channel.");
+  }
+  if (typeof requestedEnabled !== "boolean") throw new TypeError("enabled must be a boolean.");
+  const preference = requestedEnabled ? telemetryPreference() : void 0;
+  const enabled = requestedEnabled && !preference.disabled;
+  const url = destination === void 0 && (!enabled || transport !== void 0) ? void 0 : endpoint(destination);
+  for (const [name, fn] of Object.entries({ now, randomId })) {
+    if (typeof fn !== "function") throw new TypeError(`${name} must be a function.`);
+  }
+  if (transport !== void 0 && typeof transport !== "function") throw new TypeError("transport must be a function.");
+  if (getAccessToken !== void 0 && typeof getAccessToken !== "function") throw new TypeError("getAccessToken must be a function.");
+  if (enabled && !transport && typeof fetchImpl !== "function") throw new TypeError("fetchImpl must be a function.");
+  if (getGitHubUserId !== void 0 && typeof getGitHubUserId !== "function") {
+    throw new TypeError("getGitHubUserId must be a function.");
+  }
+  if (audience !== void 0 && (typeof audience !== "string" || !audience.trim() || audience.length > 512 || /[\r\n]/.test(audience))) throw new TypeError("audience must be a bounded nonempty string.");
+  if (onDiagnostic !== void 0 && typeof onDiagnostic !== "function") throw new TypeError("onDiagnostic must be a function.");
+  integer(batchSize, 1, 100, "batchSize");
+  integer(maxQueueSize, batchSize, 1e3, "maxQueueSize");
+  integer(flushIntervalMs, 10, 6e4, "flushIntervalMs");
+  integer(requestTimeoutMs, 10, 3e4, "requestTimeoutMs");
+  integer(closeTimeoutMs, 10, 3e4, "closeTimeoutMs");
+  const actions = new Map(Object.entries(record2(actionUsage, "actionUsage")).map(([name, entry]) => {
+    identifier(name, "action name");
+    record2(entry, "action usage");
+    identifier(entry.featureId, "featureId");
+    identifier(entry.featureArea, "featureArea");
+    if (!["intentional", "automatic", "excluded"].includes(entry.usageClass) || typeof entry.mutates !== "boolean") {
+      throw new TypeError("Action usage requires a supported usageClass and boolean mutates.");
+    }
+    return [name, Object.freeze({
+      featureId: entry.featureId,
+      featureArea: entry.featureArea,
+      usageClass: entry.usageClass,
+      mutates: entry.mutates
+    })];
+  }));
+  const controlRegistry = new Map(Object.entries(record2(controls, "controls")).map(([id, type]) => {
+    identifier(id, "control ID");
+    if (!CONTROL_TYPES.has(type)) throw new TypeError("Unsupported telemetry control type.");
+    return [id, type];
+  }));
+  const queue = [];
+  const stats = { delivered: 0, dropped: 0, invalid: 0 };
+  const reported = /* @__PURE__ */ new Set();
+  const shutdown = new AbortController();
+  let timer, activeFlush, activeController, closePromise;
+  let inFlight = 0, closing = false;
+  let resolvedGitHubUserId;
+  function diagnose(code) {
+    if (reported.has(code)) return;
+    reported.add(code);
+    const warn = (message) => {
+      try {
+        process.emitWarning(message, { code: "CANVAS_USAGE_METRICS" });
+      } catch {
+      }
+    };
+    if (onDiagnostic) {
+      const reportFailure = () => warn("Canvas telemetry diagnostic callback failed.");
+      try {
+        Promise.resolve(onDiagnostic(Object.freeze({ code }))).catch(reportFailure);
+      } catch {
+        reportFailure();
+      }
+    } else {
+      warn(`Canvas telemetry: ${code}.`);
+    }
+  }
+  function invalid() {
+    stats.invalid += 1;
+    diagnose("invalid_event");
+    return false;
+  }
+  if (preference?.invalid) diagnose("preference_unavailable");
+  async function githubIdentity(signal) {
+    if (resolvedGitHubUserId) return resolvedGitHubUserId;
+    try {
+      const value = await getGitHubUserId(signal);
+      if (signal.aborted) return;
+      if (typeof value === "string" && GITHUB_USER_ID.test(value)) {
+        resolvedGitHubUserId = value;
+        return value;
+      }
+    } catch {
+    }
+    diagnose("identity_unavailable");
+  }
+  function schedule() {
+    if (closing || timer || activeFlush || !queue.length) return;
+    timer = setTimeout(() => {
+      timer = void 0;
+      void flush();
+    }, queue.length >= batchSize ? 0 : flushIntervalMs);
+    timer.unref?.();
+  }
+  function enqueue(eventName, fields = {}) {
+    if (!enabled || closing) return false;
+    try {
+      const eventId = randomId();
+      if (typeof eventId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(eventId)) {
+        return invalid();
+      }
+      const event = Object.freeze({
+        ...skillContract ? { schemaVersion: 2, pluginName: skillContract.pluginName, pluginVersion: canvasVersion } : { schemaVersion: 1, canvasId, canvasVersion },
+        host,
+        releaseChannel,
+        timestamp: new Date(now()).toISOString(),
+        eventId,
+        eventName,
+        invocationSource: "unknown",
+        ...fields
+      });
+      const overflow = queue.length === maxQueueSize;
+      if (overflow) {
+        queue.shift();
+        stats.dropped += 1;
+      }
+      queue.push(event);
+      if (overflow) diagnose("queue_overflow");
+      if (queue.length >= batchSize && !activeFlush) void flush();
+      else schedule();
+      return true;
+    } catch {
+      stats.dropped += 1;
+      diagnose("event_construction_failed");
+      return false;
+    }
+  }
+  async function deliver(batch) {
+    const controller = new AbortController();
+    activeController = controller;
+    const stop = () => controller.abort(shutdown.signal.reason);
+    const deadline = setTimeout(() => controller.abort("delivery_timeout"), requestTimeoutMs);
+    deadline.unref?.();
+    shutdown.signal.addEventListener("abort", stop, { once: true });
+    if (shutdown.signal.aborted) stop();
+    let onAbort;
+    const aborted = new Promise((resolve) => {
+      onAbort = () => resolve(controller.signal.reason);
+      controller.signal.addEventListener("abort", onAbort, { once: true });
+      if (controller.signal.aborted) onAbort();
+    });
+    const request = Promise.resolve().then(async () => {
+      if (controller.signal.aborted) return controller.signal.reason;
+      if (transport) {
+        await transport(Object.freeze(batch), { signal: controller.signal });
+        return;
+      }
+      const headers = { "Content-Type": "application/json" };
+      if (getAccessToken) {
+        const credential = await getAccessToken(audience, controller.signal);
+        if (controller.signal.aborted) return controller.signal.reason;
+        const token = typeof credential === "string" ? credential : credential?.accessToken;
+        if (typeof token !== "string" || !token.trim() || /[\r\n]/.test(token)) return "delivery_failed";
+        headers.Authorization = `Bearer ${token}`;
+      }
+      const githubUserId = getGitHubUserId ? await githubIdentity(controller.signal) : void 0;
+      if (getGitHubUserId) {
+        if (controller.signal.aborted) return controller.signal.reason;
+      }
+      const response = await fetchImpl(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          schemaVersion: USAGE_ENVELOPE_SCHEMA_VERSION,
+          ...githubUserId ? { githubUserId } : {},
+          events: batch
+        }),
+        signal: controller.signal,
+        redirect: "error",
+        credentials: "omit"
+      });
+      const accepted = response?.ok;
+      await response?.body?.cancel();
+      return accepted ? void 0 : "delivery_rejected";
+    }).catch(() => "delivery_failed");
+    try {
+      const failure3 = await Promise.race([request, aborted]);
+      if (failure3) diagnose(failure3);
+      return { delivered: failure3 ? 0 : batch.length, dropped: failure3 ? batch.length : 0 };
+    } finally {
+      clearTimeout(deadline);
+      shutdown.signal.removeEventListener("abort", stop);
+      controller.signal.removeEventListener("abort", onAbort);
+      if (activeController === controller) activeController = void 0;
+    }
+  }
+  function flush() {
+    if (activeFlush) return activeFlush;
+    clearTimeout(timer);
+    timer = void 0;
+    if (!queue.length) return Promise.resolve({ delivered: 0, dropped: 0 });
+    const batch = queue.splice(0, batchSize);
+    inFlight = batch.length;
+    activeFlush = deliver(batch).then((result) => {
+      stats.delivered += result.delivered;
+      stats.dropped += result.dropped;
+      return result;
+    }).finally(() => {
+      inFlight = 0;
+      activeFlush = void 0;
+      schedule();
+    });
+    return activeFlush;
+  }
+  function feature(actionName, invocationSource) {
+    const usage2 = actions.get(actionName);
+    if (!usage2 || !SOURCES.has(invocationSource)) return invalid();
+    if (usage2.usageClass === "excluded") return false;
+    return { ...usage2, actionName, invocationSource };
+  }
+  function cancelPending() {
+    activeController?.abort("delivery_cancelled");
+  }
+  function close({ flush: drain = true } = {}) {
+    if (!enabled) {
+      closing = true;
+      return closePromise ??= Promise.resolve({ delivered: 0, dropped: 0 });
+    }
+    if (!drain) {
+      closing = true;
+      stats.dropped += queue.length;
+      queue.length = 0;
+      shutdown.abort("delivery_cancelled");
+      cancelPending();
+    }
+    if (closePromise) return closePromise;
+    closing = true;
+    clearTimeout(timer);
+    timer = void 0;
+    closePromise = (async () => {
+      const deadline = setTimeout(() => shutdown.abort("shutdown_timeout"), closeTimeoutMs);
+      deadline.unref?.();
+      try {
+        while ((queue.length || activeFlush) && !shutdown.signal.aborted) await flush();
+        if (activeFlush) await activeFlush;
+        stats.dropped += queue.length;
+        queue.length = 0;
+        return { delivered: stats.delivered, dropped: stats.dropped };
+      } finally {
+        clearTimeout(deadline);
+      }
+    })();
+    return closePromise;
+  }
+  const lifecycle = {
+    get enabled() {
+      return enabled && !closing;
+    },
+    getStats: () => Object.freeze({ ...stats, queued: queue.length, inFlight, closed: closing }),
+    flush,
+    close,
+    cancelPending
+  };
+  if (skillContract) {
+    const skills = new Set(skillContract.skills);
+    const workflowId = (value) => value === "" || typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+    return Object.freeze({
+      ...lifecycle,
+      get enabled() {
+        return enabled && !closing;
+      },
+      trackSkillInvoked({ skillName, skillTrigger, workflowId: id = "" } = {}) {
+        if (!enabled || closing) return false;
+        if (!skills.has(skillName) || !["user-invoked", "agent-invoked", "context-load", "file-read", "unknown"].includes(skillTrigger) || !workflowId(id)) return invalid();
+        return enqueue("skill_invoked", { skillName, skillTrigger, workflowId: id, invocationSource: "system" });
+      },
+      trackWorkflowCompleted(actionName, { workflowId: id, skillNames, outcome, durationMs } = {}) {
+        if (!enabled || closing) return false;
+        const fields = feature(actionName, "system");
+        if (!fields) return false;
+        if (!workflowId(id) || !id || !Array.isArray(skillNames) || skillNames.length > skills.size || skillNames.some((name) => !skills.has(name)) || new Set(skillNames).size !== skillNames.length || typeof outcome !== "string" || !Object.hasOwn(FAILURE_CODES, outcome) || !Number.isFinite(durationMs)) return invalid();
+        return enqueue("skill_workflow_completed", {
+          ...fields,
+          canvasId: skillContract.workflows[actionName].canvasId,
+          workflowId: id,
+          skillNames: Object.freeze([...skillNames].sort()),
+          outcome,
+          durationMs: Math.max(0, Math.min(Math.round(durationMs), 36e5)),
+          failureCode: FAILURE_CODES[outcome]
+        });
+      }
+    });
+  }
+  return Object.freeze({
+    ...lifecycle,
+    get enabled() {
+      return enabled && !closing;
+    },
+    hasAction: (name) => actions.has(name),
+    trackCanvasOpened(invocationSource = "unknown") {
+      if (!enabled || closing) return false;
+      if (!SOURCES.has(invocationSource)) return invalid();
+      return enqueue("canvas_opened", { invocationSource });
+    },
+    trackUiInteraction(input = {}) {
+      if (!enabled || closing) return false;
+      if (!input || !INTERACTIONS.has(input.interactionType) || !controlRegistry.has(input.controlId) || controlRegistry.get(input.controlId) !== input.controlType) return invalid();
+      return enqueue("ui_interaction", {
+        invocationSource: "panel",
+        interactionType: input.interactionType,
+        controlId: input.controlId,
+        controlType: input.controlType
+      });
+    },
+    trackFeatureInvoked(actionName, invocationSource = "unknown") {
+      if (!enabled || closing) return false;
+      const fields = feature(actionName, invocationSource);
+      return fields ? enqueue("feature_invoked", fields) : false;
+    },
+    trackFeatureCompleted(actionName, { outcome, durationMs, invocationSource = "unknown", failureCode } = {}) {
+      if (!enabled || closing) return false;
+      const fields = feature(actionName, invocationSource);
+      if (!fields) return false;
+      if (typeof outcome !== "string" || !Object.hasOwn(FAILURE_CODES, outcome) || !Number.isFinite(durationMs) || failureCode !== void 0 && failureCode !== FAILURE_CODES[outcome]) return invalid();
+      return enqueue("feature_completed", {
+        ...fields,
+        outcome,
+        durationMs: Math.max(0, Math.min(Math.round(durationMs), 36e5)),
+        failureCode: FAILURE_CODES[outcome]
+      });
+    }
+  });
+}
+function createPublicCanvasUsageMetrics(options = {}) {
+  for (const key of ["enabled", "endpoint", "audience", "getAccessToken", "transport", "now", "randomId"]) {
+    if (Object.hasOwn(options, key)) throw new TypeError(`Public canvas telemetry does not accept ${key}.`);
+  }
+  return createCanvasUsageMetrics({
+    ...options,
+    enabled: true,
+    endpoint: PUBLIC_CANVAS_USAGE_SERVICE.endpoint,
+    getGitHubUserId: options.getGitHubUserId ?? resolveGitHubCliUserId
+  });
+}
+function capture(callback, fallback) {
+  try {
+    const result = callback();
+    Promise.resolve(result).catch(() => {
+    });
+    return result;
+  } catch {
+    return fallback;
+  }
+}
+function dataProperty(value, key, inherited = false) {
+  try {
+    for (let depth = 0; value != null && depth < (inherited ? 8 : 1); depth++) {
+      const descriptor = Object.getOwnPropertyDescriptor(value, key);
+      if (descriptor) return descriptor.value;
+      value = Object.getPrototypeOf(value);
+    }
+  } catch {
+  }
+}
+function completionFromResult(result) {
+  if (dataProperty(result, "cancelled") === true || dataProperty(result, "canceled") === true || dataProperty(result, "status") === "cancelled") return "cancelled";
+  if (dataProperty(result, "ok") === false || dataProperty(result, "isError") === true) return "rejected";
+  return "succeeded";
+}
+function isAbortError(error) {
+  if (dataProperty(error, "name", true) === "AbortError") return true;
+  try {
+    return Object.getOwnPropertyDescriptor(DOMException.prototype, "name").get.call(error) === "AbortError";
+  } catch {
+    return false;
+  }
+}
+function sourceFrom(resolver, args) {
+  const source2 = typeof resolver === "function" ? capture(() => resolver(...args), "unknown") : resolver;
+  return SOURCES.has(source2) ? source2 : "unknown";
+}
+async function measure(metrics, name, invocationSource, run, opened, now) {
+  const start = capture(now, 0);
+  if (opened) capture(() => metrics.trackCanvasOpened(invocationSource));
+  capture(() => metrics.trackFeatureInvoked(name, invocationSource));
+  try {
+    const result = await run();
+    capture(() => metrics.trackFeatureCompleted(name, {
+      outcome: completionFromResult(result),
+      invocationSource,
+      durationMs: capture(now, start) - start
+    }));
+    return result;
+  } catch (error) {
+    capture(() => metrics.trackFeatureCompleted(name, {
+      outcome: isAbortError(error) ? "cancelled" : "failed",
+      invocationSource,
+      durationMs: capture(now, start) - start
+    }));
+    throw error;
+  }
+}
+function instrumentCanvasActions(actions, metrics, {
+  invocationSource = "model",
+  openedActions = [],
+  now = () => performance.now()
+} = {}) {
+  if (!SOURCES.has(invocationSource) && typeof invocationSource !== "function") throw new TypeError("Unsupported invocation source.");
+  const opened = new Set(openedActions);
+  for (const action of actions) {
+    if (typeof action.handler !== "function" || !capture(() => metrics.hasAction(action.name), true)) {
+      throw new TypeError("Every canvas action requires a handler and registered usage metadata.");
+    }
+  }
+  if (capture(() => metrics.enabled, true) === false) return actions;
+  return actions.map((action) => ({
+    ...action,
+    handler(...args) {
+      return measure(
+        metrics,
+        action.name,
+        sourceFrom(invocationSource, [args[0], action]),
+        () => action.handler.apply(this, args),
+        opened.has(action.name),
+        now
+      );
+    }
+  }));
+}
+
+// packages/sre-agent-core/src/contracts/usage.mjs
+function usage(featureId, featureArea, mutates = false) {
+  return Object.freeze({ featureId, featureArea, usageClass: "intentional", mutates });
+}
+var AZURE_SRE_AGENT_USAGE_CONTRACT = Object.freeze({
+  canvasId: "azure-sre-agent",
+  host: "copilot_app",
+  actions: Object.freeze({
+    get_diagnostics_context: usage("personal.context.view", "personal"),
+    save_personal_source: usage("personal.source.save", "personal"),
+    find_personal_tools: usage("personal.tools.discover", "personal"),
+    list_personal_subscriptions: usage("personal.subscription.list", "personal"),
+    browse_personal_namespaces: usage("personal.namespace.list", "personal"),
+    browse_personal_kusto_clusters: usage("personal.kusto.list", "personal"),
+    prepare_personal_namespace: usage("personal.namespace.prepare", "personal"),
+    create_personal_namespace: usage("personal.namespace.create", "personal", true),
+    prepare_personal_connector: usage("personal.connector.prepare", "personal"),
+    create_personal_connector: usage("personal.connector.create", "personal", true),
+    add_personal_connector: usage("personal.connector.add", "personal"),
+    confirm_personal_connector: usage("personal.connector.confirm", "personal"),
+    use_personal_connection: usage("personal.source.use", "personal"),
+    remove_personal_connector: usage("personal.connector.remove", "personal"),
+    test_personal_source: usage("personal.source.test", "personal"),
+    activate_personal_source: usage("personal.source.activate", "personal"),
+    stop_using_personal_source: usage("personal.source.deactivate", "personal"),
+    prepare_query: usage("personal.query.prepare", "personal"),
+    run_query: usage("personal.query.run", "personal"),
+    cancel_query: usage("personal.query.cancel", "personal"),
+    run_diagnostic: usage("personal.diagnostic.run", "personal"),
+    analyze_in_copilot: usage("personal.query.analyze", "personal"),
+    open_query_explorer: usage("personal.query.open_explorer", "personal"),
+    connect_personal_inbox: usage("personal.inbox.connect", "personal", true),
+    connect_personal_teams: usage("personal.teams.connect", "personal", true),
+    begin_personal_consent: usage("personal.consent.begin", "personal"),
+    check_personal_consent: usage("personal.consent.check", "personal"),
+    cancel_personal_consent: usage("personal.consent.cancel", "personal"),
+    read_inbox_context: usage("personal.inbox.read", "personal"),
+    resolve_channel_mention: usage("personal.teams.mention.resolve", "personal"),
+    prepare_channel_update: usage("personal.teams.update.prepare", "personal"),
+    publish_channel_update: usage("personal.teams.update.publish", "personal", true),
+    preview_evidence: usage("personal.evidence.preview", "personal"),
+    share_evidence: usage("personal.evidence.share", "personal", true),
+    prepare_thread_query: usage("thread.query.prepare", "threads"),
+    list_agents: usage("agent.list", "agents"),
+    select_agent: usage("agent.select", "agents"),
+    get_thread: usage("thread.read", "threads"),
+    get_connected_thread: usage("thread.connected.read", "threads"),
+    focus_thread: usage("thread.focus", "threads"),
+    unfocus_thread: usage("thread.unfocus", "threads"),
+    ask_agent: usage("thread.ask", "threads", true),
+    diagnose_app: usage("app.diagnose", "diagnostics", true),
+    correlate_ticket: usage("ticket.correlate", "diagnostics", true),
+    investigate: usage("investigation.run", "diagnostics", true),
+    list_incidents: usage("incident.list", "incidents"),
+    list_needs_attention: usage("thread.needs_attention.list", "threads"),
+    list_execution_gates: usage("execution.gate.list", "execution"),
+    scan_approvals: usage("execution.approval.scan", "execution"),
+    review_execution_approval: usage("execution.approval.review", "execution"),
+    act_on_reviewed_execution: usage("execution.approval.act", "execution", true),
+    create_incident: usage("incident.create", "incidents", true),
+    list_scheduled_tasks: usage("automation.list", "automation"),
+    create_scheduled_task: usage("automation.create", "automation", true),
+    search_memories: usage("memory.search", "memory"),
+    generate_workflow: usage("workflow.generate", "workflows", true)
+  }),
+  // SRE panel controls do not yet have a reviewed browser-to-host telemetry channel.
+  controls: Object.freeze({})
+});
+var AZURE_SRE_AGENT_USAGE_CONTRACTS = Object.freeze([
+  AZURE_SRE_AGENT_USAGE_CONTRACT
+]);
+
+// canvases/azure-sre-agent/src/usage.mjs
+function reportInvalidConfiguration(onDiagnostic) {
+  const warn = () => console.warn("[canvas-usage] diagnostic_callback_failed");
+  if (typeof onDiagnostic !== "function") return warn();
+  try {
+    Promise.resolve(onDiagnostic({ code: "invalid_configuration" })).catch(warn);
+  } catch {
+    warn();
+  }
+}
+function createSreAgentUsageMetrics({
+  env = process.env,
+  canvasVersion,
+  fetchImpl,
+  getGitHubUserId,
+  fixture,
+  onDiagnostic = ({ code }) => console.warn(`[canvas-usage] ${code}`)
+} = {}) {
+  if (fixture && (env.AZURE_SRE_AGENT_TEST_MODE !== "1" || typeof fixture.fetchImpl !== "function")) {
+    throw new Error("Usage metrics fixtures require test mode and an explicit fake transport.");
+  }
+  const contract = { ...AZURE_SRE_AGENT_USAGE_CONTRACT, versions: [canvasVersion] };
+  const config = {
+    contract,
+    canvasVersion,
+    releaseChannel: "preview",
+    onDiagnostic,
+    ...fixture ? {
+      fetchImpl: fixture.fetchImpl,
+      ...fixture.getGitHubUserId ? { getGitHubUserId: fixture.getGitHubUserId } : {}
+    } : fetchImpl ? { fetchImpl } : {},
+    ...!fixture && getGitHubUserId ? { getGitHubUserId } : {}
+  };
+  try {
+    if (!fixture && (env.AZURE_SRE_AGENT_TEST_MODE === "1" || env.AZURE_SRE_AGENT_TEST_NO_JOIN === "true" || env.SRE_AGENT_STUDIO_TEST_NO_JOIN === "true")) {
+      return createCanvasUsageMetrics({
+        contract,
+        canvasVersion,
+        releaseChannel: "development",
+        enabled: false
+      });
+    }
+    return createPublicCanvasUsageMetrics(config);
+  } catch {
+    reportInvalidConfiguration(onDiagnostic);
+    return createCanvasUsageMetrics({
+      contract,
+      canvasVersion,
+      releaseChannel: "development",
+      enabled: false
+    });
+  }
+}
+function instrumentSreAgentActions(actions, metrics) {
+  return instrumentCanvasActions(actions, metrics, { invocationSource: "model" });
+}
+
 // canvases/azure-sre-agent/src/personal-approval-mode.mjs
 var failure = (code, message, cause) => Object.assign(new Error(message, cause ? { cause } : void 0), { code });
 var manual = "Choose Interactive in the chat mode selector, then review the retained draft. Nothing was created or approved.";
@@ -4952,7 +5668,7 @@ async function switchPersonalApprovalMode(session2, input) {
 }
 
 // canvases/azure-sre-agent/src/personal-registered-connectors.mjs
-import { createHash as createHash8, randomUUID as randomUUID3 } from "node:crypto";
+import { createHash as createHash8, randomUUID as randomUUID4 } from "node:crypto";
 import { mkdirSync as mkdirSync3, readFileSync as readFileSync3, renameSync as renameSync3, statSync as statSync3, unlinkSync as unlinkSync3, writeFileSync as writeFileSync3 } from "node:fs";
 import { join as join3 } from "node:path";
 import { validatePersonalKql } from "./personal/diagnostics-transport.mjs";
@@ -5040,7 +5756,7 @@ function createRegisteredPersonalConnectors({ getSession, authorize, directory, 
     preferences[serverName] = next;
     if (Buffer.byteLength(JSON.stringify(preferences)) > 32768) throw personalError("registered_settings_too_large", "Saved chat connector settings exceeded their limit.");
     mkdirSync3(directory, { recursive: true });
-    const temporary = `${file}.${randomUUID3()}.tmp`;
+    const temporary = `${file}.${randomUUID4()}.tmp`;
     try {
       writeFileSync3(temporary, JSON.stringify(preferences), { mode: 384, flag: "wx" });
       renameSync3(temporary, file);
@@ -5450,7 +6166,7 @@ ${query}${query.endsWith("\n") ? "" : "\n"}${fence}`
 }
 
 // canvases/azure-sre-agent/src/personal-selection-store.mjs
-import { createHash as createHash9, randomUUID as randomUUID4 } from "node:crypto";
+import { createHash as createHash9, randomUUID as randomUUID5 } from "node:crypto";
 import { mkdirSync as mkdirSync4, readFileSync as readFileSync4, renameSync as renameSync4, statSync as statSync4, unlinkSync as unlinkSync4, writeFileSync as writeFileSync4 } from "node:fs";
 import { dirname, join as join4 } from "node:path";
 var guid2 = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
@@ -5458,7 +6174,7 @@ var namespace = /^\/subscriptions\/([a-f0-9-]{36})\/resourceGroups\/[^/?#%\\]+\/
 function createPersonalSelectionStore({ conversationId, directory }) {
   if (typeof conversationId !== "string" || !conversationId) throw new Error("Private connector selection requires its owning conversation.");
   const file = directory ? join4(directory, `private-connector-selection-${createHash9("sha256").update(conversationId).digest("hex")}.json`) : null;
-  let record2 = null;
+  let record3 = null;
   function validate(value) {
     const scope = value?.scope;
     if (!value || value.version !== 1 || value.conversationId !== conversationId || !/^[a-f0-9]{64}$/.test(value.callerBinding || "") || Object.keys(value).some((key) => !["version", "conversationId", "callerBinding", "scope", "namespaceId"].includes(key)) || scope !== null && (!scope || !guid2.test(scope.tenantId || "") || !PERSONAL_CLOUDS[scope.cloud] || !Array.isArray(scope.subscriptionIds) || !scope.subscriptionIds.length || scope.subscriptionIds.length > 20 || scope.subscriptionIds.some((id) => !guid2.test(id)) || new Set(scope.subscriptionIds.map((id) => id.toLowerCase())).size !== scope.subscriptionIds.length || Object.keys(scope).some((key) => !["tenantId", "cloud", "subscriptionIds"].includes(key))) || value.namespaceId !== null && (typeof value.namespaceId !== "string" || value.namespaceId.length > 2048 || !namespace.test(value.namespaceId) || scope && !scope.subscriptionIds.some((id) => id.toLowerCase() === value.namespaceId.match(namespace)[1].toLowerCase()))) {
@@ -5471,19 +6187,19 @@ function createPersonalSelectionStore({ conversationId, directory }) {
       if (file) {
         try {
           if (statSync4(file).size > 8192) throw new Error("The saved private connector selection exceeds its size limit.");
-          record2 = validate(JSON.parse(readFileSync4(file, "utf8")));
+          record3 = validate(JSON.parse(readFileSync4(file, "utf8")));
         } catch (error) {
           if (error.code !== "ENOENT") throw error;
-          record2 = null;
+          record3 = null;
         }
       }
-      return record2 ? structuredClone(record2) : null;
+      return record3 ? structuredClone(record3) : null;
     },
     save(value) {
       const next = validate({ version: 1, conversationId, ...value });
       if (file) {
         mkdirSync4(dirname(file), { recursive: true });
-        const temporary = `${file}.${randomUUID4()}.tmp`;
+        const temporary = `${file}.${randomUUID5()}.tmp`;
         try {
           writeFileSync4(temporary, JSON.stringify(next), { mode: 384, flag: "wx" });
           renameSync4(temporary, file);
@@ -5496,14 +6212,14 @@ function createPersonalSelectionStore({ conversationId, directory }) {
           throw error;
         }
       }
-      record2 = next;
+      record3 = next;
     }
   };
 }
 
 // canvases/azure-sre-agent/src/personal-metadata-lease.mjs
 import { AsyncLocalStorage } from "node:async_hooks";
-import { randomUUID as randomUUID5 } from "node:crypto";
+import { randomUUID as randomUUID6 } from "node:crypto";
 var leases = new AsyncLocalStorage();
 var failure2 = (code, message) => Object.assign(new Error(message), { code });
 function assertPersonalMetadataCurrent() {
@@ -5568,20 +6284,20 @@ var ASK_AGENT_CONTRACT = {
 };
 
 // packages/studio-runtime/src/studio-commands.mjs
-import { execFile, spawn, spawnSync } from "node:child_process";
+import { execFile as execFile2, spawn, spawnSync } from "node:child_process";
 import { createHash as createHash10 } from "node:crypto";
-import { accessSync, constants, readFileSync as readFileSync5 } from "node:fs";
+import { accessSync, constants as constants2, readFileSync as readFileSync5 } from "node:fs";
 import { cp, lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
-import path from "node:path";
+import path2 from "node:path";
 import { fileURLToPath } from "node:url";
 function resolveStudioRoot(moduleUrl) {
-  const directory = path.dirname(fileURLToPath(moduleUrl));
-  const candidates = path.basename(directory) === "src" ? [directory, path.dirname(directory)] : [directory];
+  const directory = path2.dirname(fileURLToPath(moduleUrl));
+  const candidates = path2.basename(directory) === "src" ? [directory, path2.dirname(directory)] : [directory];
   for (const candidate of candidates) {
     for (const metadata of ["studio-package.json", "package.json"]) {
       try {
-        accessSync(path.join(candidate, metadata));
+        accessSync(path2.join(candidate, metadata));
         return candidate;
       } catch (error) {
         if (error.code !== "ENOENT") throw error;
@@ -5599,7 +6315,7 @@ function resolveStudioBuildInfo(moduleUrl, fallbackVersion = "unknown") {
       manifest = readFileSync5(new URL("./studio-package.json", moduleUrl), "utf8");
     } catch (error) {
       if (error.code !== "ENOENT") throw error;
-      manifest = readFileSync5(path.join(resolveStudioRoot(moduleUrl), "package.json"), "utf8");
+      manifest = readFileSync5(path2.join(resolveStudioRoot(moduleUrl), "package.json"), "utf8");
     }
     version = JSON.parse(manifest).version || fallbackVersion;
   } catch {
@@ -5650,7 +6366,7 @@ function shortError(error) {
 }
 function canExecuteCommand(file, osName = os.platform()) {
   try {
-    accessSync(file, osName === "win32" ? constants.F_OK : constants.X_OK);
+    accessSync(file, osName === "win32" ? constants2.F_OK : constants2.X_OK);
     return true;
   } catch {
     return false;
@@ -5682,7 +6398,7 @@ function windowsCommandShellLine(command, args = []) {
 }
 function spawnSpecForLocated(located, args, env, osName) {
   if (osName === "win32" && /\.(?:cmd|bat)$/i.test(located.path)) {
-    const comSpec = env.ComSpec || env.COMSPEC || path.win32.join(env.SystemRoot || env.SYSTEMROOT || "C:\\Windows", "System32", "cmd.exe");
+    const comSpec = env.ComSpec || env.COMSPEC || path2.win32.join(env.SystemRoot || env.SYSTEMROOT || "C:\\Windows", "System32", "cmd.exe");
     return {
       file: comSpec,
       args: [
@@ -5736,7 +6452,7 @@ function sourcePath(source2) {
   return source2.PATH || source2.Path || source2.path || "";
 }
 function locateAzureCli(source2 = process.env, osName = os.platform(), exists = (candidate) => canExecuteCommand(candidate, osName)) {
-  const paths2 = osName === "win32" ? path.win32 : path.posix;
+  const paths2 = osName === "win32" ? path2.win32 : path2.posix;
   const inherited = sourcePath(source2).split(paths2.delimiter).filter(Boolean);
   const home = source2.HOME || source2.USERPROFILE || os.homedir();
   const known = osName === "win32" ? [
@@ -5796,7 +6512,7 @@ function isAzureCliLoginRequiredError(error) {
   );
 }
 function azureCliChildEnv(source2 = process.env, located = locateAzureCli(source2), osName = os.platform()) {
-  const paths2 = osName === "win32" ? path.win32 : path.posix;
+  const paths2 = osName === "win32" ? path2.win32 : path2.posix;
   const env = {};
   const copied = /* @__PURE__ */ new Set();
   for (const key of AZURE_CLI_ENV_KEYS) {
@@ -5925,7 +6641,7 @@ async function runAzureCliText(args, {
 var fixtureAuthCommands = [];
 function assertFixtureAuthenticationDenied(command, args = []) {
   if (process.env.FUNCTION_STUDIO_TEST_MODE !== "1") return;
-  const name = path.win32.basename(String(command)).replace(/\.(?:cmd|bat|exe)$/i, "").toLowerCase();
+  const name = path2.win32.basename(String(command)).replace(/\.(?:cmd|bat|exe)$/i, "").toLowerCase();
   const gitRemote = name === "git" && args.some((arg) => ["clone", "fetch", "pull", "push", "ls-remote", "credential"].includes(arg));
   const packageInstall = ["npm", "npx", "pip", "pip3", "uv"].includes(name) && args.some((arg) => ["install", "exec", "add", "run"].includes(arg)) || /^python(?:\d+(?:\.\d+)?)?$/.test(name) && args.includes("pip") && args.includes("install");
   if (!gitRemote && !packageInstall && !["az", "azd", "gh", "azureauth", "security", "codesign", "npx"].includes(name)) return;
@@ -5935,7 +6651,7 @@ function assertFixtureAuthenticationDenied(command, args = []) {
 function execFileText(file, args, options = {}) {
   return new Promise((resolve, reject) => {
     assertFixtureAuthenticationDenied(file, args);
-    execFile(file, args, { maxBuffer: 1024 * 1024, ...options }, (error, stdout, stderr) => {
+    execFile2(file, args, { maxBuffer: 1024 * 1024, ...options }, (error, stdout, stderr) => {
       if (error) {
         error.stdout = stdout;
         error.stderr = stderr;
@@ -5959,8 +6675,9 @@ function redactDeploymentOutput(value, sensitiveValues = []) {
 }
 
 // canvases/azure-sre-agent/src/extension.mjs
-var execFileAsync = promisify(execFile2);
+var execFileAsync = promisify(execFile3);
 var { version: STUDIO_VERSION, revision: STUDIO_REVISION } = resolveStudioBuildInfo(import.meta.url);
+var usageMetrics = createSreAgentUsageMetrics({ canvasVersion: STUDIO_VERSION });
 var azureSreAgentAssets = new Map([
   ...canvasUiAssets,
   ["assets/azure-sre-agent-color.svg", [new URL("./assets/azure-sre-agent-color.svg", import.meta.url), "image/svg+xml"]]
@@ -6204,10 +6921,10 @@ function parseSharedAgentReference(value) {
   if (fromPortal) {
     if (suffix && suffix !== "/" && portalRoute) throw new Error("The Portal link contains conflicting page selections.");
     const route = suffix === "/" ? portalRoute : suffix || portalRoute;
-    const path2 = route.split("?")[0];
-    const thread = path2.match(/^\/views\/thread\/([^/?#%\\\s]+)\/?$/i);
+    const path3 = route.split("?")[0];
+    const thread = path3.match(/^\/views\/thread\/([^/?#%\\\s]+)\/?$/i);
     if (thread) threadId2 = thread[1];
-    else if (path2 && !/^\/(?:overview|views\/incidents|views\/builder\/responsePlans)\/?$/i.test(path2)) {
+    else if (path3 && !/^\/(?:overview|views\/incidents|views\/builder\/responsePlans)\/?$/i.test(path3)) {
       throw new Error("The shared reference must identify exactly one Microsoft.App/agents resource and a supported Portal page.");
     }
   }
@@ -6264,8 +6981,8 @@ function parseExternalAgentReference(value) {
     } catch {
       throw new Error("The external-agent portal link has an invalid agent name.");
     }
-    const endpoint = parseExternalAgentReference(url.searchParams.get("agentUrl"));
-    if (!endpoint || endpoint.portalUrl || !name.trim() || /^\.{1,2}$/.test(name) || /[/\\\u0000-\u001f\u007f]/.test(name)) {
+    const endpoint2 = parseExternalAgentReference(url.searchParams.get("agentUrl"));
+    if (!endpoint2 || endpoint2.portalUrl || !name.trim() || /^\.{1,2}$/.test(name) || /[/\\\u0000-\u001f\u007f]/.test(name)) {
       throw new Error("The external-agent portal link has an invalid agentUrl or name.");
     }
     let route;
@@ -6278,7 +6995,7 @@ function parseExternalAgentReference(value) {
     if (route && !thread && !/^\/views\/(?:incidents|builder\/responsePlans)(?:\?[^#]*)?$/i.test(route)) {
       throw new Error("Use a supported external-agent Portal page or investigation link.");
     }
-    return { ...endpoint, name: name.trim(), portalUrl: url.href, ...thread ? { threadId: thread[1] } : {} };
+    return { ...endpoint2, name: name.trim(), portalUrl: url.href, ...thread ? { threadId: thread[1] } : {} };
   }
   if (!url.hostname.toLowerCase().endsWith(".azuresre.ai")) {
     return null;
@@ -6505,8 +7222,8 @@ function kustoOperationConfig(operation2, clusterUrl, database) {
     }))
   };
 }
-function connectorGatewayApi(path2) {
-  return path2.includes("?") ? `${path2}&api-version=${CONNECTOR_GATEWAY_API_VERSION}` : `${path2}?api-version=${CONNECTOR_GATEWAY_API_VERSION}`;
+function connectorGatewayApi(path3) {
+  return path3.includes("?") ? `${path3}&api-version=${CONNECTOR_GATEWAY_API_VERSION}` : `${path3}?api-version=${CONNECTOR_GATEWAY_API_VERSION}`;
 }
 async function listConnectorGateways(subscription, entry) {
   const gateways = await graphQuery(
@@ -6538,11 +7255,11 @@ async function listConnectorNamespaceMcps(gateways, subscription, attachedConnec
     return (data?.value || []).filter((mcp) => connectorNameOwnedBy(mcp?.name, identity.objectId)).map((mcp) => {
       const name = mcp.name || "";
       const connectionName = mcp?.properties?.connectors?.[0]?.connectionName || "";
-      const endpoint = mcp?.properties?.endpoint || mcp?.properties?.mcpEndpointUrl || (gatewayId && gateway.location && name ? `https://app-16.${gateway.location}.logic.azure.com/api/connectorGateways/${gatewayId}/mcpServerConfigs/${name}/mcp` : "");
+      const endpoint2 = mcp?.properties?.endpoint || mcp?.properties?.mcpEndpointUrl || (gatewayId && gateway.location && name ? `https://app-16.${gateway.location}.logic.azure.com/api/connectorGateways/${gatewayId}/mcpServerConfigs/${name}/mcp` : "");
       const attached = attachedNames.has(name);
       return {
         name,
-        endpoint,
+        endpoint: endpoint2,
         mcpPath: `${base}/mcpserverConfigs/${encodeURIComponent(name)}`,
         connectionPath: connectionName ? `${base}/connections/${encodeURIComponent(connectionName)}` : "",
         gatewayName: gateway.name,
@@ -6573,9 +7290,9 @@ async function createConnectorGateway(agent, subscription, entry) {
   const location = normalizedAzureLocation(matchingLocation || fallbackLocation || agent.location);
   if (!location) throw new Error("Microsoft.Web did not advertise a supported Connector Namespace region.");
   const name = await connectorGatewayName(agent, subscription);
-  const path2 = `/subscriptions/${subscription}/resourceGroups/${agent.resourceGroup}/providers/Microsoft.Web/connectorGateways/${name}`;
+  const path3 = `/subscriptions/${subscription}/resourceGroups/${agent.resourceGroup}/providers/Microsoft.Web/connectorGateways/${name}`;
   const created = await armPut(
-    connectorGatewayApi(path2),
+    connectorGatewayApi(path3),
     {
       location,
       identity: { type: "SystemAssigned" },
@@ -6590,7 +7307,7 @@ async function createConnectorGateway(agent, subscription, entry) {
   );
   for (let attempt = 0; attempt < 12; attempt += 1) {
     const gateway = attempt === 0 ? created : await armGet(
-      connectorGatewayApi(path2),
+      connectorGatewayApi(path3),
       subscription,
       entry,
       { title: `check Connector Namespace ${name}`, purpose: "Wait until the new namespace is ready." }
@@ -6601,7 +7318,7 @@ async function createConnectorGateway(agent, subscription, entry) {
       entry.status = `Created Connector Namespace ${name}; continuing delegated Kusto MCP setup.`;
       return {
         name: gateway.name || name,
-        id: gateway.id || path2,
+        id: gateway.id || path3,
         location: gateway.location || location,
         resourceGroup: agent.resourceGroup,
         properties: gateway.properties || {}
@@ -6723,8 +7440,8 @@ async function grantMcpPrincipalAccess(resourcePath, objectId2, tenantId, subscr
     { title: "grant SRE managed identity access to Kusto MCP", purpose: "Allow the managed identity selected by the generic MCP connector to invoke the MCP endpoint." }
   );
 }
-function protectedResourceMetadataUrl(endpoint) {
-  const url = new URL(endpoint);
+function protectedResourceMetadataUrl(endpoint2) {
+  const url = new URL(endpoint2);
   if (!/\/mcp\/?$/i.test(url.pathname)) {
     throw new Error("Connector Namespace returned an MCP endpoint with an unsupported path.");
   }
@@ -6733,8 +7450,8 @@ function protectedResourceMetadataUrl(endpoint) {
   url.hash = "";
   return url.toString();
 }
-async function discoverMcpTokenScope(endpoint) {
-  const response = await fetch(protectedResourceMetadataUrl(endpoint), {
+async function discoverMcpTokenScope(endpoint2) {
+  const response = await fetch(protectedResourceMetadataUrl(endpoint2), {
     headers: { Accept: "application/json" }
   });
   if (!response.ok) {
@@ -6749,7 +7466,7 @@ async function discoverMcpTokenScope(endpoint) {
   }
   return scopes[0];
 }
-async function registerGenericMcp(agent, mcpName, endpoint, tokenScope, subscription, entry) {
+async function registerGenericMcp(agent, mcpName, endpoint2, tokenScope, subscription, entry) {
   const connectorPath = withApiVersion(
     `/subscriptions/${subscription}/resourceGroups/${agent.resourceGroup}/providers/Microsoft.App/agents/${agent.name}/connectors/${encodeURIComponent(mcpName)}`
   );
@@ -6762,7 +7479,7 @@ async function registerGenericMcp(agent, mcpName, endpoint, tokenScope, subscrip
       identity: connectorIdentity,
       extendedProperties: {
         type: "http",
-        endpoint,
+        endpoint: endpoint2,
         // Preview remote-MCP managed identity serializes to the runtime's
         // AzureARM wire contract; the portal labels this Managed Identity.
         authType: "AzureARM",
@@ -6844,11 +7561,11 @@ async function finishDelegatedKustoMcp(agent, pending, subscription, entry) {
   await grantConnectionUserAccess(`${base}/connections/${encodeURIComponent(connectionName)}`, identity, subscription, entry);
   await grantMcpPrincipalAccess(mcpPath, agent.executionPrincipalId, agent.tenantId, subscription, entry);
   const gatewayId = gateway?.properties?.connectorGatewayId || gateway?.properties?.gatewayId || "";
-  const endpoint = mcpConfig?.properties?.endpoint || mcpConfig?.properties?.mcpEndpointUrl || (gatewayId && gateway.location ? `https://app-16.${gateway.location}.logic.azure.com/api/connectorGateways/${gatewayId}/mcpServerConfigs/${mcpName}/mcp` : "");
-  if (!endpoint) throw new Error("Connector Namespace created the MCP config but did not return enough information to determine its endpoint.");
+  const endpoint2 = mcpConfig?.properties?.endpoint || mcpConfig?.properties?.mcpEndpointUrl || (gatewayId && gateway.location ? `https://app-16.${gateway.location}.logic.azure.com/api/connectorGateways/${gatewayId}/mcpServerConfigs/${mcpName}/mcp` : "");
+  if (!endpoint2) throw new Error("Connector Namespace created the MCP config but did not return enough information to determine its endpoint.");
   const namespaceMcp = {
     name: mcpName,
-    endpoint,
+    endpoint: endpoint2,
     state: mcpConfig?.properties?.state || "Enabled",
     provisioningState: mcpConfig?.properties?.provisioningState || "Succeeded",
     attached: false,
@@ -6860,8 +7577,8 @@ async function finishDelegatedKustoMcp(agent, pending, subscription, entry) {
   ];
   let registration;
   try {
-    const tokenScope = await discoverMcpTokenScope(endpoint);
-    registration = await registerGenericMcp(agent, mcpName, endpoint, tokenScope, subscription, entry);
+    const tokenScope = await discoverMcpTokenScope(endpoint2);
+    registration = await registerGenericMcp(agent, mcpName, endpoint2, tokenScope, subscription, entry);
   } catch (err) {
     namespaceMcp.attachmentStatus = `MCP registration failed: ${shortError2(err)}`;
     entry.connectors = await listConnectors(agent, subscription, entry).catch(() => entry.connectors);
@@ -6871,7 +7588,7 @@ async function finishDelegatedKustoMcp(agent, pending, subscription, entry) {
       signInRequired: false,
       mcpName,
       operation: operation2.name,
-      endpoint,
+      endpoint: endpoint2,
       attached: false,
       platformBlocker: namespaceMcp.attachmentStatus,
       registrationError: shortError2(err)
@@ -6881,7 +7598,7 @@ async function finishDelegatedKustoMcp(agent, pending, subscription, entry) {
   namespaceMcp.attachmentStatus = "Attached to SRE Agent as a managed-identity HTTP MCP connector.";
   entry.connectors = await listConnectors(agent, subscription, entry).catch(() => entry.connectors);
   entry.status = `Created delegated Kusto MCP ${mcpName}, granted the SRE managed identity access, and attached the generic MCP connector. Validate a read-only query next. CRITICAL TODO: fail-closed thread-owner enforcement is not implemented.`;
-  return { signInRequired: false, mcpName, operation: operation2.name, endpoint, attached: true, registration };
+  return { signInRequired: false, mcpName, operation: operation2.name, endpoint: endpoint2, attached: true, registration };
 }
 async function createDelegatedKustoMcp(agent, { clusterUrl, database, gatewayName }, subscription, entry) {
   if (!clusterUrl || !database) throw new Error("Choose a Kusto cluster and database.");
@@ -6962,7 +7679,7 @@ async function confirmDelegatedKustoConsent(agent, code, subscription, entry) {
   throw new Error("Kusto sign-in returned, but Connector Namespace did not report the connection as Connected.");
 }
 async function dataPlaneFetch(agent, subscription, method, urlPath, body, entry, meta, { sessionImpl = azureCliSession, fetchImpl = fetch } = {}) {
-  const endpoint = dataPlaneEndpoint(agent);
+  const endpoint2 = dataPlaneEndpoint(agent);
   let accessToken;
   try {
     const token = await sessionImpl.accessToken(subscription, SRE_AGENT_TOKEN_RESOURCE, meta?.forceFreshToken === true);
@@ -6977,7 +7694,7 @@ async function dataPlaneFetch(agent, subscription, method, urlPath, body, entry,
     if (meta?.beforeDispatch || meta?.expectedApprovalCredential) error.deliveryStarted = false;
     throw error;
   }
-  const url = `${endpoint}${urlPath}`;
+  const url = `${endpoint2}${urlPath}`;
   const cmd = restLogged(entry, method, url, meta);
   let res;
   try {
@@ -7086,8 +7803,8 @@ function threadTitleFilter(query) {
 }
 async function listThreads(agent, subscription, entry, { fetchImpl = dataPlaneFetch, filter } = {}) {
   if (filter && !agent.external) throw new Error("Server-side thread search requires an external agent.");
-  const path2 = agent.external ? `/api/v1/threads?${filter ? "skip=0&" : ""}top=${EXTERNAL_THREAD_PAGE_SIZE}&${filter ? `filter=${encodeURIComponent(filter).replace(/'/g, "%27")}&` : ""}orderby=modifiedTimestamp%20desc` : "/api/v1/threads";
-  const data = await fetchImpl(agent, subscription, "GET", path2, void 0, entry, { title: "list threads" });
+  const path3 = agent.external ? `/api/v1/threads?${filter ? "skip=0&" : ""}top=${EXTERNAL_THREAD_PAGE_SIZE}&${filter ? `filter=${encodeURIComponent(filter).replace(/'/g, "%27")}&` : ""}orderby=modifiedTimestamp%20desc` : "/api/v1/threads";
+  const data = await fetchImpl(agent, subscription, "GET", path3, void 0, entry, { title: "list threads" });
   if (!Array.isArray(data?.value) && !Array.isArray(data)) {
     throw new Error("The SRE Agent did not return a valid thread list.");
   }
@@ -7714,8 +8431,8 @@ async function resolveAppResource(subscription, resourceIdOrName, entry) {
   return rows[0] || null;
 }
 async function resourceHealthSummary(resourceId, subscription, entry) {
-  const path2 = `${resourceId}/providers/Microsoft.ResourceHealth/availabilityStatuses/current`;
-  const data = await armGet(withApiVersion(path2), subscription, entry, { title: "resource health", purpose: "Pull the current Resource Health status for the target app." }).catch((err) => ({ error: shortError2(err) }));
+  const path3 = `${resourceId}/providers/Microsoft.ResourceHealth/availabilityStatuses/current`;
+  const data = await armGet(withApiVersion(path3), subscription, entry, { title: "resource health", purpose: "Pull the current Resource Health status for the target app." }).catch((err) => ({ error: shortError2(err) }));
   if (data?.error) return { availabilityState: "unknown", summary: data.error };
   return {
     availabilityState: data?.properties?.availabilityState || "unknown",
@@ -7993,7 +8710,7 @@ async function executePersonalAction(entry, name, input, options, getRuntime) {
     const opened = await session.rpc.canvas.open({
       canvasId: provider.canvasId,
       extensionId: provider.extensionId,
-      instanceId: `query-${randomUUID6()}`,
+      instanceId: `query-${randomUUID7()}`,
       input: {
         handoffContract: "personal-kql-v1",
         query: draft.query,
@@ -8313,8 +9030,8 @@ async function restoreConnectedSelection(entry, openSelection = openChatSelectio
   if (entry.agent || !target2) return;
   await openSelection(entry, target2, { current: () => store.revision === revision2 });
 }
-var STICKY_STATE_DIR = join5(homedir(), ".copilot", "azure-sre-agent");
-var LEGACY_STICKY_STATE_FILE = join5(homedir(), ".copilot", "sre-agent-studio", "last-selection.json");
+var STICKY_STATE_DIR = join5(homedir2(), ".copilot", "azure-sre-agent");
+var LEGACY_STICKY_STATE_FILE = join5(homedir2(), ".copilot", "sre-agent-studio", "last-selection.json");
 var STICKY_STATE_FILE = join5(STICKY_STATE_DIR, "last-selection.json");
 var FAVORITES_FILE = join5(STICKY_STATE_DIR, "favorites.json");
 var MAX_FAVORITES = 20;
@@ -8374,7 +9091,7 @@ function writeFavorites(favorites, file = FAVORITES_FILE) {
   const data = JSON.stringify({ version: 1, favorites });
   if (Buffer.byteLength(data) > MAX_FAVORITES_BYTES) throw new Error("Saved Favorites exceed the size limit.");
   mkdirSync5(dirname2(file), { recursive: true });
-  const temporary = `${file}.${randomUUID6()}.tmp`;
+  const temporary = `${file}.${randomUUID7()}.tmp`;
   try {
     writeFileSync5(temporary, data, { mode: 384, flag: "wx" });
     renameSync5(temporary, file);
@@ -9251,7 +9968,7 @@ async function openSharedAgentReference(entry, value, dependencies = {}) {
 function getApprovalsController(entry, dependencies = {}) {
   if (!entry.approvalsController) {
     const transport = dependencies.fetchImpl || dataPlaneFetch;
-    const fetchImpl = (agent, subscription, method, path2, body, selected, meta) => transport(agent, subscription, method, path2, body, selected, { ...meta, forceFreshToken: true });
+    const fetchImpl = (agent, subscription, method, path3, body, selected, meta) => transport(agent, subscription, method, path3, body, selected, { ...meta, forceFreshToken: true });
     entry.approvalHandles ||= createHandleRegistry();
     entry.approvalsController = createApprovalsAdapter(entry, {
       agentKey: (agent) => agent ? canonicalAgentKey(agent) : "",
@@ -9943,11 +10660,7 @@ var canvas = createCanvas({
     },
     dependentRequired: { threadId: ["agentReference"] }
   },
-  actions: [
-    ...PERSONAL_ACTIONS.map(({ route, ...action }) => ({
-      ...action,
-      handler: ({ input, instanceId }) => dispatchPersonalAction(ensureEntry(instanceId), action.name, input)
-    })),
+  actions: instrumentSreAgentActions([
     {
       name: "prepare_thread_query",
       description: "Open the exact KQL block from an SRE message as a personal Copilot draft. Does not query, reconnect, approve an execution, or share evidence. Incomplete previews remain blocked.",
@@ -10304,7 +11017,7 @@ var canvas = createCanvas({
       if (["scan_approvals", "review_execution_approval", "act_on_reviewed_execution"].includes(action.name)) return result;
       return action.name === "prepare_thread_query" || personalActionNames.has(action.name) ? result : appendFocusContract(entry, result);
     }
-  })),
+  })), usageMetrics),
   async open({ instanceId, sessionId, input }) {
     const entry = ensureEntry(instanceId);
     bindChatConversation(entry, sessionId || session?.sessionId, session?.workspacePath);
@@ -10328,6 +11041,7 @@ var canvas = createCanvas({
       }
       await startServer(entry);
     }
+    usageMetrics.trackCanvasOpened("panel");
     return { url: entry.url, title: "Azure SRE Agent", status: "ready" };
   },
   async onClose({ instanceId }) {
@@ -10388,6 +11102,10 @@ if (process.env.AZURE_SRE_AGENT_TEST_NO_JOIN !== "true" && process.env.SRE_AGENT
     }
   });
 }
+process.on("exit", () => {
+  usageMetrics.close({ flush: false }).catch(() => {
+  });
+});
 function renderHtml() {
   const feedbackUrl = `https://github.com/microsoft/azure-dev-tools/issues/new?title=${encodeURIComponent("Azure SRE Agent feedback")}&body=${encodeURIComponent(
     `Product: Azure SRE Agent
@@ -10665,6 +11383,12 @@ Revision: ${STUDIO_REVISION}
     .thread-master .row-list { max-height: max(160px, calc(100dvh - 430px)); }
     .thread-detail { height: clamp(380px, calc(100dvh - 520px), 800px); }
     .threads-layout > .thread-detail { padding: .75rem; }
+    .threads-layout > .thread-detail > .panel-head { flex-wrap: nowrap; gap: .25rem; }
+    .threads-layout > .thread-detail > .panel-head h2 { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .threads-layout > .thread-detail > .panel-head .btn { flex-shrink: 0; white-space: nowrap; }
+    .threads-layout > .thread-detail .chat-connection-strip { flex-wrap: nowrap; gap: .35rem; padding: .25rem .45rem; }
+    .threads-layout > .thread-detail #chat-connection-helper { display: none; }
+    .threads-layout > .thread-detail .chat-connection-strip .btn { margin-left: 0; }
   }
   @media (forced-colors: active) {
     .product-mark { forced-color-adjust: none; }
@@ -10701,6 +11425,7 @@ Revision: ${STUDIO_REVISION}
   .tool-cmd pre { margin: 0; font-family: inherit; white-space: pre-wrap; word-break: break-all; }
   .tool-output { margin-top: .35rem; color: var(--muted); white-space: pre-wrap; max-height: 160px; overflow-y: auto; }
   .mcp-run-card > .tool-output { max-height: none; overflow: visible; white-space: normal; }
+  .mcp-run-card pre.tool-output { font: inherit; }
   .mcp-run-card .automation-table { font-size: inherit; }
   .mcp-run-card .mcp-disclosure { display: flex; align-items: center; gap: .5rem; cursor: pointer; list-style: none; }
   .mcp-run-card .mcp-disclosure::marker { content: ''; }

@@ -3,6 +3,7 @@ var paths = {
   "arrow-left": ["M19 12H5m6-6-6 6 6 6"],
   "arrow-right": ["M5 12h14m-6-6 6 6-6 6"],
   "chevron-down": ["m6 9 6 6 6-6"],
+  search: ["M21 21l-5-5", "M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0"],
   refresh: ["M20 7v5h-5", "M19.5 12a7.5 7.5 0 1 0-2 5.5", "m20 12-3-3"],
   copy: ["M9 9h11v11H9z", "M15 5V3H3v12h2"],
   "external-link": ["M14 3h7v7m0-7L10 14", "M10 5H4v15h15v-6"],

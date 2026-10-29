@@ -83,6 +83,9 @@ the current investigation rather than the selected-agent inbox.
 ## Stay in standalone Copilot CLI
 
 This extension registers `sre_personal_*` tools separately from its canvas.
+Use those native tools for personal diagnostics, queries, Teams and evidence,
+including in canvas-capable hosts; they are not `invoke_canvas_action` actions.
+The panel's Private Connectors and query controls use their own HTTP routes.
 In a compatible standalone Copilot CLI extension runtime, Copilot can invoke
 them directly without Azure MCP. Start with `sre_personal_get_diagnostics_context`;
 personal source setup, query preparation and bounded reads use the same
@@ -125,16 +128,11 @@ automatic approvals or yolo mode.
 
 ## Install the full plugin
 
-When the **Awesome Copilot** marketplace lists **Azure SRE Agent** in GitHub
-Copilot, go to **Customize → Plugins → marketplace gear**, add
-`github/awesome-copilot` (marketplace ID `awesome-copilot`), and install
-**Azure SRE Agent**. The full plugin includes both the canvas and its
+In GitHub Copilot, open **Customize → Plugins** and install **Azure SRE Agent**
+from the **awesome-copilot** marketplace. If the marketplace is missing, open
+**Customize → Plugins → marketplace gear** and add `github/awesome-copilot`
+(marketplace ID `awesome-copilot`). The full plugin includes both the canvas and its
 `azure-sre-agent-canvas` routing skill.
-
-```sh
-copilot plugin marketplace add github/awesome-copilot
-copilot plugin install azure-sre-agent@awesome-copilot
-```
 
 Fully quit and reopen GitHub Copilot, start a fresh chat, and try this exact
 prompt:

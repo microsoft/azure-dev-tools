@@ -47,6 +47,7 @@
   --accent: var(--text-color-accent, var(--coreai-brand-80));
   --accent2: var(--text-color-accent, var(--coreai-brand-70));
   --canvas-bg: var(--bg);
+  --canvas-overlay: var(--bg);
   --canvas-fg: var(--ink);
   --canvas-muted: var(--muted);
   --canvas-border: var(--line);
@@ -57,6 +58,7 @@
   --canvas-hover: var(--background-color-control-transparent-hover, var(--coreai-interactive-hover));
   --canvas-selected: var(--background-color-accent-muted, color-mix(in srgb, var(--accent) 12%, transparent));
   --canvas-radius: 8px;
+  --canvas-font-family: var(--coreai-font-family-base);
   font-family: var(--coreai-font-family-base);
   font-size: var(--coreai-body-size);
   line-height: var(--coreai-body-line);

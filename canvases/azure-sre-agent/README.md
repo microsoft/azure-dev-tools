@@ -7,18 +7,14 @@ sources, read your Inbox, and prepare Teams updates from the same chat.
 
 ## Install
 
-In GitHub Copilot, open **Customize → Plugins**, add the
-**github/awesome-copilot** marketplace, and install **Azure SRE Agent**
-when listed. Or use the marketplace commands:
+In GitHub Copilot, open **Customize → Plugins** and install **Azure SRE Agent**
+from the **awesome-copilot** marketplace. If the marketplace is missing, add
+it first:
 
 ```sh
 copilot plugin marketplace add github/awesome-copilot
 copilot plugin install azure-sre-agent@awesome-copilot
 ```
-
-Browse the [Awesome Copilot marketplace](https://github.com/github/awesome-copilot/tree/main#install-a-plugin).
-The plugin source remains in
-[microsoft/azure-dev-tools](https://github.com/microsoft/azure-dev-tools/tree/main/canvases/azure-sre-agent).
 
 Reopen Copilot and start a new chat. Requires Azure CLI signed in and access
 to the resources you use.
@@ -58,6 +54,16 @@ Compatible Copilot CLI extension runtimes expose this plugin's registered
 `sre_personal_*` tools directly, without Azure MCP. The visual panel and SRE
 investigation actions need a canvas-capable host. See
 [usage and CLI support](docs/advanced.md) for the supported tool path and limits.
+
+## Usage data
+
+Usage telemetry is enabled by default to help improve this plugin. It sends
+basic usage data and, when available, your numeric GitHub user ID to the
+[usage metrics service](https://canvas-metrics-pilot-0b8944-add3hsghhddcbxe9.b01.azurefd.net/api/events).
+Prompts, tool inputs/outputs and credentials are excluded.
+
+You can [disable usage telemetry](https://github.com/microsoft/azure-dev-tools#disable-usage-telemetry).
+Copilot's own telemetry is separate.
 
 ## Prompts to try
 
