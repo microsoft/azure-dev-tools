@@ -52,7 +52,7 @@
     },
     {
       "name": "azure-functions",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Azure Functions: create, edit, modernize, review, run, deploy, and monitor function apps, with optional AI help.",
       "source": "canvases/azure-functions"
     }

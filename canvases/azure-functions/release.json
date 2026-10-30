@@ -2,11 +2,11 @@
   "schemaVersion": 2,
   "format": "plugin",
   "name": "azure-functions",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "mutableDocumentation": true,
   "publicationRepository": "microsoft/azure-dev-tools",
   "plugin": {
-    "manifest": ".github/plugin/plugin.json",
+    "manifest": "plugin.json",
     "extension": {
       "name": "azure-functions",
       "canvasId": "azure-functions",
@@ -209,7 +209,6 @@
     ]
   },
   "files": [
-    ".github/plugin/plugin.json",
     "THIRD_PARTY_NOTICES.txt",
     "assets/preview.png",
     "com.github.copilot/extensions/azure-functions/assets/toolkit/icons.mjs",
@@ -350,6 +349,7 @@
     "com.github.copilot/extensions/azure-functions/ui/workbench-copy.js",
     "com.github.copilot/extensions/azure-functions/ui/workbench.js",
     "package.json",
+    "plugin.json",
     "skills/azure-functions-assess/SKILL.md",
     "skills/azure-functions-assess/references/finding-schema.json",
     "skills/azure-functions-assess/references/lifecycle.json",
@@ -458,8 +458,8 @@
   },
   "build": {
     "esbuild": "0.25.12",
-    "lockSha256": "b954715f51daad33ac14faa0b9b4722718290727909e97d33e1817ae8def0050",
-    "inputSha256": "bb64efbc704c9546833735d2e5308c5089af4a35f5fd35b4a16f10c0cc3a4219"
+    "lockSha256": "f059dd7f4058e725c6d3492b3e6d6dc1f4a1e5bc6bfeacbfbbc7cb19bd06203d",
+    "inputSha256": "d71e3a6327365b14fd5f53d9e6c305b0fa981c6aeb7b36f95ed99bfcff3cd4ba"
   },
   "dependencies": [
     {
