@@ -6,6 +6,30 @@ import { dirname, posix, resolve } from "node:path";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packages = {
+  "azure-functions": {
+    path: "canvases/azure-functions",
+    manifest: ".github/plugin/plugin.json",
+    skills: [
+      "./skills/azure-functions-canvas/",
+      "./skills/azure-functions-best-practices/",
+      "./skills/azure-functions-common/",
+      "./skills/azure-functions-create/",
+      "./skills/azure-functions-deploy/",
+      "./skills/azure-functions-diagnostics/",
+      "./skills/azure-functions-doctor/",
+      "./skills/azure-functions-feedback/",
+      "./skills/azure-functions-health-status/",
+      "./skills/azure-functions-help/",
+      "./skills/azure-functions-hosted-skills/",
+      "./skills/azure-functions-inventory/",
+      "./skills/azure-functions-setup/",
+      "./skills/azure-functions-update/",
+      "./skills/azure-functions-assess/",
+    ],
+    extension: "azure-functions",
+    extensionPath: "com.github.copilot/extensions/azure-functions",
+    receipt: "canvases/azure-functions/SHA256SUMS",
+  },
   "azure-functions-hosted-skills": {
     path: "canvases/azure-functions-hosted-skills",
     manifest: ".github/plugin/plugin.json",

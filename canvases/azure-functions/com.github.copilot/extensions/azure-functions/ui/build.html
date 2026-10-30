@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Azure Functions</title>
+  <link rel="stylesheet" href="./canvas-ui/styles.css">
+  <link rel="stylesheet" href="./canvas-ui/profiles/coreai-azure.css">
+<link rel="stylesheet" href="./canvas-ui/subscription-picker.css">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./host-activity.css">
+  <script src="./bootstrap.js" type="module"></script>
+  <script src="./build.js" type="module"></script>
+</head>
+<body class="canvas-ui canvas-profile-coreai-azure workbench" data-workbench-ui data-page="build">
+  <section id="canvas-startup" role="alert" aria-labelledby="canvas-startup-title">
+    <div class="notice error">
+      <h2 id="canvas-startup-title" class="page-title">Azure Functions is not ready</h2>
+      <p id="canvas-startup-note">Reload the display. If the problem continues, restart Copilot to reload the extension. Reloading the display does not cancel app operations.</p>
+      <div class="row actions-row">
+        <a id="canvas-startup-reload" class="btn primary" href="">Reload display</a>
+        <a id="canvas-startup-home" class="btn ghost" href="./build">Home</a>
+      </div>
+      <p id="canvas-startup-error" hidden></p>
+    </div>
+  </section>
+  <main class="app">
+    <header class="workbench-header"></header>
+    <dialog id="job-dialog" aria-labelledby="job-title">
+      <div class="row between"><h2 id="job-title" data-i18n="workbench.jump">Jump to</h2><button type="button" class="btn ghost" id="close-jobs" data-i18n="workbench.close">Close</button></div>
+      <label class="field-stack"><span data-i18n="workbench.search">Search jobs</span><input id="job-search" type="search" autocomplete="off"></label>
+      <div id="job-list" class="tasks"></div><p id="job-empty" data-i18n="workbench.empty" hidden>No matching jobs</p>
+    </dialog>
+    <dialog id="local-preparation" aria-labelledby="run-help-title" aria-describedby="run-help-description" data-tabster='{"uncontrolled":{"completely":true}}'>
+      <div class="row between"><h2 id="run-help-title" data-i18n="run.preparation">Run help</h2><button class="btn ghost" type="button" id="close-run-help" data-i18n="workbench.close">Close</button></div>
+      <div class="run-help-body">
+        <p id="run-help-description" data-i18n="run.approval">Start may download dependencies and run app build and startup scripts. Missing debug/local settings are created; existing settings are kept. Local-only exclusions are added to ignore files.</p>
+        <p class="muted" data-i18n="run.hostScope">Running confirms the host is up, not that a function succeeded.</p>
+        <p class="muted" data-i18n-code="run.note" data-cmd="func start">Prepare language dependencies, VS Code debug files and Azurite, then run <code>func start</code>.</p>
+        <div id="local-plan"></div>
+        <p class="muted" id="run-editor-help" data-i18n="run.editorHelp">VS Code opens the selected project for editing and debugging. Setup guides open documentation, not applications.</p>
+        <div id="run-editor" class="run-editor">
+          <button class="btn ghost" type="button" id="run-guides-toggle" data-i18n="run.guides" aria-label="Setup guides" data-i18n-aria-label="run.guides" aria-haspopup="menu" aria-expanded="false" aria-controls="local-guides" disabled>Setup guides</button>
+          <div id="local-guides" class="run-guides" role="menu" aria-label="Setup guides" data-i18n-aria-label="run.guides" hidden></div>
+        </div>
+      </div>
+    </dialog>
+    <aside id="activity-dialog" class="workbench-detail-panel" aria-labelledby="activity-title" hidden><div class="workbench-detail-header"><h2 id="activity-title" data-i18n="workbench.commands">Commands</h2><button type="button" class="btn ghost" id="close-activity" data-i18n="workbench.close">Close</button></div><div class="workbench-detail-body"><section id="command-results" hidden></section><div id="activity-content"></div><div id="project-chip"></div></div></aside>
+    <aside id="local-output" class="workbench-detail-panel local-output" aria-labelledby="local-output-label" data-tabster='{"uncontrolled":{"completely":true}}' hidden>
+      <div class="panel-resize" role="separator" tabindex="0" aria-label="Resize logs and results" data-i18n-aria-label="run.resizeLogs"></div>
+      <div class="workbench-detail-header"><h2 id="local-output-label" data-i18n="run.logs">Logs and results</h2><div class="local-output-header-actions">
+        <button type="button" class="btn ghost icon-button" id="expand-local-output" aria-controls="local-output" aria-pressed="false" aria-label="Expand logs and results" title="Expand logs and results" data-i18n-aria-label="run.expandOutput" data-i18n-title="run.expandOutput"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 2H2v4m8-4h4v4M2 10v4h4m8-4v4h-4"/></svg></button>
+        <button type="button" class="btn ghost" id="close-local-output" data-i18n="workbench.close">Close</button>
+      </div></div>
+      <div class="workbench-detail-body">
+        <div class="row local-output-header"><span id="local-status" role="status" aria-live="polite"></span></div>
+        <section id="local-results" aria-live="polite" aria-relevant="additions text" hidden></section>
+        <p id="local-log-empty" class="muted" data-i18n="run.noOutput">No logs or results yet.</p>
+        <div id="local-output-splitter" role="separator" tabindex="0" aria-orientation="horizontal" aria-controls="local-results local-raw-output" aria-label="Resize results and raw output" data-i18n-aria-label="run.resizeOutputSplit" aria-valuemin="0" aria-valuemax="100" aria-valuenow="55" hidden></div>
+        <section id="local-raw-output">
+          <div class="row actions-row">
+            <button type="button" class="btn ghost" id="local-raw-toggle" aria-expanded="true" aria-controls="local-log" data-i18n="run.rawOutput">Raw output</button>
+            <button type="button" class="btn ghost" id="local-jump-latest" data-i18n="run.jumpLatest" hidden>Jump to latest</button>
+          </div>
+          <div id="local-log" hidden></div>
+        </section>
+      </div>
+    </aside>
+    <!-- Preserve native tab order between the supporting panel and the current task. -->
+    <aside id="prerequisites-drawer" class="workbench-detail-panel prerequisites-drawer" aria-labelledby="prerequisites-title" data-tabster='{"uncontrolled":{"completely":true}}' hidden>
+      <div class="panel-resize" role="separator" tabindex="0" data-i18n-aria-label="doctor.resize" aria-label="Resize prerequisites"></div>
+      <div class="workbench-detail-header"><h2 id="prerequisites-title" data-i18n="workbench.doctor">Check prerequisites</h2><button type="button" class="btn ghost" id="close-prerequisites" data-i18n="workbench.close">Close</button></div>
+      <div class="workbench-detail-body"><div id="prerequisites-content"></div></div>
+    </aside>
+    <header class="app-header">
+      <h1 class="product-heading" id="workbench-title">What would you like to do?</h1>
+      <p class="sub" id="workbench-sub" hidden></p>
+    </header>
+    <div id="auto-health" class="inline-notice"></div>
+    <nav class="crumbs" aria-label="Breadcrumb" data-i18n-aria-label="build.crumbs" id="crumbs" hidden></nav>
+    <ol class="stepper" id="flow-steps" aria-label="Progress" data-i18n-aria-label="steps.label" hidden></ol>
+    <datalist id="recent-paths"></datalist>
+
+    <div data-panel="home">
+      <div class="tasks joined">
+        <button class="task" type="button" data-tab="create">
+          <span class="action-symbol"><svg class="workbench-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5-6 7 6 7m8-14 6 7-6 7m-3-17-2 20"/></svg></span>
+          <span class="action-copy"><strong data-i18n="workbench.create">Create a function app</strong><span data-i18n="workbench.create.sub">Start a function app project from a template</span></span><span class="action-chevron" aria-hidden="true">›</span>
+        </button>
+        <button class="task" type="button" data-tab="project">
+          <span class="action-symbol"><svg class="workbench-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6 4-4a6 6 0 0 1-7 8L3 18a2 2 0 0 0 3 3l8-8a6 6 0 0 0 8-7l-4 4-4-4Z"/></svg></span>
+          <span class="action-copy"><strong data-i18n="workbench.project">Open function app</strong><span data-i18n="workbench.project.sub">Open an existing function app project</span></span><span class="action-chevron" aria-hidden="true">›</span>
+        </button>
+        <button class="task" type="button" data-job="modernize">
+          <span class="action-symbol"><svg class="workbench-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Zm-4 9 3 3 5-6"/></svg></span>
+          <span class="action-copy"><strong data-i18n="workbench.modernize">Modernize a function app</strong><span data-i18n="workbench.modernize.sub">Assess local code or Azure configuration</span></span><span class="action-chevron" aria-hidden="true">›</span>
+        </button>
+        <button class="task" type="button" data-job="monitor">
+          <span class="action-symbol"><svg class="workbench-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM3 12h18M12 3c-5 5-5 13 0 18 5-5 5-13 0-18Z"/></svg></span>
+          <span class="action-copy"><strong data-i18n="workbench.monitor">Monitor a deployed app</strong><span data-i18n="workbench.monitor.sub">Compare apps, inspect health, or diagnose symptoms</span></span><span class="action-chevron" aria-hidden="true">›</span>
+        </button>
+      </div>
+      <div id="recent-apps" hidden></div>
+    </div>
+
+    <div data-panel="doctor" hidden>
+      <h2 class="section-label" data-i18n="doctor.label">PREREQUISITES</h2>
+      <section class="card">
+        <p class="muted" data-i18n="doctor.note">Build uses tools on this computer. It does not install them.</p>
+        <div id="tools"></div>
+        <div id="tools-error"></div>
+        <div class="row actions-row"><button class="btn ghost" type="button" id="check-tools" data-i18n="doctor.check">Check again</button><button class="btn primary" type="button" id="help-tools" hidden data-i18n="doctor.help">Help with setup</button></div>
+        <p id="tools-help-status" class="muted" role="status"></p>
+      </section>
+    </div>
+
+    <div data-panel="project" hidden>
+      <h2 class="page-title" id="customize-heading" hidden data-i18n="workbench.edit">Edit a function app</h2>
+      <section class="card" id="project-selector">
+        <div id="existing-folder-field"></div>
+        <div id="project-browser" class="folder-browser" role="region" aria-label="Choose a folder" data-i18n-aria-label="folders.title" hidden></div>
+        <div id="project-facts"></div>
+        <div class="row actions-row" id="project-facts-actions" hidden>
+          <button class="btn ghost" type="button" id="open-vscode"><span class="label" data-i18n="project.openVsCode">Open in VS Code</span></button>
+        </div>
+      </section>
+      <div id="function-authoring">
+        <div id="function-editor-actions" class="row actions-row" hidden></div>
+        <div id="function-edit-options" class="tasks joined"></div>
+        <div id="add-function-flow" hidden></div>
+      </div>
+      <div id="customize-ai">
+      <h2 class="section-label" data-i18n="ai.label">CUSTOMIZE WITH AI</h2>
+      <section class="card">
+        <p class="muted" data-i18n="ai.note">Describe changes to this function app project, including individual functions. Review the proposed edits in chat before files change.</p>
+        <textarea id="ai-text" maxlength="2000" placeholder="For example: add a Kafka trigger, or edit an existing function" aria-label="Request for AI" data-i18n-placeholder="workbench.edit.placeholder" data-i18n-aria-label="ai.request"></textarea>
+        <div class="row actions-row"><button class="btn primary" type="button" id="ask-ai" data-i18n="workbench.edit">Edit a function app</button><span id="ai-status" class="muted"></span></div>
+      </section>
+      </div>
+      <div class="row actions-row" id="customize-next" hidden>
+        <button class="btn primary" type="button" data-tab="run" data-i18n="page.run">Run and test</button>
+        <button class="btn ghost" type="button" data-tab="deploy" data-i18n="page.deploy">Deploy</button>
+      </div>
+    </div>
+
+    <div data-panel="create" hidden>
+      <div id="creation-form">
+      <section id="hosted-canvas-guide" class="card" hidden>
+        <p data-i18n="create.hosted.canvasNote">Prefer configuring models and tools in a dedicated UI? Open the Hosted Skills canvas, or continue here with skill-led customization and deployment.</p>
+        <button class="btn ghost" type="button" id="open-hosted-canvas" data-i18n="create.hosted.openCanvas">Open Hosted Skills canvas</button>
+      </section>
+      <section id="family-step">
+        <h2 class="page-title" data-i18n="workbench.choose">What kind of function app are you building?</h2>
+        <div id="event-families" class="tasks joined"></div>
+        <p id="family-status" class="muted" role="status"></p>
+      </section>
+      <section id="language-step" hidden><h2 class="page-title" data-i18n="workbench.language.question">Which language do you want to use?</h2><div id="language-choices" class="tasks joined"></div></section>
+      <section id="infrastructure-step" hidden><h2 class="page-title" data-i18n="workbench.infrastructure.question">Which infrastructure do you want to use?</h2><div id="infrastructure-choices" class="tasks joined"></div></section>
+      <section id="template-step" hidden><h2 class="page-title" data-i18n="workbench.template.question">Which starter do you want to use?</h2><div id="templates" class="tasks joined"></div></section>
+      <section id="hosted-trigger-step" hidden>
+        <h2 class="page-title" data-i18n="create.hosted.trigger">What should start your Hosted Skill?</h2>
+        <p class="muted" data-i18n="create.hosted.triggerNote">The starter is the same. Your choice is passed to the customization request.</p>
+        <div id="hosted-trigger-choices" class="tasks joined"></div>
+        <button class="btn ghost" type="button" data-hosted-trigger-skip data-metric-id="workbench-family" data-i18n="create.hosted.skipTrigger">Describe the trigger in my request</button>
+      </section>
+      <section id="location-step" hidden>
+        <h2 class="page-title" data-i18n="workbench.location.question">Where should this function app project go?</h2>
+        <section id="function-setup" class="card setup-section" hidden>
+          <h3 data-i18n="setup.configuration">Function app setup</h3>
+          <div class="setup-section-heading configuration-summary-row"><p id="configuration-summary" class="flow-context"></p><button id="edit-configuration" class="revision-link" type="button" aria-controls="configuration-editor" aria-expanded="false" data-i18n="setup.change">Change configuration</button><button id="close-configuration" class="revision-link" type="button" aria-controls="configuration-editor" data-i18n="workbench.close" hidden>Close</button></div>
+          <div id="configuration-editor" hidden inert>
+            <label class="field-stack"><span data-i18n="setup.type">Type</span><select id="configuration-type"></select></label>
+            <p id="configuration-type-error" class="configuration-validation" role="status" hidden></p>
+            <label class="field-stack"><span data-i18n="create.language">Language</span><select id="configuration-language"></select></label>
+            <p id="configuration-language-error" class="configuration-validation" role="status" hidden></p>
+            <label id="configuration-iac-field" class="field-stack"><span data-i18n="create.iac">Infrastructure</span><select id="configuration-iac"></select></label>
+            <p id="configuration-iac-error" class="configuration-validation" role="status" hidden></p>
+            <label id="configuration-template-field" class="field-stack"><span data-i18n="setup.starter">Starter</span><select id="configuration-template"></select></label>
+            <p id="configuration-template-error" class="configuration-validation" role="status" hidden></p>
+          </div>
+          <div id="setup-selection-error" class="inline-notice" hidden></div>
+        </section>
+        <p id="location-context" class="flow-context"></p>
+        <details id="setup-instructions" class="workbench-disclosure" open hidden>
+          <summary data-i18n="setup.instructions">Customize with AI (optional)</summary>
+          <div id="setup-composer"></div>
+          <div class="prompt-refinement-actions">
+            <button class="btn ghost" type="button" id="refine-prompt" aria-describedby="refinement-help"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m14 3 2.5 6.5L23 12l-6.5 2.5L14 21l-2.5-6.5L5 12l6.5-2.5L14 3ZM4 2l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3Z"/></svg><span data-i18n="refinement.refine">Refine with Copilot</span></button>
+          </div>
+          <p class="muted" id="refinement-help" data-i18n="refinement.help">Make your instructions clearer. Copilot may ask a quick question.</p>
+          <section id="prompt-refinement" class="prompt-refinement" hidden aria-labelledby="refinement-heading">
+            <h3 id="refinement-heading" data-i18n="refinement.heading">Suggested instructions</h3>
+            <p id="refinement-status" role="status" aria-live="polite"></p>
+            <div id="refinement-suggestion-field" class="field-stack" hidden><textarea id="refinement-suggestion" aria-labelledby="refinement-heading" maxlength="2000" rows="6"></textarea></div>
+            <div class="row actions-row">
+              <button class="btn" type="button" id="apply-refinement" hidden data-i18n="refinement.apply">Use suggestion</button>
+              <button class="btn ghost" type="button" id="dismiss-refinement" data-i18n="refinement.keep">Keep original</button>
+            </div>
+          </section>
+        </details>
+        <section id="project-location" class="setup-section">
+          <h3 data-i18n="setup.location">Project location</h3>
+          <div id="setup-folder-field"></div>
+          <label class="field-stack app-name-field"><span><span data-i18n="setup.name">Project name</span> <span aria-hidden="true">*</span></span><input type="text" id="create-name" required></label>
+        </section>
+        <div id="destination-error" hidden></div>
+        <div class="row actions-row"><button class="btn primary" type="button" id="confirm-location" data-i18n="create.button">Create</button></div>
+      </section>
+      <section id="intent-step" hidden>
+        <h2 class="page-title" data-i18n="workbench.intent.question">What do you plan on building?</h2>
+        <p id="creation-context" class="flow-context"></p>
+        <div id="intent-composer"><div id="creation-composer"></div></div>
+        <h3 class="sample-heading" data-i18n="workbench.samples">Or start with a sample</h3>
+        <div id="intent-examples" class="tasks"></div>
+        <details class="workbench-disclosure" id="creation-options"><summary data-i18n="workbench.creation.options">Creation options</summary>
+        <p class="muted" data-i18n="workbench.direct.note">You can also create the selected starter without AI.</p>
+        <button class="btn ghost" type="button" id="create" data-i18n="workbench.direct">Create from starter</button>
+        </details>
+        <button type="button" class="revision-link" data-create-stage="location" data-i18n="workbench.change.location">Choose another location</button>
+      </section>
+      <div id="catalog-error"></div>
+      </div>
+      <section id="creation-progress-card" hidden tabindex="-1" aria-labelledby="workbench-title">
+        <p id="generation-context" class="flow-context"></p>
+        <div id="generation-attention" aria-live="polite" aria-atomic="true" hidden></div>
+        <div id="generation-progress"></div>
+        <p id="generation-step" class="flow-context" hidden></p>
+        <p id="generation-chat-note" class="muted" data-i18n="create.ai.chatNote" hidden>Questions and approval requests appear in chat. Check chat while customization is running.</p>
+        <details id="generation-plan" class="workbench-disclosure" hidden>
+          <summary data-i18n="create.ai.planDetails">View full plan</summary>
+          <p id="generation-plan-message" class="generation-detail-copy"></p>
+        </details>
+        <details id="generation-request" class="workbench-disclosure" hidden>
+          <summary data-i18n="create.ai.originalRequest">Your original request</summary>
+          <p id="generation-message" class="generation-detail-copy"></p>
+        </details>
+        <div id="generation-error" role="alert"></div>
+        <button class="btn ghost" type="button" id="cancel-creation" data-i18n="create.ai.cancel" hidden>Cancel customization</button>
+        <p class="muted" id="creation-reset-note" data-i18n="create.ai.resetNote" hidden>Deleted the queued message? Return to your inputs. This does not cancel a message in chat.</p>
+        <button class="btn ghost" type="button" id="reset-creation" data-i18n="create.ai.reset" hidden>Back to inputs</button>
+      </section>
+      <section id="template-creation-result" hidden tabindex="-1" aria-labelledby="creation-result-title">
+        <div class="creation-confirmation">
+          <div id="creation-celebration" role="status" aria-live="polite" hidden>
+            <svg class="creation-artwork" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="160" height="160" aria-hidden="true" focusable="false">
+              <g id="creation-art-frame">
+                <rect id="creation-art-backing" x="238" y="295" width="388" height="448" rx="40" fill="var(--creation-art-accent)" opacity=".5"/>
+                <g id="creation-art-window">
+                  <rect x="288" y="255" width="442" height="450" rx="38" fill="var(--creation-art-body)" stroke="var(--creation-art-outline)" stroke-width="3"/>
+                  <line x1="288" y1="329" x2="730" y2="329" stroke="var(--creation-art-outline)" stroke-width="3"/>
+                  <circle cx="621" cy="292" r="17" fill="var(--creation-art-accent)"/>
+                  <circle cx="676" cy="292" r="17" fill="var(--creation-art-warm)" stroke="var(--creation-art-outline)" stroke-width="1"/>
+                </g>
+              </g>
+              <g id="creation-art-code-lines" stroke-width="22" stroke-linecap="round">
+                <path d="M342 377 H538" pathLength="1" stroke="var(--creation-art-outline)"/>
+                <path d="M380 416 H483" pathLength="1" stroke="var(--creation-art-accent)"/>
+                <path d="M416 455 H639" pathLength="1" stroke="var(--creation-art-highlight)"/>
+                <path d="M342 511 H464" pathLength="1" stroke="var(--creation-art-outline)"/>
+                <path d="M380 549 H623" pathLength="1" stroke="var(--creation-art-accent)"/>
+                <path d="M416 588 H503" pathLength="1" stroke="var(--creation-art-highlight)"/>
+                <path d="M342 640 H551" pathLength="1" stroke="var(--creation-art-outline)"/>
+              </g>
+              <g id="creation-art-badge">
+                <circle cx="699" cy="665" r="93" fill="var(--creation-art-accent)" stroke="var(--creation-art-outline)" stroke-width="3"/>
+                <path id="creation-art-check" d="M659 671 L685 697 L739 641" pathLength="1" fill="none" stroke="var(--text-color-button-primary-rest, #fff)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+              <g id="creation-art-sparkles" fill="var(--creation-art-warm)">
+                <path d="M793 525 Q798 550 823 555 Q798 560 793 585 Q788 560 763 555 Q788 550 793 525 Z"/>
+                <path d="M829 601 Q833 618 850 622 Q833 626 829 643 Q825 626 808 622 Q825 618 829 601 Z"/>
+              </g>
+            </svg>
+          </div>
+          <div>
+            <span id="creation-result-context" class="chip" hidden></span>
+            <h2 id="creation-result-title" data-i18n="workbench.result.ready">Your function app project is ready</h2>
+            <p id="creation-result-note" data-i18n="workbench.result.createdLocally">Give it a spin locally, then take it to Azure when you're ready.</p>
+          </div>
+        </div>
+      <div class="row actions-row" id="creation-next" hidden>
+        <button class="btn primary" type="button" data-tab="run" data-i18n="page.run">Run and test</button>
+        <button class="btn ghost" type="button" id="creation-open-vscode"><span class="label" data-i18n="project.openVsCode">Open in VS Code</span></button>
+      </div>
+      </section>
+      <section class="card result-output" id="creation-output" hidden aria-labelledby="creation-output-title"><div class="row"><h2 id="creation-output-title" data-i18n="run.output">Output</h2><span id="create-status" class="muted"></span></div><div id="create-log"></div></section>
+    </div>
+
+    <div data-panel="run" hidden>
+      <section id="hosted-review" hidden>
+        <p class="muted" data-i18n="hosted.review.note">Review the customized files before planning deployment. This does not run the skill.</p>
+        <section class="card">
+          <h3 data-i18n="hosted.review.report">Reported customization result</h3>
+          <p id="hosted-review-summary" class="generation-detail-copy"></p>
+          <p class="muted" data-i18n="hosted.review.files">Open the current .agent.md, agents.config.yaml and mcp.json files in VS Code to check instructions, triggers, model settings and tools.</p>
+          <div class="row actions-row">
+            <button class="btn ghost" type="button" id="hosted-review-open-vscode"><span class="label" data-i18n="project.openVsCode">Open in VS Code</span></button>
+          </div>
+        </section>
+        <p class="muted" data-i18n="hosted.review.verification">Model and connector calls still need cloud services. After deployment approval, verify the deployed trigger and its real output in chat; file review is not runtime verification.</p>
+        <div class="row actions-row">
+          <button class="btn primary" type="button" data-tab="deploy" data-i18n="hosted.review.deploy">Continue to deployment</button>
+        </div>
+      </section>
+      <section class="flow-output">
+        <p id="local-test-context" class="muted" role="status" aria-live="polite" hidden></p>
+        <label class="stack" id="local-app-field" hidden><span data-i18n="run.app">Function App</span><select id="local-app"></select></label>
+        <div id="local-functions" hidden>
+          <div id="local-urls"></div>
+          <label class="stack" id="local-method-field"><span data-i18n="run.method">HTTP method</span><select id="local-method"></select></label>
+          <label class="stack" id="local-route-field"><span data-i18n="run.route">Route parameters (JSON)</span><input type="text" id="local-route" value="{}"></label>
+          <label class="stack" id="local-query-field"><span data-i18n="run.query">Query string</span><input type="text" id="local-query"></label>
+          <label class="stack"><span data-i18n="run.body">Message / JSON body (HTTP can be empty)</span><textarea id="local-body" rows="4"></textarea></label>
+          <label class="stack" id="local-headers-field"><span data-i18n="run.headers">HTTP headers (JSON)</span><input type="text" id="local-headers" value="{}"></label>
+        </div>
+        <div class="row actions-row run-actions" id="local-actions">
+          <button class="btn primary" type="button" id="local-send" data-i18n="run.send" hidden disabled>Send</button>
+          <button class="btn primary" type="button" id="start-local" aria-label="Run" data-i18n-aria-label="run.start" title="Run" data-i18n-title="run.start" aria-describedby="local-approval" disabled><svg class="run-play-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path d="M4 2.5v11L13 8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="label" data-i18n="run.start">Run</span></button>
+          <button class="btn ghost icon-button" type="button" id="local-show-result" aria-label="Logs and results" title="Logs and results" data-i18n-aria-label="run.logs" data-i18n-title="run.logs" aria-controls="local-output" aria-expanded="false" hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h4"/></svg></button>
+          <button class="btn ghost icon-button" type="button" id="run-open-vscode" aria-label="Open in VS Code" data-i18n-aria-label="run.openVsCode" title="Open in VS Code" data-i18n-title="run.openVsCode" disabled></button>
+          <button class="btn ghost icon-button" type="button" id="run-help" aria-label="Run help" data-i18n-aria-label="run.preparation" title="Run help" data-i18n-title="run.preparation" aria-haspopup="dialog" aria-expanded="false" aria-controls="local-preparation"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.25"/><path d="M6.5 6a1.5 1.5 0 1 1 2.25 1.3C8 7.75 8 8.25 8 9"/><path d="M8 10.5v1"/></svg></button>
+          <button class="btn ghost" type="button" id="run-deployment-setup" data-tab="deploy" aria-label="Ready to deploy" data-i18n-aria-label="run.setupDeployment" title="Review deployment settings" data-i18n-title="workbench.result.review"><span class="label" data-i18n="run.setupDeployment">Ready to deploy</span></button>
+        </div>
+        <div id="local-progress" class="action-feedback" hidden></div>
+        <div id="local-message" class="muted action-feedback" role="status"></div>
+        <p id="local-approval" class="muted" data-i18n="run.startWarning" hidden>Start may install dependencies and run project scripts.</p>
+        <div id="local-fallback" class="inline-notice" hidden></div>
+      </section>
+    </div>
+
+    <div data-panel="deploy" hidden>
+      <section id="deployment-result" hidden tabindex="-1" aria-labelledby="deployment-complete-title">
+        <div id="deployment-message" class="deployment-success" role="status" aria-live="polite" aria-atomic="true">
+          <div id="deployment-artwork" class="deployment-artwork" aria-hidden="true">
+            <svg class="deployment-stars" viewBox="0 0 160 160" aria-hidden="true" focusable="false">
+              <path d="M23 24l1.2 3.8L28 29l-3.8 1.2L23 34l-1.2-3.8L18 29l3.8-1.2Z" style="--star-duration:5.6s;--star-delay:-1.1s"/>
+              <circle cx="43" cy="57" r="1.2" style="--star-duration:6.2s;--star-delay:-4s"/>
+              <path d="M133 17l.9 2.8 2.8.9-2.8.9-.9 2.8-.9-2.8-2.8-.9 2.8-.9Z" style="--star-duration:5s;--star-delay:-2.6s"/>
+              <circle cx="145" cy="76" r="1" style="--star-duration:6.6s;--star-delay:-.7s"/>
+              <circle cx="17" cy="91" r="1" style="--star-duration:5.8s;--star-delay:-3.4s"/>
+              <path d="M121 83l.8 2.5 2.5.8-2.5.8-.8 2.5-.8-2.5-2.5-.8 2.5-.8Z" style="--star-duration:6.4s;--star-delay:-5.1s"/>
+              <circle cx="52" cy="16" r=".9" style="--star-duration:6s;--star-delay:-2.2s"/>
+              <circle cx="108" cy="37" r="1" style="--star-duration:5.4s;--star-delay:-4.5s"/>
+            </svg>
+            <svg class="deployment-rocket" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="160" height="160" aria-hidden="true" focusable="false">
+              <defs>
+                <path id="deployment-rocket-body" d="M496 170 C450 215 400 290 386 390 C374 480 400 580 445 662 Q450 670 460 670 L560 670 Q570 670 575 662 C620 580 642 480 630 390 C618 290 570 215 524 170 Q510 152 496 170 Z"/>
+                <path id="deployment-rocket-finL" d="M392 515 L332 572 Q318 586 318 606 L318 684 Q320 712 348 708 Q356 706 362 700 L434 645 Z"/>
+                <path id="deployment-rocket-finR" d="M628 515 L688 572 Q702 586 702 606 L702 684 Q700 712 672 708 Q664 706 658 700 L586 645 Z"/>
+                <clipPath id="deployment-rocket-bodyClip"><use href="#deployment-rocket-body"/></clipPath>
+              </defs>
+              <g id="deployment-rocket-shadow" fill="var(--rocket-accent)" opacity="0.5" transform="translate(34 22)">
+                <use href="#deployment-rocket-body"/>
+                <use href="#deployment-rocket-finR"/>
+              </g>
+              <g fill="var(--rocket-accent)" stroke="var(--rocket-outline)" stroke-width="3" stroke-linejoin="round">
+                <use href="#deployment-rocket-finL"/>
+                <use href="#deployment-rocket-finR"/>
+              </g>
+              <rect x="455" y="660" width="108" height="48" rx="10" fill="var(--rocket-outline)"/>
+              <use href="#deployment-rocket-body" fill="var(--rocket-body)"/>
+              <g clip-path="url(#deployment-rocket-bodyClip)">
+                <path d="M300 100 L720 100 L720 252 Q700 268 600 268 L430 268 Q410 268 400 252 Z" fill="var(--rocket-accent)"/>
+                <path d="M410 255 Q420 268 445 268 L575 268 Q600 268 610 255" fill="none" stroke="var(--rocket-outline)" stroke-width="3" stroke-linecap="round"/>
+              </g>
+              <use href="#deployment-rocket-body" fill="none" stroke="var(--rocket-outline)" stroke-width="3" stroke-linejoin="round"/>
+              <circle cx="508" cy="383" r="58" fill="var(--rocket-warm)" stroke="var(--rocket-outline)" stroke-width="3"/>
+              <path d="M590 398 Q612 395 614 415 C612 480 600 540 588 574 Q582 586 570 582 Q562 578 564 562 C568 510 576 450 584 410 Q586 400 590 398 Z" fill="var(--rocket-highlight)"/>
+              <g class="deployment-flame">
+                <path d="M508 860 C478 830 450 795 450 760 C450 735 466 722 490 722 L526 722 C550 722 566 735 566 760 C566 795 538 830 508 860 Z" fill="var(--rocket-warm)"/>
+                <path d="M508 805 C496 792 484 777 484 758 C484 735 498 722 508 722 C518 722 532 735 532 758 C532 777 520 792 508 805 Z" fill="var(--rocket-accent)"/>
+              </g>
+            </svg>
+          </div>
+          <h2 id="deployment-complete-title"></h2>
+          <ul id="deployment-summary" class="deployment-tags" role="list" aria-label="Deployment details" data-i18n-aria-label="deploy.result.details"></ul>
+        </div>
+        <div id="deployment-destination"></div>
+      </section>
+      <section id="hosted-deployment" hidden>
+        <p class="muted" data-i18n="workbench.deploy.hosted">Review the Azure settings and deployment plan in chat. The app is already created.</p>
+        <div class="row actions-row">
+          <button class="btn primary" type="button" id="hosted-deploy-help" data-i18n="deploy.plan">Plan deployment in chat</button>
+          <button class="btn ghost" type="button" id="cancel-hosted-deployment" data-i18n="deploy.ai.cancel" hidden>Cancel deployment</button>
+        </div>
+        <div id="hosted-deployment-progress" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></div>
+      </section>
+      <section class="deployment-form" aria-labelledby="deployment-settings-title">
+        <div class="deployment-settings-header">
+          <h2 id="deployment-settings-title" data-i18n="workbench.deploy.settings">Deployment settings</h2>
+          <button class="btn ghost" type="button" id="refresh-deploy-inputs" data-i18n="workbench.deploy.refresh">Reload deployment settings</button>
+        </div>
+        <div class="row">
+          <div class="stack grow"><span data-i18n="common.subscription">Subscription</span> <button type="button" id="deploy-subscription-trigger"></button><div id="deploy-subscription-status"></div></div>
+        </div>
+        <div class="row">
+          <label class="stack"><span data-i18n="deploy.environment">Environment</span> <input type="text" id="deploy-env"></label>
+          <label class="stack"><span data-i18n="common.location">Location</span> <input type="text" id="deploy-location"></label>
+        </div>
+        <div id="deploy-input-status" role="status"></div>
+        <div id="deploy-input-changes" role="status" aria-live="polite"></div>
+        <div id="deploy-inputs" class="deployment-inputs"></div>
+        <p class="confirm"><label><input type="checkbox" id="deploy-confirm"> <span data-i18n="deploy.confirm">I understand this deployment can create or update Azure resources and incur charges.</span></label></p>
+        <div class="row actions-row">
+          <button class="btn primary" type="button" id="deploy" data-i18n="page.deploy">Deploy</button>
+          <button class="btn ghost danger" type="button" id="cancel-deploy" data-i18n="common.stop">Stop</button>
+        </div>
+        <div id="deploy-status"></div>
+        <details id="deploy-failure-details" class="workbench-disclosure" hidden>
+          <summary data-i18n="deploy.failure.details">Error details</summary>
+          <pre id="deploy-failure-message" class="log"></pre>
+        </details>
+      </section>
+      <section id="deployment-recovery" class="stack" hidden aria-labelledby="recovery-title">
+        <h2 id="recovery-title" data-i18n="deploy.recovery.title">Recover publishing</h2>
+        <p id="recovery-status" class="muted" role="status" aria-live="polite"></p>
+        <p id="recovery-approval" class="confirm" hidden><label><input type="checkbox" id="recovery-confirm"> <span data-i18n="deploy.recovery.confirm">Publish this snapshot to existing resources without provisioning again. Function invocation is not included.</span></label></p>
+        <div class="row actions-row">
+          <button class="btn ghost" type="button" id="recovery-check" data-i18n="deploy.recovery.check">Check existing resources</button>
+          <button class="btn primary" type="button" id="recovery-publish" hidden data-i18n="deploy.recovery.publish">Retry publishing to existing resources</button>
+          <button class="btn ghost" type="button" id="recovery-reconcile" data-i18n="deploy.recovery.reconcile">Verify an existing publish</button>
+        </div>
+        <details class="workbench-disclosure">
+          <summary data-i18n="deploy.recovery.original">Original failed run</summary>
+          <pre id="recovery-original" class="log"></pre>
+        </details>
+      </section>
+      <div id="deploy-phases" class="action-feedback" hidden></div>
+    </div>
+
+    <div data-panel="scenarios" hidden>
+      <p class="muted" data-i18n="workbench.catalog.note"></p>
+      <div id="migration-catalog" class="stack"></div>
+    </div>
+    <div data-panel="update" hidden>
+      <ol class="stepper" id="update-steps" aria-label="Progress" data-i18n-aria-label="steps.label"></ol>
+      <h2 class="section-label" data-i18n="update.label">UPDATE SCENARIOS</h2>
+      <section class="card">
+        <p class="muted" data-i18n="update.note">Each scenario runs the azure-functions-update skill in chat. The agent asks before it changes files. Check project health to find the scenarios that apply.</p>
+        <div id="scenarios"></div>
+        <div class="row actions-row"><button class="btn primary" type="button" id="start-update" data-i18n="update.start">Start update</button><span id="update-status"></span></div>
+        <ul class="steps" id="update-progress"></ul>
+      </section>
+    </div>
+    <div id="toast" role="status" hidden></div>
+    <footer id="workbench-footer"></footer>
+  </main>
+</body>
+</html>

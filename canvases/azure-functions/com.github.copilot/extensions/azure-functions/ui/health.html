@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Azure Functions</title>
+  <link rel="stylesheet" href="./canvas-ui/styles.css">
+  <link rel="stylesheet" href="./canvas-ui/profiles/coreai-azure.css">
+<link rel="stylesheet" href="./canvas-ui/subscription-picker.css">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./host-activity.css">
+  <script src="./bootstrap.js" type="module"></script>
+  <script src="./health.js" type="module"></script>
+</head>
+<body class="canvas-ui canvas-profile-coreai-azure workbench" data-workbench-ui data-page="health">
+  <section id="canvas-startup" role="alert" aria-labelledby="canvas-startup-title">
+    <div class="notice error">
+      <h2 id="canvas-startup-title" class="page-title">Azure Functions is not ready</h2>
+      <p id="canvas-startup-note">Reload the display. If the problem continues, restart Copilot to reload the extension. Reloading the display does not cancel app operations.</p>
+      <div class="row actions-row">
+        <a id="canvas-startup-reload" class="btn primary" href="">Reload display</a>
+        <a id="canvas-startup-home" class="btn ghost" href="./build">Home</a>
+      </div>
+      <p id="canvas-startup-error" hidden></p>
+    </div>
+  </section>
+  <main class="app">
+    <header class="workbench-header"></header>
+    <dialog id="job-dialog" aria-labelledby="job-title">
+      <div class="row between"><h2 id="job-title" data-i18n="workbench.jump">Jump to</h2><button type="button" class="btn ghost" id="close-jobs" data-i18n="workbench.close">Close</button></div>
+      <label class="field-stack"><span data-i18n="workbench.search">Search jobs</span><input id="job-search" type="search" autocomplete="off"></label>
+      <div id="job-list" class="tasks"></div><p id="job-empty" data-i18n="workbench.empty" hidden>No matching jobs</p>
+    </dialog>
+    <aside id="activity-dialog" class="workbench-detail-panel" aria-labelledby="activity-title" hidden><div class="workbench-detail-header"><h2 id="activity-title" data-i18n="workbench.commands">Commands</h2><button type="button" class="btn ghost" id="close-activity" data-i18n="workbench.close">Close</button></div><div class="workbench-detail-body"><div id="activity-content"></div><div id="lifecycle"></div></div></aside>
+    <header class="app-header">
+      <h1 class="product-heading" id="workbench-title" data-i18n="workbench.modernize">Modernize a function app</h1>
+      <p class="sub" id="workbench-sub" data-i18n="workbench.modernize.sub">Assess local code or Azure configuration</p>
+    </header>
+    <div id="lifecycle-error"></div>
+    <div id="fix-workflow"></div>
+    <datalist id="recent-paths"></datalist>
+    <div id="assessment-navigation" class="row"></div>
+    <div id="assessment-request" hidden><h2 id="assessment-request-title" class="page-title"></h2><div id="assessment-context" class="card"></div></div>
+
+    <div data-panel="local">
+      <section class="card" id="local-target-card">
+        <div id="assessment-folder-field"></div>
+        <div id="local-browser" class="folder-browser" role="region" aria-label="Choose a folder" data-i18n-aria-label="folders.title" hidden></div>
+        <div id="local-facts" hidden></div>
+      </section>
+      <section id="local-check-options" hidden><h2 class="page-title" data-i18n="workbench.check.question">How do you want to check this project?</h2><div id="check-menu" class="tasks joined"></div></section>
+      <section id="deep-review-step" hidden>
+        <div id="deep-confirm" class="notice warn deep-confirm" role="region" aria-labelledby="deep-confirm-title">
+          <strong id="deep-confirm-title" data-i18n="health.deep.title">Deep check reads the project files</strong>
+          <p data-i18n="health.deep.warning">The agent reads the code and the configuration files of this project with the azure-functions-doctor skill. Text in a file can try to give instructions to the agent (prompt injection). Use the deep check only for a project that you trust. The agent does not change files, run project code, or read setting values.</p>
+          <p data-i18n="health.deep.cost">This check can use many AI tokens and can take a long time.</p>
+          <div class="row">
+            <button class="btn primary" type="button" id="deep-continue" data-i18n="health.deep.continue">I trust this project. Continue</button>
+            <button class="btn ghost" type="button" id="deep-cancel" data-i18n="health.deep.cancel">Cancel</button>
+          </div>
+        </div>
+      </section>
+      <div id="local-status" aria-live="polite"></div>
+      <section class="card" id="local-findings-card" hidden>
+        <h2 data-i18n="health.findings">Findings</h2>
+        <div id="local-findings"></div>
+      </section>
+      <div id="local-result-actions" class="row actions-row"></div>
+    </div>
+
+    <div data-panel="azure" hidden>
+      <div id="azure-list-view">
+        <section class="card">
+          <div class="row">
+            <div class="stack grow"><span data-i18n="common.subscription">Subscription</span> <button type="button" id="subscription-trigger"></button><div id="subscription-status"></div></div>
+            <button class="btn ghost small" type="button" id="refresh-apps" data-i18n="health.azure.refresh">Refresh</button>
+          </div>
+          <input type="search" id="app-filter" class="list-filter" placeholder="Filter by name, resource group, or location" aria-label="Filter by name, resource group, or location" data-i18n-placeholder="health.azure.filter" data-i18n-aria-label="health.azure.filter" hidden>
+          <div id="apps"></div>
+        </section>
+      </div>
+      <div id="azure-app-view" hidden>
+        <div class="row between app-bar">
+          <button class="btn ghost small" type="button" id="back-to-list" data-i18n="health.app.back">← Back to list</button>
+          <button class="btn ghost small" type="button" id="recheck" data-i18n="health.app.recheck">Check again</button>
+        </div>
+        <div id="azure-status"></div>
+        <div class="app-tabs row actions-row"></div>
+        <div id="findings-count" aria-live="polite"></div>
+        <section class="card" data-app-panel="overview" role="tabpanel" aria-labelledby="app-tab-overview">
+          <div id="azure-facts"></div>
+        </section>
+        <section class="card" data-app-panel="health" role="tabpanel" aria-labelledby="app-tab-health" hidden>
+          <div class="row between">
+            <p class="muted" data-i18n="health.signals.note">Azure Resource Health and Application Insights for the last 24 hours. Read-only.</p>
+            <button class="btn ghost small" type="button" id="refresh-signals" data-i18n="health.signals.refresh">Refresh signals</button>
+          </div>
+          <div id="signals"></div>
+        </section>
+        <section class="card" data-app-panel="diagnose" role="tabpanel" aria-labelledby="app-tab-diagnose" hidden>
+          <h3 data-i18n="health.diagnose.exceptions">Top exceptions (24 hours)</h3>
+          <div id="exceptions"></div>
+          <div class="row actions-row">
+            <input class="grow" type="text" id="symptom" placeholder="Optional: describe a symptom, for example 'timer did not run last night'" aria-label="Symptom" data-i18n-placeholder="health.symptom.placeholder" data-i18n-aria-label="health.symptom">
+            <button class="btn" type="button" id="diagnose" data-i18n="health.diagnose">Diagnose with AI</button>
+          </div>
+        </section>
+        <section class="card" data-app-panel="findings" role="tabpanel" aria-labelledby="app-tab-findings" hidden>
+          <div id="azure-findings"></div>
+        </section>
+        <div id="azure-result-actions" class="row actions-row"><button class="btn ghost" type="button" id="assess-azure" data-i18n="health.assess">Assess with AI</button></div>
+      </div>
+    </div>
+    <section id="assessment-ai-step" hidden><div class="card"><h2 data-i18n="workbench.ai.review">AI Assisted</h2><p data-i18n="health.assess.description">AI review with moderate time and token use.</p><p data-i18n="health.local.note">The review does not change files.</p><button class="btn primary" type="button" id="assessment-ai-continue" data-i18n="health.assess">Assess with AI</button></div><div id="assessment-ai-status" aria-live="polite"></div></section>
+    <section id="remediation-review" hidden><h2 class="page-title" data-i18n="workbench.remediation.question">Which findings belong in the proposed plan?</h2><div id="remediation-context" class="card"></div><div id="remediation-actions" class="row actions-row"></div></section>
+    <div id="toast" role="status" hidden></div>
+    <footer id="workbench-footer"></footer>
+  </main>
+</body>
+</html>

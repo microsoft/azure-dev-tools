@@ -1,0 +1,79 @@
+{
+  "$comment": "Update scenarios that the Azure Functions canvas shows and starts. This file is the source of truth: do not add a scenario in the canvas code. status: available (the reference file of this skill gives the steps, and the SKILL.md table links it), planned (shown, but the user cannot start it; reference is null), or external (a skill in another plugin does the work; skill names it, and reference is null). from: the project facts that show that the scenario applies. A list value means any of these values. programmingModel and hostingPlan are keys in lifecycle.json; extensionBundle is the major version of host.json extensionBundle. A scenario with no from is never detected; the user selects it. validatedFrameworks (optional): the TFMs for which this scenario's Definition of done has actual build/test/E2E evidence. Add a TFM here only after the reference file's frameworkRevalidationSection actually ran and passed for it; never add it only because a project now targets it. frameworkRevalidationSection (optional, needs validatedFrameworks): the heading in the reference file to redo when a project's TargetFramework later changes outside this scenario (for example, by a separate .NET upgrade tool). azure-functions-doctor's MG-001 reads both fields; do not copy Definition of done IDs or text into the doctor skill. docs/checks.md must agree; test/unit/check-catalog.test.mjs checks it.",
+  "schemaVersion": 1,
+  "scenarios": [
+    {
+      "id": "dotnet-isolated",
+      "status": "available",
+      "title": ".NET in-process to isolated worker model",
+      "summary": "Move a .NET in-process Function App to the isolated worker model before in-process support ends.",
+      "reference": "references/dotnet-isolated.md",
+      "from": { "programmingModel": "dotnet-in-process" },
+      "validatedFrameworks": ["net8.0", "net10.0"],
+      "frameworkRevalidationSection": "Functions follow-up after the language stage"
+    },
+    {
+      "id": "node-v4",
+      "status": "planned",
+      "title": "Node.js programming model v3 to v4",
+      "summary": "Move a Node.js Function App from programming model v3 to v4.",
+      "reference": null,
+      "from": { "programmingModel": "node-v3" }
+    },
+    {
+      "id": "python-v2",
+      "status": "available",
+      "title": "Python programming model v1 to v2",
+      "summary": "Move Python functions from function.json files to decorators in code.",
+      "reference": "references/python-model-v2.md",
+      "from": { "programmingModel": "python-v1" }
+    },
+    {
+      "id": "python-blob-sdk",
+      "status": "available",
+      "title": "Python Blob InputStream to SDK type bindings",
+      "summary": "Change a Python Blob input from InputStream to a BlobClient SDK type binding.",
+      "reference": "references/python-blob-sdk.md"
+    },
+    {
+      "id": "python-http-streaming",
+      "status": "available",
+      "title": "Python HTTP streaming",
+      "summary": "Move the Python HTTP functions of an app to the HTTP streaming extension.",
+      "reference": "references/python-http-streaming.md"
+    },
+    {
+      "id": "bundles-v4",
+      "status": "available",
+      "title": "Extension bundle v1, v2, or v3 to v4",
+      "summary": "Move host.json to extension bundle v4 and check the extensions that the app uses.",
+      "reference": "references/bundles-v4.md",
+      "from": { "extensionBundle": ["1", "2", "3"] }
+    },
+    {
+      "id": "durable-extension",
+      "status": "available",
+      "title": "Durable Functions extension v1 or v2 to a current version",
+      "summary": "Update the Durable Functions extension and keep the task hub, storage provider, and running orchestrations safe.",
+      "reference": "references/durable-v2.md"
+    },
+    {
+      "id": "flex-consumption",
+      "status": "external",
+      "title": "Linux Consumption to Flex Consumption",
+      "summary": "Move a Function App from the Linux Consumption plan to the Flex Consumption plan before Linux Consumption retires. The azure-upgrade skill of the Azure plugin does this migration.",
+      "reference": null,
+      "skill": { "name": "azure-upgrade", "plugin": "azure@azure-skills", "marketplace": "microsoft/azure-skills" },
+      "from": { "hostingPlan": "linux-consumption" }
+    },
+    {
+      "id": "windows-consumption-to-flex",
+      "status": "external",
+      "title": "Windows Consumption to Flex Consumption",
+      "summary": "Move a Windows Consumption Function App to Linux-based Flex Consumption. The azure-upgrade skill of the Azure plugin checks compatibility and performs the migration.",
+      "reference": null,
+      "skill": { "name": "azure-upgrade", "plugin": "azure@azure-skills", "marketplace": "microsoft/azure-skills" },
+      "from": { "hostingPlan": "windows-consumption" }
+    }
+  ]
+}

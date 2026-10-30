@@ -1,0 +1,2 @@
+/* Compatibility alias. New consumers should use @microsoft/canvas-toolkit/ui/base.css. */
+@import "./base.css";

@@ -9,6 +9,12 @@
   },
   "plugins": [
     {
+      "name": "azure-functions",
+      "version": "0.1.0",
+      "description": "Azure Functions: create, edit, modernize, review, run, deploy, and monitor function apps, with optional AI help.",
+      "source": "canvases/azure-functions"
+    },
+    {
       "name": "azure-functions-hosted-skills",
       "description": "Build and run Azure Functions Hosted Skills with a canvas and companion skills.",
       "version": "0.5.5",

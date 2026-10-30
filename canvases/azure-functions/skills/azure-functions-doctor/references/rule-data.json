@@ -1,0 +1,90 @@
+{
+  "$comment": "Values that the deterministic Health Check rules and the azure-functions-doctor skill use. The rule code has no copy of these values. Each entry has its own source and checkedOn date. kind is official (a maintainer compares the value with the source page) or heuristic (no source gives the full value; review it on a schedule). Maintainers update this file by hand, then run npm run data:check in canvases/azure-functions. A newer published copy at https://raw.githubusercontent.com/microsoft/azure-dev-tools/main/data/azure-functions/rule-data.json replaces this file without a plugin release.",
+  "schemaVersion": 1,
+  "checkedOn": "2026-10-04",
+  "extensionBundle": {
+    "kind": "official",
+    "checkedOn": "2026-10-02",
+    "source": "https://learn.microsoft.com/azure/azure-functions/extension-bundles",
+    "id": "Microsoft.Azure.Functions.ExtensionBundle",
+    "range": "[4.*, 5.0.0)"
+  },
+  "deprecatedSettings": {
+    "kind": "official",
+    "checkedOn": "2026-10-02",
+    "source": "https://learn.microsoft.com/azure/azure-functions/functions-app-settings",
+    "settings": [
+      { "name": "AzureWebJobsSecretStorageKeyVaultName", "replacement": "AzureWebJobsSecretStorageKeyVaultUri" },
+      { "name": "FUNCTIONS_V2_COMPATIBILITY_MODE", "replacement": null },
+      { "name": "WEBSITE_CONTENTOVERVNET", "replacement": "the vnetContentShareEnabled site property" },
+      { "name": "WEBSITE_VNET_ROUTE_ALL", "replacement": "the vnetRouteAllEnabled site setting" },
+      { "name": "AZURE_FUNCTION_PROXY_DISABLE_LOCAL_CALL", "replacement": null },
+      { "name": "AZURE_FUNCTION_PROXY_BACKEND_URL_DECODE_SLASHES", "replacement": null }
+    ],
+    "flexConsumption": [
+      { "name": "ENABLE_ORYX_BUILD", "replacement": "the remoteBuild deployment parameter" },
+      { "name": "FUNCTIONS_EXTENSION_VERSION", "replacement": null, "platformManaged": true },
+      { "name": "FUNCTIONS_WORKER_RUNTIME", "replacement": "functionAppConfig.runtime.name", "platformManaged": true },
+      { "name": "FUNCTIONS_WORKER_RUNTIME_VERSION", "replacement": "functionAppConfig.runtime.version" },
+      { "name": "FUNCTIONS_MAX_HTTP_CONCURRENCY", "replacement": "the trigger section of functionAppConfig.scaleAndConcurrency" },
+      { "name": "FUNCTIONS_WORKER_PROCESS_COUNT", "replacement": null },
+      { "name": "FUNCTIONS_WORKER_DYNAMIC_CONCURRENCY_ENABLED", "replacement": null },
+      { "name": "SCM_DO_BUILD_DURING_DEPLOYMENT", "replacement": "the remoteBuild deployment parameter" },
+      { "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING", "replacement": "functionAppConfig.deployment" },
+      { "name": "WEBSITE_CONTENTOVERVNET", "replacement": null },
+      { "name": "WEBSITE_CONTENTSHARE", "replacement": "functionAppConfig.deployment" },
+      { "name": "WEBSITE_DNS_SERVER", "replacement": null },
+      { "name": "WEBSITE_MAX_DYNAMIC_APPLICATION_SCALE_OUT", "replacement": "functionAppConfig.scaleAndConcurrency.maximumInstanceCount" },
+      { "name": "WEBSITE_NODE_DEFAULT_VERSION", "replacement": "functionAppConfig.runtime.version" },
+      { "name": "WEBSITE_RUN_FROM_PACKAGE", "replacement": null },
+      { "name": "WEBSITE_SKIP_CONTENTSHARE_VALIDATION", "replacement": null },
+      { "name": "WEBSITE_VNET_ROUTE_ALL", "replacement": null }
+    ]
+  },
+  "applicationInsights": {
+    "kind": "official",
+    "checkedOn": "2026-10-02",
+    "source": "https://learn.microsoft.com/azure/azure-functions/functions-app-settings",
+    "connectionString": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+    "instrumentationKey": "APPINSIGHTS_INSTRUMENTATIONKEY"
+  },
+  "python": {
+    "kind": "official",
+    "checkedOn": "2026-10-02",
+    "source": "https://learn.microsoft.com/azure/azure-functions/functions-reference-python",
+    "functionsPackage": "azure-functions",
+    "deployExclusions": [".venv", "tests", "local.settings.json"]
+  },
+  "pythonWorkerPackage": {
+    "kind": "heuristic",
+    "checkedOn": "2026-10-02",
+    "source": "https://learn.microsoft.com/azure/azure-functions/functions-reference-python",
+    "package": "azure-functions-worker",
+    "runtimePackage": "azure-functions-runtime"
+  },
+  "go": {
+    "kind": "official",
+    "checkedOn": "2026-10-02",
+    "source": "https://github.com/Azure/azure-functions-golang-worker/blob/main/go.mod",
+    "workerModule": "github.com/azure/azure-functions-golang-worker",
+    "minimumVersion": "1.24",
+    "workerRuntime": "native"
+  },
+  "secretFiles": {
+    "kind": "heuristic",
+    "checkedOn": "2026-10-02",
+    "source": "https://learn.microsoft.com/azure/azure-functions/functions-develop-local",
+    "files": ["local.settings.json", ".env", ".env.local", ".env.development", ".env.production"]
+  },
+  "deploymentMethod": {
+    "kind": "official",
+    "checkedOn": "2026-10-04",
+    "source": "https://learn.microsoft.com/azure/azure-functions/deployment-zip-push",
+    "recommended": {
+      "premium": "one",
+      "dedicated": "one",
+      "windows-consumption": "one",
+      "linux-consumption": "url"
+    }
+  }
+}

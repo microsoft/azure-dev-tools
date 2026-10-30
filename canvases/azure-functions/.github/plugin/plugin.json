@@ -1,0 +1,28 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "azure-functions",
+  "version": "0.1.0",
+  "description": "Azure Functions: create, edit, modernize, review, run, deploy, and monitor function apps, with optional AI help.",
+  "extensions": {
+    "com.github.copilot": {
+      "logo": "assets/preview.png"
+    }
+  },
+  "skills": [
+    "./skills/azure-functions-canvas/",
+    "./skills/azure-functions-best-practices/",
+    "./skills/azure-functions-common/",
+    "./skills/azure-functions-create/",
+    "./skills/azure-functions-deploy/",
+    "./skills/azure-functions-diagnostics/",
+    "./skills/azure-functions-doctor/",
+    "./skills/azure-functions-feedback/",
+    "./skills/azure-functions-health-status/",
+    "./skills/azure-functions-help/",
+    "./skills/azure-functions-hosted-skills/",
+    "./skills/azure-functions-inventory/",
+    "./skills/azure-functions-setup/",
+    "./skills/azure-functions-update/",
+    "./skills/azure-functions-assess/"
+  ]
+}

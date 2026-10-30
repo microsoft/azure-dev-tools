@@ -1,0 +1,124 @@
+{
+  "$comment": "Lifecycle data for Azure Functions. The Health Check canvas bundles this file as its offline snapshot. It uses a published copy (microsoft/azure-dev-tools data/azure-functions/lifecycle.json) when that copy has a later checkedOn, and it prefers live language dates from the Azure functionAppStacks API. Keep each date tied to an official source. A null end means that no confirmed date exists.",
+  "schemaVersion": 1,
+  "checkedOn": "2026-10-04",
+  "languageVersions": {
+    "source": "https://learn.microsoft.com/azure/azure-functions/supported-languages",
+    "api": "GET https://management.azure.com/providers/Microsoft.Web/functionAppStacks?api-version=2023-12-01",
+    "versions": {
+      "dotnet": [
+        { "version": "net5.0", "end": "2022-05-08" },
+        { "version": "net6.0", "end": "2024-11-12" },
+        { "version": "net7.0", "end": "2024-05-14" },
+        { "version": "net8.0", "end": "2026-11-10" },
+        { "version": "net9.0", "end": "2026-11-10" },
+        { "version": "net10.0", "end": "2028-11-10" },
+        { "version": "net11.0", "end": "2028-11-14" },
+        { "version": "netcoreapp3.1", "end": "2022-12-03" }
+      ],
+      "node": [
+        { "version": "6", "end": "2019-04-30" },
+        { "version": "8", "end": "2019-12-31" },
+        { "version": "10", "end": "2021-04-30" },
+        { "version": "12", "end": "2022-12-13" },
+        { "version": "14", "end": "2023-04-30" },
+        { "version": "16", "end": "2024-06-30" },
+        { "version": "18", "end": "2025-04-30" },
+        { "version": "20", "end": "2026-04-30" },
+        { "version": "22", "end": "2027-04-30" },
+        { "version": "24", "end": "2028-04-30" }
+      ],
+      "python": [
+        { "version": "3.6", "end": "2021-12-23" },
+        { "version": "3.7", "end": "2023-06-27" },
+        { "version": "3.8", "end": "2024-10-07" },
+        { "version": "3.9", "end": "2025-10-31" },
+        { "version": "3.10", "end": "2026-10-31" },
+        { "version": "3.11", "end": "2027-10-31" },
+        { "version": "3.12", "end": "2028-10-31" },
+        { "version": "3.13", "end": "2029-10-31" },
+        { "version": "3.14", "end": "2029-04-30" },
+        { "version": "3.15", "end": null }
+      ],
+      "java": [
+        { "version": "8", "end": "2027-09-01" },
+        { "version": "11", "end": "2027-09-01" },
+        { "version": "17", "end": "2027-09-01" },
+        { "version": "21", "end": "2028-09-01" },
+        { "version": "25", "end": "2029-05-31" }
+      ],
+      "powershell": [
+        { "version": "6", "end": "2022-09-30" },
+        { "version": "7", "end": "2022-12-03" },
+        { "version": "7.2", "end": "2024-11-08" },
+        { "version": "7.4", "end": "2026-11-10" },
+        { "version": "7.6", "end": "2028-11-14" }
+      ]
+    }
+  },
+  "programmingModels": {
+    "dotnet-in-process": {
+      "title": ".NET in-process model",
+      "end": "2026-11-10",
+      "source": "https://learn.microsoft.com/azure/azure-functions/migrate-dotnet-to-isolated-model"
+    },
+    "node-v3": {
+      "title": "Node.js programming model v3",
+      "end": null,
+      "source": "https://learn.microsoft.com/azure/azure-functions/functions-node-upgrade-v4"
+    },
+    "python-v1": {
+      "title": "Python programming model v1",
+      "end": null,
+      "source": "https://learn.microsoft.com/azure/azure-functions/functions-reference-python"
+    }
+  },
+  "hostVersions": {
+    "~1": {
+      "end": "2026-09-14",
+      "source": "https://learn.microsoft.com/azure/azure-functions/functions-versions"
+    },
+    "~2": {
+      "end": "2022-12-13",
+      "source": "https://learn.microsoft.com/azure/azure-functions/functions-versions"
+    },
+    "~3": {
+      "end": "2022-12-13",
+      "source": "https://learn.microsoft.com/azure/azure-functions/functions-versions"
+    }
+  },
+  "extensionBundles": {
+    "1": {
+      "status": "unsupported",
+      "source": "https://learn.microsoft.com/azure/azure-functions/extension-bundles"
+    },
+    "2": {
+      "status": "unsupported",
+      "source": "https://learn.microsoft.com/azure/azure-functions/extension-bundles"
+    },
+    "3": {
+      "status": "deprecated",
+      "source": "https://learn.microsoft.com/azure/azure-functions/extension-bundles"
+    }
+  },
+  "hostingPlans": {
+    "windows-consumption": {
+      "title": "Windows Consumption plan",
+      "status": "legacy",
+      "end": null,
+      "source": "https://learn.microsoft.com/azure/azure-functions/consumption-plan",
+      "target": "Flex Consumption plan"
+    },
+    "linux-consumption": {
+      "title": "Linux Consumption plan",
+      "end": "2028-09-30",
+      "source": "https://learn.microsoft.com/azure/azure-functions/consumption-plan",
+      "target": "Flex Consumption plan",
+      "runtimeStop": {
+        "hostVersion": "~3",
+        "end": "2026-09-30",
+        "source": "https://learn.microsoft.com/azure/azure-functions/consumption-plan"
+      }
+    }
+  }
+}

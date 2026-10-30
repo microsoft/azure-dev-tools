@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>Rocket ship spot illustration</title>
+  <defs>
+    <path id="body" d="M496 170 C450 215 400 290 386 390 C374 480 400 580 445 662 Q450 670 460 670 L560 670 Q570 670 575 662 C620 580 642 480 630 390 C618 290 570 215 524 170 Q510 152 496 170 Z"/>
+    <path id="finL" d="M392 515 L332 572 Q318 586 318 606 L318 684 Q320 712 348 708 Q356 706 362 700 L434 645 Z"/>
+    <path id="finR" d="M628 515 L688 572 Q702 586 702 606 L702 684 Q700 712 672 708 Q664 706 658 700 L586 645 Z"/>
+    <clipPath id="bodyClip"><use href="#body"/></clipPath>
+  </defs>
+
+  <!-- offset backing shape for layered depth -->
+  <g fill="#5E8FF7" transform="translate(34 22)">
+    <use href="#body"/>
+    <use href="#finR"/>
+  </g>
+
+  <!-- fins -->
+  <g fill="#5E8FF7" stroke="#2A4685" stroke-width="3" stroke-linejoin="round">
+    <use href="#finL"/>
+    <use href="#finR"/>
+  </g>
+
+  <!-- nozzle -->
+  <rect x="455" y="660" width="108" height="48" rx="10" fill="#2A4685"/>
+
+  <!-- body -->
+  <use href="#body" fill="#F4F4F4"/>
+  <!-- nose cone -->
+  <g clip-path="url(#bodyClip)">
+    <path d="M300 100 L720 100 L720 252 Q700 268 600 268 L430 268 Q410 268 400 252 Z" fill="#5E8FF7"/>
+    <path d="M410 255 Q420 268 445 268 L575 268 Q600 268 610 255" fill="none" stroke="#2A4685" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <use href="#body" fill="none" stroke="#2A4685" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- window -->
+  <circle cx="508" cy="383" r="58" fill="#FEE5B6" stroke="#2A4685" stroke-width="3"/>
+
+  <!-- highlight -->
+  <path d="M590 398 Q612 395 614 415 C612 480 600 540 588 574 Q582 586 570 582 Q562 578 564 562 C568 510 576 450 584 410 Q586 400 590 398 Z" fill="#D0DFFC"/>
+
+  <!-- flame -->
+  <path d="M508 860 C478 830 450 795 450 760 C450 735 466 722 490 722 L526 722 C550 722 566 735 566 760 C566 795 538 830 508 860 Z" fill="#FEE5B6"/>
+  <path d="M508 805 C496 792 484 777 484 758 C484 735 498 722 508 722 C518 722 532 735 532 758 C532 777 520 792 508 805 Z" fill="#5E8FF7"/>
+</svg>
