@@ -31,6 +31,10 @@
     {
       "name": "containers",
       "source": "canvases/containers"
+    },
+    {
+      "name": "azure-functions",
+      "source": "canvases/azure-functions"
     }
   ]
 }

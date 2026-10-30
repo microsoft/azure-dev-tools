@@ -1,0 +1,11 @@
+{
+  "name": "azure-functions",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "com.github.copilot/extensions/azure-functions/extension.mjs",
+  "engines": {
+    "node": ">=22"
+  },
+  "description": "Azure Functions: create, edit, modernize, review, run, deploy, and monitor function apps, with optional AI help."
+}

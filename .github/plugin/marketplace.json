@@ -49,6 +49,12 @@
       "version": "0.1.1",
       "description": "Copilot canvas extension for local Docker and Podman: sortable container and image lists, live log streaming, CPU and memory charts, a filesystem browser, image layer size breakdown, and Dockerfile provenance.",
       "source": "canvases/containers"
+    },
+    {
+      "name": "azure-functions",
+      "version": "0.1.0",
+      "description": "Azure Functions: create, edit, modernize, review, run, deploy, and monitor function apps, with optional AI help.",
+      "source": "canvases/azure-functions"
     }
   ]
 }

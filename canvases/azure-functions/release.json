@@ -1,0 +1,1583 @@
+{
+  "schemaVersion": 2,
+  "format": "plugin",
+  "name": "azure-functions",
+  "version": "0.1.0",
+  "mutableDocumentation": true,
+  "publicationRepository": "microsoft/azure-dev-tools",
+  "plugin": {
+    "manifest": ".github/plugin/plugin.json",
+    "extension": {
+      "name": "azure-functions",
+      "canvasId": "azure-functions",
+      "directory": "com.github.copilot/extensions/azure-functions",
+      "entry": "com.github.copilot/extensions/azure-functions/extension.mjs"
+    },
+    "preview": {
+      "file": "assets/preview.png"
+    },
+    "skills": [
+      {
+        "name": "azure-functions-canvas",
+        "directory": "skills/azure-functions-canvas",
+        "files": [
+          "SKILL.md",
+          "resolve-canvas-launch.mjs"
+        ]
+      },
+      {
+        "name": "azure-functions-best-practices",
+        "directory": "skills/azure-functions-best-practices",
+        "files": [
+          "SKILL.md",
+          "references/remediation-patterns.md",
+          "references/review-checklist.md"
+        ]
+      },
+      {
+        "name": "azure-functions-common",
+        "directory": "skills/azure-functions-common",
+        "files": [
+          "SKILL.md",
+          "references/extensions/azure-tables.md",
+          "references/extensions/cosmos-db.md",
+          "references/extensions/dapr.md",
+          "references/extensions/durable-functions.md",
+          "references/extensions/event-grid.md",
+          "references/extensions/event-hubs.md",
+          "references/extensions/extension-bundles.md",
+          "references/extensions/fabric.md",
+          "references/extensions/http.md",
+          "references/extensions/kafka.md",
+          "references/extensions/mcp.md",
+          "references/extensions/mysql.md",
+          "references/extensions/rabbitmq.md",
+          "references/extensions/redis.md",
+          "references/extensions/sendgrid.md",
+          "references/extensions/service-bus.md",
+          "references/extensions/signalr.md",
+          "references/extensions/sql.md",
+          "references/extensions/storage-blob.md",
+          "references/extensions/storage-queue.md",
+          "references/extensions/timer.md",
+          "references/extensions/twilio.md",
+          "references/extensions/web-pubsub.md",
+          "references/languages/csharp.md",
+          "references/languages/durable-functions.md",
+          "references/languages/go.md",
+          "references/languages/java.md",
+          "references/languages/node-typescript.md",
+          "references/languages/powershell.md",
+          "references/languages/python.md",
+          "references/local-emulators.md",
+          "references/routing.md"
+        ]
+      },
+      {
+        "name": "azure-functions-create",
+        "directory": "skills/azure-functions-create",
+        "files": [
+          "SKILL.md",
+          "references/go-project.md",
+          "references/language-snippets.md"
+        ]
+      },
+      {
+        "name": "azure-functions-deploy",
+        "directory": "skills/azure-functions-deploy",
+        "files": [
+          "SKILL.md",
+          "references/deployment-result.md"
+        ]
+      },
+      {
+        "name": "azure-functions-diagnostics",
+        "directory": "skills/azure-functions-diagnostics",
+        "files": [
+          "SKILL.md",
+          "references/evidence-checklist.md",
+          "references/workflow.md"
+        ]
+      },
+      {
+        "name": "azure-functions-doctor",
+        "directory": "skills/azure-functions-doctor",
+        "files": [
+          "SKILL.md",
+          "references/ai-semantic-checks.md",
+          "references/iac-azure-resource-checks.md",
+          "references/language-checks.md",
+          "references/migration-checks.md",
+          "references/routing.md",
+          "references/rule-data.json",
+          "references/source-only-checks.md",
+          "references/supply-chain-checks.md"
+        ]
+      },
+      {
+        "name": "azure-functions-feedback",
+        "directory": "skills/azure-functions-feedback",
+        "files": [
+          "SKILL.md"
+        ]
+      },
+      {
+        "name": "azure-functions-health-status",
+        "directory": "skills/azure-functions-health-status",
+        "files": [
+          "SKILL.md",
+          "references/health-status-commands-and-kql.md",
+          "scripts/get-functionapp-health-status.ps1",
+          "scripts/get-functionapp-health-status.sh"
+        ]
+      },
+      {
+        "name": "azure-functions-help",
+        "directory": "skills/azure-functions-help",
+        "files": [
+          "SKILL.md"
+        ]
+      },
+      {
+        "name": "azure-functions-hosted-skills",
+        "directory": "skills/azure-functions-hosted-skills",
+        "files": [
+          "SKILL.md",
+          "assets/infra/app/trigger-config.bicep",
+          "references/abbreviations.json",
+          "references/agent-authoring.md",
+          "references/agent-files.md",
+          "references/built-in-endpoints.md",
+          "references/connector-mcp.md",
+          "references/connector-schemas.md",
+          "references/connector-smoke-tests.md",
+          "references/connector-teams.md",
+          "references/connector-triggers.md",
+          "references/connectors.md",
+          "references/infra-and-deployment.md",
+          "references/models.md",
+          "references/project-files.md",
+          "references/quickstart-reference.md",
+          "references/sessions.md",
+          "references/testing.md",
+          "references/tools-and-skills.md",
+          "references/triggers.md",
+          "references/troubleshooting.md"
+        ]
+      },
+      {
+        "name": "azure-functions-inventory",
+        "directory": "skills/azure-functions-inventory",
+        "files": [
+          "SKILL.md",
+          "references/inventory-commands.md",
+          "scripts/get-functionapp-inventory.ps1",
+          "scripts/get-functionapp-inventory.sh"
+        ]
+      },
+      {
+        "name": "azure-functions-setup",
+        "directory": "skills/azure-functions-setup",
+        "files": [
+          "SKILL.md"
+        ]
+      },
+      {
+        "name": "azure-functions-update",
+        "directory": "skills/azure-functions-update",
+        "files": [
+          "SKILL.md",
+          "references/bundles-v4.md",
+          "references/dotnet-isolated.md",
+          "references/durable-v2.md",
+          "references/extensions.md",
+          "references/python-blob-sdk.md",
+          "references/python-http-streaming.md",
+          "references/python-model-v2.md",
+          "references/scenarios.json"
+        ]
+      },
+      {
+        "name": "azure-functions-assess",
+        "directory": "skills/azure-functions-assess",
+        "files": [
+          "SKILL.md",
+          "references/finding-schema.json",
+          "references/lifecycle.json"
+        ]
+      }
+    ]
+  },
+  "files": [
+    ".github/plugin/plugin.json",
+    "THIRD_PARTY_NOTICES.txt",
+    "assets/preview.png",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/AiFoundry.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ApiManagementService.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/AppServiceKubernetesEnvironment.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/AppServicePlans.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/AppServices.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ApplicationInsights.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ArcEnabledMachines.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/AvailabilitySets.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/AzureCosmosDb.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/AzureCosmosDbForMongoDbRu.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/AzureDocumentDb.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/BatchAccounts.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/CacheRedis.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ContainerApps.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ContainerAppsEnvironment.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ContainerRegistry.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ContainerServiceManagedClusters.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/Customlocations.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/DevTestLabs.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/DeviceIotHubs.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/Disks.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/DurableTaskHub.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/DurableTaskScheduler.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/EventGridDomains.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/EventGridEventSubscriptions.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/EventGridTopics.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/EventHubNamespaces.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/FrontDoorAndCdnProfiles.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/FunctionApp.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/Generic.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/Images.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/KeyVaults.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/KubernetesConnectedClusters.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/LoadBalancers.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/LogicApp.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/LogicWorkflows.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ManagedIdentityUserAssignedIdentities.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/MongoClusters.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/MysqlServers.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkApplicationGateways.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkApplicationSecurityGroups.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkInterfaces.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkLocalNetworkGateways.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkPublicIpPrefixes.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkRouteTables.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkSecurityGroups.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkVirtualNetworkGateways.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkWatchers.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NotificationHubNamespaces.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/OperationalInsightsWorkspaces.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/OperationsManagementSolutions.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/PostgresqlServersFlexible.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/PostgresqlServersStandard.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/PublicIpAddresses.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ResourceGroup.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ServiceBusNamespaces.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ServiceFabricClusters.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ServiceFabricMeshApplications.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/SignalRService.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/SpringApps.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/SqlDatabases.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/SqlServers.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/StaticWebApps.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/StorageAccounts.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/Subscription.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/VirtualMachineScaleSets.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/VirtualMachines.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/VirtualNetworks.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/WebHostingEnvironments.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/WebPubSub.svg",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/azure-subscription-picker.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/base.css",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/browser/THIRD_PARTY_NOTICES.txt",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/browser/base.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/browser/fluent.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/browser/react-runtime.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/commands-log.css",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/commands-log.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/component-helpers.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/components.css",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/components.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/content.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/fluent.css",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/forms.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/icons.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/locations.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/navigation.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/profiles/coreai-azure.css",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/styles.css",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/subscription-picker.css",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/subscription-picker.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/telemetry.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/theme.mjs",
+    "com.github.copilot/extensions/azure-functions/extension.mjs",
+    "com.github.copilot/extensions/azure-functions/functions/authoring.mjs",
+    "com.github.copilot/extensions/azure-functions/local/plan.mjs",
+    "com.github.copilot/extensions/azure-functions/sdk/queue.mjs",
+    "com.github.copilot/extensions/azure-functions/shared/prompts.mjs",
+    "com.github.copilot/extensions/azure-functions/ui/assets/azure.svg",
+    "com.github.copilot/extensions/azure-functions/ui/assets/github.svg",
+    "com.github.copilot/extensions/azure-functions/ui/assets/rocket-ship-spot-illustration.svg",
+    "com.github.copilot/extensions/azure-functions/ui/assets/vscode.svg",
+    "com.github.copilot/extensions/azure-functions/ui/bootstrap.js",
+    "com.github.copilot/extensions/azure-functions/ui/build.html",
+    "com.github.copilot/extensions/azure-functions/ui/build.js",
+    "com.github.copilot/extensions/azure-functions/ui/common.js",
+    "com.github.copilot/extensions/azure-functions/ui/create-flow.js",
+    "com.github.copilot/extensions/azure-functions/ui/folder-fields.js",
+    "com.github.copilot/extensions/azure-functions/ui/folder-path.js",
+    "com.github.copilot/extensions/azure-functions/ui/function-copy.js",
+    "com.github.copilot/extensions/azure-functions/ui/function-flow.js",
+    "com.github.copilot/extensions/azure-functions/ui/header-ui.js",
+    "com.github.copilot/extensions/azure-functions/ui/health.html",
+    "com.github.copilot/extensions/azure-functions/ui/health.js",
+    "com.github.copilot/extensions/azure-functions/ui/host-activity-colors.js",
+    "com.github.copilot/extensions/azure-functions/ui/host-activity.css",
+    "com.github.copilot/extensions/azure-functions/ui/host-activity.js",
+    "com.github.copilot/extensions/azure-functions/ui/i18n.js",
+    "com.github.copilot/extensions/azure-functions/ui/invocation-results.js",
+    "com.github.copilot/extensions/azure-functions/ui/local-departure.js",
+    "com.github.copilot/extensions/azure-functions/ui/locales/de.js",
+    "com.github.copilot/extensions/azure-functions/ui/locales/en.js",
+    "com.github.copilot/extensions/azure-functions/ui/locales/es.js",
+    "com.github.copilot/extensions/azure-functions/ui/locales/ja.js",
+    "com.github.copilot/extensions/azure-functions/ui/locales/ko.js",
+    "com.github.copilot/extensions/azure-functions/ui/locales/pt-BR.js",
+    "com.github.copilot/extensions/azure-functions/ui/locales/zh-Hans.js",
+    "com.github.copilot/extensions/azure-functions/ui/quick-context.js",
+    "com.github.copilot/extensions/azure-functions/ui/source-copy.js",
+    "com.github.copilot/extensions/azure-functions/ui/source-panel.js",
+    "com.github.copilot/extensions/azure-functions/ui/source-tabs.js",
+    "com.github.copilot/extensions/azure-functions/ui/styles.css",
+    "com.github.copilot/extensions/azure-functions/ui/task-checklist.js",
+    "com.github.copilot/extensions/azure-functions/ui/workbench-copy.js",
+    "com.github.copilot/extensions/azure-functions/ui/workbench.js",
+    "package.json",
+    "skills/azure-functions-assess/SKILL.md",
+    "skills/azure-functions-assess/references/finding-schema.json",
+    "skills/azure-functions-assess/references/lifecycle.json",
+    "skills/azure-functions-best-practices/SKILL.md",
+    "skills/azure-functions-best-practices/references/remediation-patterns.md",
+    "skills/azure-functions-best-practices/references/review-checklist.md",
+    "skills/azure-functions-canvas/SKILL.md",
+    "skills/azure-functions-canvas/resolve-canvas-launch.mjs",
+    "skills/azure-functions-common/SKILL.md",
+    "skills/azure-functions-common/references/extensions/azure-tables.md",
+    "skills/azure-functions-common/references/extensions/cosmos-db.md",
+    "skills/azure-functions-common/references/extensions/dapr.md",
+    "skills/azure-functions-common/references/extensions/durable-functions.md",
+    "skills/azure-functions-common/references/extensions/event-grid.md",
+    "skills/azure-functions-common/references/extensions/event-hubs.md",
+    "skills/azure-functions-common/references/extensions/extension-bundles.md",
+    "skills/azure-functions-common/references/extensions/fabric.md",
+    "skills/azure-functions-common/references/extensions/http.md",
+    "skills/azure-functions-common/references/extensions/kafka.md",
+    "skills/azure-functions-common/references/extensions/mcp.md",
+    "skills/azure-functions-common/references/extensions/mysql.md",
+    "skills/azure-functions-common/references/extensions/rabbitmq.md",
+    "skills/azure-functions-common/references/extensions/redis.md",
+    "skills/azure-functions-common/references/extensions/sendgrid.md",
+    "skills/azure-functions-common/references/extensions/service-bus.md",
+    "skills/azure-functions-common/references/extensions/signalr.md",
+    "skills/azure-functions-common/references/extensions/sql.md",
+    "skills/azure-functions-common/references/extensions/storage-blob.md",
+    "skills/azure-functions-common/references/extensions/storage-queue.md",
+    "skills/azure-functions-common/references/extensions/timer.md",
+    "skills/azure-functions-common/references/extensions/twilio.md",
+    "skills/azure-functions-common/references/extensions/web-pubsub.md",
+    "skills/azure-functions-common/references/languages/csharp.md",
+    "skills/azure-functions-common/references/languages/durable-functions.md",
+    "skills/azure-functions-common/references/languages/go.md",
+    "skills/azure-functions-common/references/languages/java.md",
+    "skills/azure-functions-common/references/languages/node-typescript.md",
+    "skills/azure-functions-common/references/languages/powershell.md",
+    "skills/azure-functions-common/references/languages/python.md",
+    "skills/azure-functions-common/references/local-emulators.md",
+    "skills/azure-functions-common/references/routing.md",
+    "skills/azure-functions-create/SKILL.md",
+    "skills/azure-functions-create/references/go-project.md",
+    "skills/azure-functions-create/references/language-snippets.md",
+    "skills/azure-functions-deploy/SKILL.md",
+    "skills/azure-functions-deploy/references/deployment-result.md",
+    "skills/azure-functions-diagnostics/SKILL.md",
+    "skills/azure-functions-diagnostics/references/evidence-checklist.md",
+    "skills/azure-functions-diagnostics/references/workflow.md",
+    "skills/azure-functions-doctor/SKILL.md",
+    "skills/azure-functions-doctor/references/ai-semantic-checks.md",
+    "skills/azure-functions-doctor/references/iac-azure-resource-checks.md",
+    "skills/azure-functions-doctor/references/language-checks.md",
+    "skills/azure-functions-doctor/references/migration-checks.md",
+    "skills/azure-functions-doctor/references/routing.md",
+    "skills/azure-functions-doctor/references/rule-data.json",
+    "skills/azure-functions-doctor/references/source-only-checks.md",
+    "skills/azure-functions-doctor/references/supply-chain-checks.md",
+    "skills/azure-functions-feedback/SKILL.md",
+    "skills/azure-functions-health-status/SKILL.md",
+    "skills/azure-functions-health-status/references/health-status-commands-and-kql.md",
+    "skills/azure-functions-health-status/scripts/get-functionapp-health-status.ps1",
+    "skills/azure-functions-health-status/scripts/get-functionapp-health-status.sh",
+    "skills/azure-functions-help/SKILL.md",
+    "skills/azure-functions-hosted-skills/SKILL.md",
+    "skills/azure-functions-hosted-skills/assets/infra/app/trigger-config.bicep",
+    "skills/azure-functions-hosted-skills/references/abbreviations.json",
+    "skills/azure-functions-hosted-skills/references/agent-authoring.md",
+    "skills/azure-functions-hosted-skills/references/agent-files.md",
+    "skills/azure-functions-hosted-skills/references/built-in-endpoints.md",
+    "skills/azure-functions-hosted-skills/references/connector-mcp.md",
+    "skills/azure-functions-hosted-skills/references/connector-schemas.md",
+    "skills/azure-functions-hosted-skills/references/connector-smoke-tests.md",
+    "skills/azure-functions-hosted-skills/references/connector-teams.md",
+    "skills/azure-functions-hosted-skills/references/connector-triggers.md",
+    "skills/azure-functions-hosted-skills/references/connectors.md",
+    "skills/azure-functions-hosted-skills/references/infra-and-deployment.md",
+    "skills/azure-functions-hosted-skills/references/models.md",
+    "skills/azure-functions-hosted-skills/references/project-files.md",
+    "skills/azure-functions-hosted-skills/references/quickstart-reference.md",
+    "skills/azure-functions-hosted-skills/references/sessions.md",
+    "skills/azure-functions-hosted-skills/references/testing.md",
+    "skills/azure-functions-hosted-skills/references/tools-and-skills.md",
+    "skills/azure-functions-hosted-skills/references/triggers.md",
+    "skills/azure-functions-hosted-skills/references/troubleshooting.md",
+    "skills/azure-functions-inventory/SKILL.md",
+    "skills/azure-functions-inventory/references/inventory-commands.md",
+    "skills/azure-functions-inventory/scripts/get-functionapp-inventory.ps1",
+    "skills/azure-functions-inventory/scripts/get-functionapp-inventory.sh",
+    "skills/azure-functions-setup/SKILL.md",
+    "skills/azure-functions-update/SKILL.md",
+    "skills/azure-functions-update/references/bundles-v4.md",
+    "skills/azure-functions-update/references/dotnet-isolated.md",
+    "skills/azure-functions-update/references/durable-v2.md",
+    "skills/azure-functions-update/references/extensions.md",
+    "skills/azure-functions-update/references/python-blob-sdk.md",
+    "skills/azure-functions-update/references/python-http-streaming.md",
+    "skills/azure-functions-update/references/python-model-v2.md",
+    "skills/azure-functions-update/references/scenarios.json"
+  ],
+  "status": "publication-controlled-by-external-approval",
+  "runtime": {
+    "node": ">=22",
+    "sdk": "@github/copilot-sdk/extension",
+    "azureCli": ">=2.61"
+  },
+  "build": {
+    "esbuild": "0.25.12",
+    "lockSha256": "b954715f51daad33ac14faa0b9b4722718290727909e97d33e1817ae8def0050",
+    "inputSha256": "bb64efbc704c9546833735d2e5308c5089af4a35f5fd35b4a16f10c0cc3a4219"
+  },
+  "dependencies": [
+    {
+      "name": "@azure-rest/core-client",
+      "version": "2.9.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/abort-controller",
+      "version": "2.2.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-auth",
+      "version": "1.11.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-client",
+      "version": "1.11.1",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-http-compat",
+      "version": "2.5.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-process",
+      "version": "1.0.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-rest-pipeline",
+      "version": "1.25.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-tracing",
+      "version": "1.4.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-util",
+      "version": "1.14.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/identity",
+      "version": "4.13.3",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/logger",
+      "version": "1.4.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/msal-common",
+      "version": "16.14.1",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/msal-node",
+      "version": "6.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/storage-common",
+      "version": "12.5.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/storage-queue",
+      "version": "12.32.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@cloud-foundation/function-app-core",
+      "version": "0.1.0",
+      "license": null
+    },
+    {
+      "name": "@cloud-foundation/studio-runtime",
+      "version": "0.1.0",
+      "license": null
+    },
+    {
+      "name": "@microsoft/canvas-toolkit",
+      "version": "0.1.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@nodable/entities",
+      "version": "3.1.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@typespec/ts-http-runtime",
+      "version": "0.3.9",
+      "license": "MIT"
+    },
+    {
+      "name": "agent-base",
+      "version": "7.1.4",
+      "license": "MIT"
+    },
+    {
+      "name": "anynum",
+      "version": "1.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "buffer-equal-constant-time",
+      "version": "1.0.1",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "debug",
+      "version": "4.4.3",
+      "license": "MIT"
+    },
+    {
+      "name": "ecdsa-sig-formatter",
+      "version": "1.0.11",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "fast-xml-builder",
+      "version": "1.3.1",
+      "license": "MIT"
+    },
+    {
+      "name": "fast-xml-parser",
+      "version": "5.11.2",
+      "license": "MIT"
+    },
+    {
+      "name": "fflate",
+      "version": "0.8.3",
+      "license": "MIT"
+    },
+    {
+      "name": "has-flag",
+      "version": "4.0.0",
+      "license": "MIT"
+    },
+    {
+      "name": "http-proxy-agent",
+      "version": "7.0.2",
+      "license": "MIT"
+    },
+    {
+      "name": "https-proxy-agent",
+      "version": "7.0.6",
+      "license": "MIT"
+    },
+    {
+      "name": "is-unsafe",
+      "version": "2.0.2",
+      "license": "MIT"
+    },
+    {
+      "name": "jsonwebtoken",
+      "version": "9.0.3",
+      "license": "MIT"
+    },
+    {
+      "name": "jwa",
+      "version": "2.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "jws",
+      "version": "4.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.includes",
+      "version": "4.3.0",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.isboolean",
+      "version": "3.0.3",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.isinteger",
+      "version": "4.0.4",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.isnumber",
+      "version": "3.0.3",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.isplainobject",
+      "version": "4.0.6",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.isstring",
+      "version": "4.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.once",
+      "version": "4.1.1",
+      "license": "MIT"
+    },
+    {
+      "name": "ms",
+      "version": "2.1.3",
+      "license": "MIT"
+    },
+    {
+      "name": "path-expression-matcher",
+      "version": "1.6.2",
+      "license": "MIT"
+    },
+    {
+      "name": "safe-buffer",
+      "version": "5.2.1",
+      "license": "MIT"
+    },
+    {
+      "name": "semver",
+      "version": "7.8.5",
+      "license": "ISC"
+    },
+    {
+      "name": "strip-json-comments",
+      "version": "5.0.3",
+      "license": "MIT"
+    },
+    {
+      "name": "strnum",
+      "version": "2.5.1",
+      "license": "MIT"
+    },
+    {
+      "name": "supports-color",
+      "version": "7.2.0",
+      "license": "MIT"
+    },
+    {
+      "name": "xml-naming",
+      "version": "0.3.0",
+      "license": "MIT"
+    },
+    {
+      "name": "yaml",
+      "version": "2.9.1",
+      "license": "ISC"
+    }
+  ],
+  "modules": [
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/azure-subscription-picker.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/browser/base.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/browser/fluent.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/browser/react-runtime.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/commands-log.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/component-helpers.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/components.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/content.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/forms.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/icons.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/locations.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/navigation.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/subscription-picker.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/telemetry.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/theme.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/extension.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/functions/authoring.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/local/plan.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/sdk/queue.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/shared/prompts.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/bootstrap.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/build.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/common.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/create-flow.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/folder-fields.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/folder-path.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/function-copy.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/function-flow.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/header-ui.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/health.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/host-activity-colors.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/host-activity.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/i18n.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/invocation-results.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/local-departure.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/locales/de.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/locales/en.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/locales/es.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/locales/ja.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/locales/ko.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/locales/pt-BR.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/locales/zh-Hans.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/quick-context.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/source-copy.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/source-panel.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/source-tabs.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/task-checklist.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/workbench-copy.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/workbench.js",
+      "platform": "browser"
+    },
+    {
+      "file": "skills/azure-functions-canvas/resolve-canvas-launch.mjs",
+      "platform": "node"
+    }
+  ],
+  "assets": [
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/AiFoundry.svg",
+      "route": "icons/AiFoundry.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ApiManagementService.svg",
+      "route": "icons/ApiManagementService.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ApplicationInsights.svg",
+      "route": "icons/ApplicationInsights.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/AppServiceKubernetesEnvironment.svg",
+      "route": "icons/AppServiceKubernetesEnvironment.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/AppServicePlans.svg",
+      "route": "icons/AppServicePlans.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/AppServices.svg",
+      "route": "icons/AppServices.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ArcEnabledMachines.svg",
+      "route": "icons/ArcEnabledMachines.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/AvailabilitySets.svg",
+      "route": "icons/AvailabilitySets.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/AzureCosmosDb.svg",
+      "route": "icons/AzureCosmosDb.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/AzureCosmosDbForMongoDbRu.svg",
+      "route": "icons/AzureCosmosDbForMongoDbRu.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/AzureDocumentDb.svg",
+      "route": "icons/AzureDocumentDb.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/BatchAccounts.svg",
+      "route": "icons/BatchAccounts.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/CacheRedis.svg",
+      "route": "icons/CacheRedis.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ContainerApps.svg",
+      "route": "icons/ContainerApps.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ContainerAppsEnvironment.svg",
+      "route": "icons/ContainerAppsEnvironment.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ContainerRegistry.svg",
+      "route": "icons/ContainerRegistry.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ContainerServiceManagedClusters.svg",
+      "route": "icons/ContainerServiceManagedClusters.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/Customlocations.svg",
+      "route": "icons/Customlocations.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/DeviceIotHubs.svg",
+      "route": "icons/DeviceIotHubs.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/DevTestLabs.svg",
+      "route": "icons/DevTestLabs.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/Disks.svg",
+      "route": "icons/Disks.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/DurableTaskHub.svg",
+      "route": "icons/DurableTaskHub.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/DurableTaskScheduler.svg",
+      "route": "icons/DurableTaskScheduler.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/EventGridDomains.svg",
+      "route": "icons/EventGridDomains.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/EventGridEventSubscriptions.svg",
+      "route": "icons/EventGridEventSubscriptions.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/EventGridTopics.svg",
+      "route": "icons/EventGridTopics.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/EventHubNamespaces.svg",
+      "route": "icons/EventHubNamespaces.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/FrontDoorAndCdnProfiles.svg",
+      "route": "icons/FrontDoorAndCdnProfiles.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/FunctionApp.svg",
+      "route": "icons/FunctionApp.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/Generic.svg",
+      "route": "icons/Generic.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/Images.svg",
+      "route": "icons/Images.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/KeyVaults.svg",
+      "route": "icons/KeyVaults.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/KubernetesConnectedClusters.svg",
+      "route": "icons/KubernetesConnectedClusters.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/LoadBalancers.svg",
+      "route": "icons/LoadBalancers.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/LogicApp.svg",
+      "route": "icons/LogicApp.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/LogicWorkflows.svg",
+      "route": "icons/LogicWorkflows.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ManagedIdentityUserAssignedIdentities.svg",
+      "route": "icons/ManagedIdentityUserAssignedIdentities.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/MongoClusters.svg",
+      "route": "icons/MongoClusters.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/MysqlServers.svg",
+      "route": "icons/MysqlServers.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkApplicationGateways.svg",
+      "route": "icons/NetworkApplicationGateways.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkApplicationSecurityGroups.svg",
+      "route": "icons/NetworkApplicationSecurityGroups.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkInterfaces.svg",
+      "route": "icons/NetworkInterfaces.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkLocalNetworkGateways.svg",
+      "route": "icons/NetworkLocalNetworkGateways.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkPublicIpPrefixes.svg",
+      "route": "icons/NetworkPublicIpPrefixes.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkRouteTables.svg",
+      "route": "icons/NetworkRouteTables.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkSecurityGroups.svg",
+      "route": "icons/NetworkSecurityGroups.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkVirtualNetworkGateways.svg",
+      "route": "icons/NetworkVirtualNetworkGateways.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NetworkWatchers.svg",
+      "route": "icons/NetworkWatchers.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/NotificationHubNamespaces.svg",
+      "route": "icons/NotificationHubNamespaces.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/OperationalInsightsWorkspaces.svg",
+      "route": "icons/OperationalInsightsWorkspaces.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/OperationsManagementSolutions.svg",
+      "route": "icons/OperationsManagementSolutions.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/PostgresqlServersFlexible.svg",
+      "route": "icons/PostgresqlServersFlexible.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/PostgresqlServersStandard.svg",
+      "route": "icons/PostgresqlServersStandard.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/PublicIpAddresses.svg",
+      "route": "icons/PublicIpAddresses.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ResourceGroup.svg",
+      "route": "icons/ResourceGroup.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ServiceBusNamespaces.svg",
+      "route": "icons/ServiceBusNamespaces.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ServiceFabricClusters.svg",
+      "route": "icons/ServiceFabricClusters.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/ServiceFabricMeshApplications.svg",
+      "route": "icons/ServiceFabricMeshApplications.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/SignalRService.svg",
+      "route": "icons/SignalRService.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/SpringApps.svg",
+      "route": "icons/SpringApps.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/SqlDatabases.svg",
+      "route": "icons/SqlDatabases.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/SqlServers.svg",
+      "route": "icons/SqlServers.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/StaticWebApps.svg",
+      "route": "icons/StaticWebApps.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/StorageAccounts.svg",
+      "route": "icons/StorageAccounts.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/Subscription.svg",
+      "route": "icons/Subscription.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/VirtualMachines.svg",
+      "route": "icons/VirtualMachines.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/VirtualMachineScaleSets.svg",
+      "route": "icons/VirtualMachineScaleSets.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/VirtualNetworks.svg",
+      "route": "icons/VirtualNetworks.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/WebHostingEnvironments.svg",
+      "route": "icons/WebHostingEnvironments.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/icons/WebPubSub.svg",
+      "route": "icons/WebPubSub.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/azure-subscription-picker.mjs",
+      "route": "canvas-ui/azure-subscription-picker.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/base.css",
+      "route": "canvas-ui/base.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/browser/base.mjs",
+      "route": "canvas-ui/base.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/browser/fluent.mjs",
+      "route": "canvas-ui/fluent.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/browser/react-runtime.mjs",
+      "route": "canvas-ui/react-runtime.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/browser/THIRD_PARTY_NOTICES.txt",
+      "route": "canvas-ui/THIRD_PARTY_NOTICES.txt",
+      "mime": "text/plain; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/commands-log.css",
+      "route": "canvas-ui/commands-log.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/commands-log.mjs",
+      "route": "canvas-ui/commands-log.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/component-helpers.mjs",
+      "route": "canvas-ui/component-helpers.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/components.css",
+      "route": "canvas-ui/components.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/components.mjs",
+      "route": "canvas-ui/components.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/content.mjs",
+      "route": "canvas-ui/content.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/fluent.css",
+      "route": "canvas-ui/fluent.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/forms.mjs",
+      "route": "canvas-ui/forms.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/icons.mjs",
+      "route": "canvas-ui/icons.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/locations.mjs",
+      "route": "canvas-ui/locations.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/navigation.mjs",
+      "route": "canvas-ui/navigation.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/profiles/coreai-azure.css",
+      "route": "canvas-ui/profiles/coreai-azure.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/styles.css",
+      "route": "canvas-ui/styles.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/subscription-picker.css",
+      "route": "canvas-ui/subscription-picker.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/subscription-picker.mjs",
+      "route": "canvas-ui/subscription-picker.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/telemetry.mjs",
+      "route": "canvas-ui/telemetry.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/theme.mjs",
+      "route": "canvas-ui/theme.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/assets/azure.svg",
+      "route": "assets/azure.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/assets/github.svg",
+      "route": "assets/github.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/assets/rocket-ship-spot-illustration.svg",
+      "route": "assets/rocket-ship-spot-illustration.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/assets/vscode.svg",
+      "route": "assets/vscode.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/bootstrap.js",
+      "route": "bootstrap.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/build.html",
+      "route": "build",
+      "mime": "text/html; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/build.js",
+      "route": "build.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/common.js",
+      "route": "common.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/create-flow.js",
+      "route": "create-flow.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/folder-fields.js",
+      "route": "folder-fields.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/folder-path.js",
+      "route": "folder-path.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/function-copy.js",
+      "route": "function-copy.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/function-flow.js",
+      "route": "function-flow.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/header-ui.js",
+      "route": "header-ui.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/health.html",
+      "route": "health",
+      "mime": "text/html; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/health.js",
+      "route": "health.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/host-activity-colors.js",
+      "route": "host-activity-colors.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/host-activity.css",
+      "route": "host-activity.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/host-activity.js",
+      "route": "host-activity.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/i18n.js",
+      "route": "i18n.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/invocation-results.js",
+      "route": "invocation-results.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/local-departure.js",
+      "route": "local-departure.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/locales/de.js",
+      "route": "locales/de.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/locales/en.js",
+      "route": "locales/en.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/locales/es.js",
+      "route": "locales/es.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/locales/ja.js",
+      "route": "locales/ja.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/locales/ko.js",
+      "route": "locales/ko.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/locales/pt-BR.js",
+      "route": "locales/pt-BR.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/locales/zh-Hans.js",
+      "route": "locales/zh-Hans.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/quick-context.js",
+      "route": "quick-context.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/source-copy.js",
+      "route": "source-copy.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/source-panel.js",
+      "route": "source-panel.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/source-tabs.js",
+      "route": "source-tabs.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/styles.css",
+      "route": "styles.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/task-checklist.js",
+      "route": "task-checklist.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/workbench-copy.js",
+      "route": "workbench-copy.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/workbench.js",
+      "route": "workbench.js",
+      "mime": "text/javascript; charset=utf-8"
+    }
+  ]
+}
