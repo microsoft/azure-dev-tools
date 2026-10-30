@@ -456,12 +456,13 @@ export function verifyPlugin({ source, name, version }, { candidate = false } = 
   const revision = "HEAD";
 
   try {
-    const packageManifest = JSON.parse(fileAt(revision, `${path}/${product.manifest}`));
+    const files = packageFiles(revision, path);
+    const manifestPath = files.includes("plugin.json") ? "plugin.json" : product.manifest;
+    const packageManifest = JSON.parse(fileAt(revision, `${path}/${manifestPath}`));
     let mutableDocumentation = false;
     if (packageManifest.name !== name || packageManifest.version !== version) {
       throw new Error("plugin metadata differs from marketplace entry");
     }
-    const files = packageFiles(revision, path);
     const immutableFiles = verifyMutableDocumentationTrees(
       packageTree(revision, path),
       packageTree(releaseTag ?? revision, path),
@@ -499,7 +500,7 @@ export function verifyPlugin({ source, name, version }, { candidate = false } = 
       }
       const packageJson = JSON.parse(fileAt(revision, `${path}/package.json`));
       if (release.name !== name || release.version !== version ||
-          release.plugin?.manifest !== product.manifest ||
+          release.plugin?.manifest !== manifestPath ||
           release.plugin?.extension?.entry !== `${product.extensionPath}/extension.mjs` ||
           release.plugin?.extension?.canvasId !== product.extension ||
           release.plugin?.preview?.file !== "assets/preview.png" ||
@@ -520,7 +521,16 @@ export function verifyPlugin({ source, name, version }, { candidate = false } = 
       } else if (packageManifest.extensions !== "./extensions") {
         throw new Error("extension metadata differs from marketplace entry");
       }
-      if (!Array.isArray(packageManifest.skills) ||
+      if (manifestPath === "plugin.json") {
+        const skills = files.filter((file) => /^skills\/[^/]+\/SKILL\.md$/.test(file))
+          .map((file) => `./${file.slice(0, -"SKILL.md".length)}`);
+        if (Object.hasOwn(packageManifest, "skills") || Object.hasOwn(packageManifest, "canvases") ||
+            files.includes(product.manifest) ||
+            skills.length !== product.skills.length ||
+            product.skills.some((skill) => !skills.includes(skill))) {
+          throw new Error("Agent Plugins root manifest or auto-discovered skills differ from marketplace entry");
+        }
+      } else if (!Array.isArray(packageManifest.skills) ||
           packageManifest.skills.length !== product.skills.length ||
           product.skills.some((skill) => !packageManifest.skills.includes(skill))) {
         throw new Error("skills differ from marketplace entry");

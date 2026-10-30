@@ -43,6 +43,28 @@ function modified(update) {
   return manifest;
 }
 
+test("Functions verifies root-manifest candidates and the immutable legacy release", () => {
+  const plugin = catalog.plugins.find(({ name }) => name === "azure-functions");
+  assert.match(verifyPlugin(plugin, { candidate: true }), /^azure-functions@/);
+  const checkout = mkdtempSync(join(tmpdir(), "functions-legacy-release-"));
+  const clone = join(checkout, "repo");
+  try {
+    execFileSync("git", ["clone", "--quiet", "--local", "--no-hardlinks", root, clone]);
+    execFileSync("git", ["-C", clone, "checkout", "--quiet", "--detach",
+      "azure-functions-v0-1-0-0aa8dee"]);
+    copyFileSync(join(root, verifier), join(clone, verifier));
+    const output = execFileSync("node", ["--input-type=module", "-e",
+      `import { verifyPlugin } from "./scripts/verify-plugin-marketplace.mjs";
+       const { readFileSync } = await import("node:fs");
+       const catalog = JSON.parse(readFileSync(".github/plugin/marketplace.json"));
+       console.log(verifyPlugin(catalog.plugins.find(plugin => plugin.name === "azure-functions")));`],
+    { cwd: clone, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    assert.match(output, /azure-functions@0\.1\.0 azure-functions-v0-1-0-0aa8dee/);
+  } finally {
+    rmSync(checkout, { recursive: true, force: true });
+  }
+});
+
 test("requires release tags for full verification, then checks every catalog plugin", () => {
   assert.deepEqual(fixture.plugins, catalog.plugins.map(({ name, version, source }) =>
     ({ name, version, source })));

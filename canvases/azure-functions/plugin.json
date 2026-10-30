@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "azure-functions",
+  "version": "0.1.1",
+  "description": "Azure Functions: create, edit, modernize, review, run, deploy, and monitor function apps, with optional AI help.",
+  "extensions": {
+    "com.github.copilot": {
+      "logo": "assets/preview.png"
+    }
+  }
+}
