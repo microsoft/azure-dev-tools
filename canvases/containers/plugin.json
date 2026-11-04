@@ -7,8 +7,5 @@
     "com.github.copilot": {
       "logo": "assets/preview.png"
     }
-  },
-  "skills": [
-    "./skills/containers/"
-  ]
+  }
 }
