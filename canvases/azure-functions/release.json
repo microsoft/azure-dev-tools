@@ -2,8 +2,11 @@
   "schemaVersion": 2,
   "format": "plugin",
   "name": "azure-functions",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "mutableDocumentation": true,
+  "legalNotices": [
+    "notices/emulator-sdk-MIT-LICENSE.txt"
+  ],
   "publicationRepository": "microsoft/azure-dev-tools",
   "plugin": {
     "manifest": "plugin.json",
@@ -297,19 +300,29 @@
     "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/content.mjs",
     "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/fluent.css",
     "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/forms.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/hosts/github-app/design.md",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/hosts/github-app/theming.md",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/hosts/index.md",
     "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/icons.mjs",
     "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/locations.mjs",
     "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/navigation.mjs",
     "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/profiles/coreai-azure.css",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/profiles/github-app.css",
     "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/styles.css",
     "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/subscription-picker.css",
     "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/subscription-picker.mjs",
     "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/telemetry.mjs",
     "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/theme.mjs",
+    "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/visual-profiles.mjs",
+    "com.github.copilot/extensions/azure-functions/build/controller.mjs",
     "com.github.copilot/extensions/azure-functions/extension.mjs",
     "com.github.copilot/extensions/azure-functions/functions/authoring.mjs",
     "com.github.copilot/extensions/azure-functions/local/plan.mjs",
+    "com.github.copilot/extensions/azure-functions/sdk/blob.mjs",
+    "com.github.copilot/extensions/azure-functions/sdk/cosmos.mjs",
+    "com.github.copilot/extensions/azure-functions/sdk/event-hubs.mjs",
     "com.github.copilot/extensions/azure-functions/sdk/queue.mjs",
+    "com.github.copilot/extensions/azure-functions/sdk/service-bus.mjs",
     "com.github.copilot/extensions/azure-functions/shared/prompts.mjs",
     "com.github.copilot/extensions/azure-functions/ui/assets/azure.svg",
     "com.github.copilot/extensions/azure-functions/ui/assets/github.svg",
@@ -333,6 +346,7 @@
     "com.github.copilot/extensions/azure-functions/ui/i18n.js",
     "com.github.copilot/extensions/azure-functions/ui/invocation-results.js",
     "com.github.copilot/extensions/azure-functions/ui/local-departure.js",
+    "com.github.copilot/extensions/azure-functions/ui/local-route.js",
     "com.github.copilot/extensions/azure-functions/ui/locales/de.js",
     "com.github.copilot/extensions/azure-functions/ui/locales/en.js",
     "com.github.copilot/extensions/azure-functions/ui/locales/es.js",
@@ -340,6 +354,7 @@
     "com.github.copilot/extensions/azure-functions/ui/locales/ko.js",
     "com.github.copilot/extensions/azure-functions/ui/locales/pt-BR.js",
     "com.github.copilot/extensions/azure-functions/ui/locales/zh-Hans.js",
+    "com.github.copilot/extensions/azure-functions/ui/ncrontab.js",
     "com.github.copilot/extensions/azure-functions/ui/quick-context.js",
     "com.github.copilot/extensions/azure-functions/ui/source-copy.js",
     "com.github.copilot/extensions/azure-functions/ui/source-panel.js",
@@ -348,6 +363,7 @@
     "com.github.copilot/extensions/azure-functions/ui/task-checklist.js",
     "com.github.copilot/extensions/azure-functions/ui/workbench-copy.js",
     "com.github.copilot/extensions/azure-functions/ui/workbench.js",
+    "notices/emulator-sdk-MIT-LICENSE.txt",
     "package.json",
     "plugin.json",
     "skills/azure-functions-assess/SKILL.md",
@@ -458,8 +474,8 @@
   },
   "build": {
     "esbuild": "0.25.12",
-    "lockSha256": "f059dd7f4058e725c6d3492b3e6d6dc1f4a1e5bc6bfeacbfbbc7cb19bd06203d",
-    "inputSha256": "d71e3a6327365b14fd5f53d9e6c305b0fa981c6aeb7b36f95ed99bfcff3cd4ba"
+    "lockSha256": "b1cd88485fe244afe1835df54e1eefc954dc3059c958c385872992215f10c91f",
+    "inputSha256": "8125c3f1c3906684b4abbabf7efd7bee761648adfa052b4d6e8bc7d3771c45e5"
   },
   "dependencies": [
     {
@@ -470,6 +486,11 @@
     {
       "name": "@azure/abort-controller",
       "version": "2.2.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-amqp",
+      "version": "4.5.1",
       "license": "MIT"
     },
     {
@@ -485,6 +506,16 @@
     {
       "name": "@azure/core-http-compat",
       "version": "2.5.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-lro",
+      "version": "2.7.2",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-paging",
+      "version": "1.7.0",
       "license": "MIT"
     },
     {
@@ -508,8 +539,33 @@
       "license": "MIT"
     },
     {
+      "name": "@azure/core-xml",
+      "version": "1.6.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/cosmos",
+      "version": "4.10.1",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/event-hubs",
+      "version": "6.0.4",
+      "license": "MIT"
+    },
+    {
       "name": "@azure/identity",
       "version": "4.13.3",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/keyvault-common",
+      "version": "2.1.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/keyvault-keys",
+      "version": "4.10.2",
       "license": "MIT"
     },
     {
@@ -525,6 +581,16 @@
     {
       "name": "@azure/msal-node",
       "version": "6.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/service-bus",
+      "version": "7.10.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/storage-blob",
+      "version": "12.33.0",
       "license": "MIT"
     },
     {
@@ -588,6 +654,11 @@
       "license": "Apache-2.0"
     },
     {
+      "name": "fast-json-stable-stringify",
+      "version": "2.1.0",
+      "license": "MIT"
+    },
+    {
       "name": "fast-xml-builder",
       "version": "1.3.1",
       "license": "MIT"
@@ -618,8 +689,18 @@
       "license": "MIT"
     },
     {
+      "name": "is-buffer",
+      "version": "2.0.5",
+      "license": "MIT"
+    },
+    {
       "name": "is-unsafe",
       "version": "2.0.2",
+      "license": "MIT"
+    },
+    {
+      "name": "jsonc-parser",
+      "version": "3.3.1",
       "license": "MIT"
     },
     {
@@ -673,6 +754,11 @@
       "license": "MIT"
     },
     {
+      "name": "long",
+      "version": "5.3.2",
+      "license": "Apache-2.0"
+    },
+    {
       "name": "ms",
       "version": "2.1.3",
       "license": "MIT"
@@ -683,9 +769,29 @@
       "license": "MIT"
     },
     {
+      "name": "priorityqueuejs",
+      "version": "2.0.0",
+      "license": "MIT"
+    },
+    {
+      "name": "rhea",
+      "version": "3.0.5",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "rhea-promise",
+      "version": "3.1.0",
+      "license": "Apache-2.0"
+    },
+    {
       "name": "safe-buffer",
       "version": "5.2.1",
       "license": "MIT"
+    },
+    {
+      "name": "semaphore",
+      "version": "1.1.0",
+      "license": null
     },
     {
       "name": "semver",
@@ -706,6 +812,11 @@
       "name": "supports-color",
       "version": "7.2.0",
       "license": "MIT"
+    },
+    {
+      "name": "tslib",
+      "version": "2.8.1",
+      "license": "0BSD"
     },
     {
       "name": "xml-naming",
@@ -788,6 +899,14 @@
       "platform": "browser"
     },
     {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/visual-profiles.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/build/controller.mjs",
+      "platform": "node"
+    },
+    {
       "file": "com.github.copilot/extensions/azure-functions/extension.mjs",
       "platform": "node"
     },
@@ -800,7 +919,23 @@
       "platform": "node"
     },
     {
+      "file": "com.github.copilot/extensions/azure-functions/sdk/blob.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/sdk/cosmos.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/sdk/event-hubs.mjs",
+      "platform": "node"
+    },
+    {
       "file": "com.github.copilot/extensions/azure-functions/sdk/queue.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/sdk/service-bus.mjs",
       "platform": "node"
     },
     {
@@ -868,6 +1003,10 @@
       "platform": "browser"
     },
     {
+      "file": "com.github.copilot/extensions/azure-functions/ui/local-route.js",
+      "platform": "browser"
+    },
+    {
       "file": "com.github.copilot/extensions/azure-functions/ui/locales/de.js",
       "platform": "browser"
     },
@@ -893,6 +1032,10 @@
     },
     {
       "file": "com.github.copilot/extensions/azure-functions/ui/locales/zh-Hans.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/ncrontab.js",
       "platform": "browser"
     },
     {
@@ -1350,6 +1493,21 @@
       "mime": "text/javascript; charset=utf-8"
     },
     {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/hosts/github-app/design.md",
+      "route": "canvas-ui/hosts/github-app/design.md",
+      "mime": "text/markdown; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/hosts/github-app/theming.md",
+      "route": "canvas-ui/hosts/github-app/theming.md",
+      "mime": "text/markdown; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/hosts/index.md",
+      "route": "canvas-ui/hosts/index.md",
+      "mime": "text/markdown; charset=utf-8"
+    },
+    {
       "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/icons.mjs",
       "route": "canvas-ui/icons.mjs",
       "mime": "text/javascript; charset=utf-8"
@@ -1367,6 +1525,11 @@
     {
       "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/profiles/coreai-azure.css",
       "route": "canvas-ui/profiles/coreai-azure.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/profiles/github-app.css",
+      "route": "canvas-ui/profiles/github-app.css",
       "mime": "text/css; charset=utf-8"
     },
     {
@@ -1392,6 +1555,11 @@
     {
       "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/theme.mjs",
       "route": "canvas-ui/theme.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/assets/toolkit/ui/visual-profiles.mjs",
+      "route": "canvas-ui/visual-profiles.mjs",
       "mime": "text/javascript; charset=utf-8"
     },
     {
@@ -1505,6 +1673,11 @@
       "mime": "text/javascript; charset=utf-8"
     },
     {
+      "file": "com.github.copilot/extensions/azure-functions/ui/local-route.js",
+      "route": "local-route.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
       "file": "com.github.copilot/extensions/azure-functions/ui/locales/de.js",
       "route": "locales/de.js",
       "mime": "text/javascript; charset=utf-8"
@@ -1537,6 +1710,11 @@
     {
       "file": "com.github.copilot/extensions/azure-functions/ui/locales/zh-Hans.js",
       "route": "locales/zh-Hans.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions/ui/ncrontab.js",
+      "route": "ncrontab.js",
       "mime": "text/javascript; charset=utf-8"
     },
     {

@@ -56,7 +56,8 @@ user's explicit confirmation. Do not call canvas actions such as
   Send reports to the exact instance named by the panel's prompt.
 - `show_tab` selects `home`, `doctor`, `project`, `create`, `run`, `deploy`,
   `update`, `local` (review), or `azure` (monitoring). It selects the corresponding
-  internal page without starting an operation. `show_page` only switches between
+  internal page. Selecting Run performs a bounded read-only capability scan.
+  It does not install dependencies, run build scripts or start the app. `show_page` only switches between
   `build` and `health`; it does not create, run, deploy, or scan.
 - Opening the Azure Functions canvas leaves Home visible. Let the user choose a task; do not
   automatically scan a supplied project path.
@@ -98,6 +99,18 @@ user's explicit confirmation. Do not call canvas actions such as
 - Create New starts with trusted templates. **Create** scaffolds the selected
   template, then opens Customize: the user can open the editor, optionally ask
   AI for changes, or go directly to Run and test.
+- Run uses the selected app, including an explicit monorepo app choice.
+  A ready app needs only **Run**. Required app settings, dependencies/build and
+  missing Blob resources use one combined **Apply** with the shown conflict
+  choices. Do not require Check, Review or per-service preparation clicks.
+  **Run** then prepares missing local services using the current product-use
+  notice and verified images, ports and configuration. Compatible borrowed
+  services are not changed or stopped. Stop and leaving Run stop the host
+  first; owned services stop after their last consumer. Containers and networks
+  remain when removal could lose data. Report retained resources, not complete
+  cleanup. **Send** remains separate. AI setup is a last resort after an
+  actionable failure, not the normal flow. Cosmos and SQL remain unsupported
+  for local Run; Hosted Skills uses its separate workflow.
 - The optional **Create with AI help** uses a trusted template skeleton first,
   then customizes it. Normally choose the official template from the written
   requirements, independently of the template list and its filters. Ask about
