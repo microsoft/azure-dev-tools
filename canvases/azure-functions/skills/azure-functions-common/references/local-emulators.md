@@ -10,6 +10,21 @@ Use this reference when `azure-functions-create`, diagnostics, or best-practices
 - Do not change long-lived system services, Docker state, Azure resources, secrets, or connection strings without explicit approval.
 - Keep local settings in `local.settings.json` or environment variables. Never commit secrets or real connection strings.
 
+## Azure Functions canvas Run
+
+With the panel open, selecting Run automatically checks the selected app using
+bounded read-only metadata and readiness probes. Do not install, build or execute
+app code during this scan. A ready app needs no preparation click. Required app
+changes use one combined Apply; Run then prepares missing local runtime services.
+Do not impose the manual verification stages below as extra canvas buttons.
+Run uses the displayed product-use notice. Send requires its own action.
+Compatible borrowed services remain unchanged. Stop and leaving Run stop the
+host first and release only this run's service leases. Data, images and borrowed
+services are kept. Managed containers and networks are stopped and retained when
+durable storage cannot be proved. Do not claim complete removal.
+Cosmos and SQL bindings remain outside canvas-local Run. Hosted Skills is separate.
+Outside the panel, the explicit approvals below still apply.
+
 ## Trigger and binding mapping
 
 Official links below were checked for HTTP 200 access on 2026-05-12.

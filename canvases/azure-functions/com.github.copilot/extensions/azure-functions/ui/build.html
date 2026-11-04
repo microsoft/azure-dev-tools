@@ -75,18 +75,18 @@
     </aside>
     <header class="app-header">
       <h1 class="product-heading" id="workbench-title">What would you like to do?</h1>
-      <p class="sub" id="workbench-sub" hidden></p>
+      <p class="sub" id="workbench-sub">Create a function app, open existing work, or check a deployed app.</p>
     </header>
     <div id="auto-health" class="inline-notice"></div>
     <nav class="crumbs" aria-label="Breadcrumb" data-i18n-aria-label="build.crumbs" id="crumbs" hidden></nav>
     <ol class="stepper" id="flow-steps" aria-label="Progress" data-i18n-aria-label="steps.label" hidden></ol>
     <datalist id="recent-paths"></datalist>
 
-    <div data-panel="home">
-      <div class="tasks joined">
+    <div data-panel="home" class="simple-home">
+      <div class="simple-home-start">
+      <div class="tasks simple-home-tasks">
         <button class="task" type="button" data-tab="create">
-          <span class="action-symbol"><svg class="workbench-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5-6 7 6 7m8-14 6 7-6 7m-3-17-2 20"/></svg></span>
-          <span class="action-copy"><strong data-i18n="workbench.create">Create a function app</strong><span data-i18n="workbench.create.sub">Start a function app project from a template</span></span><span class="action-chevron" aria-hidden="true">›</span>
+          <span class="action-copy"><strong data-i18n="workbench.create">Create a function app</strong><span data-i18n="workbench.create.sub">Start a function app project from a template</span></span>
         </button>
         <button class="task" type="button" data-tab="project">
           <span class="action-symbol"><svg class="workbench-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6 4-4a6 6 0 0 1-7 8L3 18a2 2 0 0 0 3 3l8-8a6 6 0 0 0 8-7l-4 4-4-4Z"/></svg></span>
@@ -101,7 +101,8 @@
           <span class="action-copy"><strong data-i18n="workbench.monitor">Monitor a deployed app</strong><span data-i18n="workbench.monitor.sub">Compare apps, inspect health, or diagnose symptoms</span></span><span class="action-chevron" aria-hidden="true">›</span>
         </button>
       </div>
-      <div id="recent-apps" hidden></div>
+      </div>
+      <div id="recent-apps" class="simple-home-recent" hidden></div>
     </div>
 
     <div data-panel="doctor" hidden>
@@ -182,6 +183,11 @@
           <div id="setup-selection-error" class="inline-notice" hidden></div>
         </section>
         <p id="location-context" class="flow-context"></p>
+        <section id="create-timer-settings" class="card" hidden>
+          <label class="stack"><span data-i18n="run.timer.schedule">Timer schedule</span><input id="create-timer-schedule" type="text" value="0 */5 * * * *" aria-describedby="create-timer-help create-timer-error"></label>
+          <p id="create-timer-help" class="muted" data-i18n="run.timer.creation">Six fields: second minute hour day month day-of-week. Create writes this schedule into the Timer source. Default time zone is UTC; hosting plans have different time-zone limits.</p>
+          <p id="create-timer-error" role="status" class="muted"></p>
+        </section>
         <details id="setup-instructions" class="workbench-disclosure" open hidden>
           <summary data-i18n="setup.instructions">Customize with AI (optional)</summary>
           <div id="setup-composer"></div>
@@ -204,7 +210,7 @@
           <div id="setup-folder-field"></div>
           <label class="field-stack app-name-field"><span><span data-i18n="setup.name">Project name</span> <span aria-hidden="true">*</span></span><input type="text" id="create-name" required></label>
         </section>
-        <div id="destination-error" hidden></div>
+        <div id="destination-error" role="alert" hidden></div>
         <div class="row actions-row"><button class="btn primary" type="button" id="confirm-location" data-i18n="create.button">Create</button></div>
       </section>
       <section id="intent-step" hidden>
@@ -309,12 +315,72 @@
           <div id="local-urls"></div>
           <label class="stack" id="local-method-field"><span data-i18n="run.method">HTTP method</span><select id="local-method"></select></label>
           <label class="stack" id="local-route-field"><span data-i18n="run.route">Route parameters (JSON)</span><input type="text" id="local-route" value="{}"></label>
+          <label class="stack" id="local-orchestration-field" hidden><span data-i18n="run.route.orchestration">Orchestration</span><select id="local-orchestration"></select></label>
           <label class="stack" id="local-query-field"><span data-i18n="run.query">Query string</span><input type="text" id="local-query"></label>
-          <label class="stack"><span data-i18n="run.body">Message / JSON body (HTTP can be empty)</span><textarea id="local-body" rows="4"></textarea></label>
+          <label class="stack" id="local-body-field"><span data-i18n="run.body">Message / JSON body (HTTP can be empty)</span><textarea id="local-body" rows="4"></textarea></label>
+          <div id="local-blob-fields" hidden>
+            <label class="stack"><span data-i18n="run.blob.file">PDF file (optional)</span><input id="local-blob-file" type="file" accept=".pdf,application/pdf"></label>
+            <p id="local-blob-selected" class="muted"></p>
+            <label class="stack"><span data-i18n="run.blob.name">Blob name</span><input id="local-blob-name" type="text" value="local-test.pdf"></label>
+            <label class="stack"><span data-i18n="run.blob.contentType">Content type</span><select id="local-blob-content-type"><option value="application/pdf">application/pdf</option><option value="application/octet-stream">application/octet-stream</option></select></label>
+            <p class="muted" data-i18n="run.blob.sample">Use a PDF up to 2 MiB, or a synthetic sample. Each send adds a unique name suffix so old output cannot prove success.</p>
+          </div>
           <label class="stack" id="local-headers-field"><span data-i18n="run.headers">HTTP headers (JSON)</span><input type="text" id="local-headers" value="{}"></label>
+          <p id="local-recipe-note" class="muted" role="status"></p>
         </div>
+        <p id="local-sdk-check" class="muted" role="status" hidden></p>
+        <section id="local-emulators" class="card" hidden>
+          <h3 data-i18n="run.emulators">Local emulators</h3>
+          <div id="local-emulator-checks"></div>
+          <details id="local-runtime-details" hidden>
+            <summary data-i18n="run.runtime.details">Runtime details and product terms</summary>
+            <div id="local-runtime-plan" class="stack"></div>
+            <div id="local-runtime-terms" class="stack"></div>
+          </details>
+          <div class="row">
+            <button id="local-dts-dashboard" type="button" data-metric-id="local-dts-dashboard" class="btn ghost" hidden data-i18n="run.emulator.dashboard">Open dashboard</button>
+          </div>
+        </section>
+        <section id="local-settings" class="card" hidden>
+          <details id="local-settings-details">
+          <summary data-i18n="run.settings.title">Local preparation</summary>
+          <p class="muted" data-i18n="run.settings.note">Inspection makes no changes. Apply required app changes once, then Run. Send remains separate.</p>
+          <div class="row actions-row">
+            <button id="request-local-setup" type="button" class="btn ghost" data-i18n="run.setup.request">Plan emulator setup with AI</button>
+            <button id="discard-local-setup" type="button" class="btn ghost" hidden data-i18n="run.setup.discard">Discard setup request</button>
+          </div>
+          <p id="local-setup-status" class="muted" role="status"></p>
+          <div id="local-preparation-checks" hidden>
+            <p id="local-preparation-preview" class="muted" role="status"></p>
+          </div>
+          <div id="local-settings-review" hidden>
+            <p class="muted" data-i18n="run.settings.scope">Changes apply only to local.settings.json. Other values and comments are kept. No Azure settings change.</p>
+            <div id="local-settings-changes" role="status"></div>
+          </div>
+          </details>
+          <p id="local-preparation-status" class="muted" role="status"></p>
+          <button id="local-emulator-refresh" type="button" class="btn ghost" hidden data-i18n="run.emulator.refresh">Check again</button>
+          <div id="local-settings-conflicts"></div>
+          <button id="apply-local-preparation" type="button" class="btn primary" hidden data-i18n="run.preparation.apply">Apply</button>
+        </section>
+        <section id="local-timer-settings" class="card" hidden>
+          <details id="local-timer-details">
+          <summary data-i18n="run.timer.schedule">Timer schedule</summary>
+          <label class="stack"><span data-i18n="run.functions">Function</span><select id="local-timer-function"></select></label>
+          <label class="stack"><span data-i18n="run.timer.schedule">Timer schedule</span><input id="local-timer-schedule" type="text" aria-describedby="local-timer-help local-timer-error"></label>
+          <p id="local-timer-help" class="muted" data-i18n="run.timer.help">Six fields: second minute hour day month day-of-week. Stop the host before edits. Apply does not restart the host or deploy to Azure.</p>
+          <p id="local-timer-error" class="muted" role="status"></p>
+          <button id="review-timer-schedule" type="button" class="btn ghost" data-i18n="run.timer.review">Review schedule change</button>
+          <div id="local-timer-review" hidden>
+            <p id="local-timer-diff" class="path"></p>
+            <p id="local-timer-scope" class="muted"></p>
+            <button id="apply-timer-schedule" type="button" class="btn primary" data-i18n="run.timer.apply">Apply reviewed schedule</button>
+          </div>
+          </details>
+        </section>
+        <div id="local-run-warnings" class="muted" role="status"></div>
         <div class="row actions-row run-actions" id="local-actions">
-          <button class="btn primary" type="button" id="local-send" data-i18n="run.send" hidden disabled>Send</button>
+          <button class="btn primary" type="button" id="local-send" aria-label="Send" data-i18n-aria-label="run.send" title="Send" data-i18n-title="run.send" hidden disabled><svg class="run-play-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m2 2 12 6-12 6 2-6-2-6ZM4 8h10"/></svg><span class="label" data-i18n="run.send">Send</span></button>
           <button class="btn primary" type="button" id="start-local" aria-label="Run" data-i18n-aria-label="run.start" title="Run" data-i18n-title="run.start" aria-describedby="local-approval" disabled><svg class="run-play-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path d="M4 2.5v11L13 8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="label" data-i18n="run.start">Run</span></button>
           <button class="btn ghost icon-button" type="button" id="local-show-result" aria-label="Logs and results" title="Logs and results" data-i18n-aria-label="run.logs" data-i18n-title="run.logs" aria-controls="local-output" aria-expanded="false" hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h4"/></svg></button>
           <button class="btn ghost icon-button" type="button" id="run-open-vscode" aria-label="Open in VS Code" data-i18n-aria-label="run.openVsCode" title="Open in VS Code" data-i18n-title="run.openVsCode" disabled></button>
@@ -323,7 +389,7 @@
         </div>
         <div id="local-progress" class="action-feedback" hidden></div>
         <div id="local-message" class="muted action-feedback" role="status"></div>
-        <p id="local-approval" class="muted" data-i18n="run.startWarning" hidden>Start may install dependencies and run project scripts.</p>
+        <p id="local-approval" class="muted" data-i18n="run.startWarning" hidden>Apply may install declared dependencies and run the required build.</p>
         <div id="local-fallback" class="inline-notice" hidden></div>
       </section>
     </div>

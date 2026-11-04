@@ -9,6 +9,21 @@ and asynchronous work remain owned by Azure Functions. The standalone package
 includes the same-origin toolkit runtime and styles; opening it does not fetch
 UI code or require a customer dependency install.
 
+Home uses the toolkit's **Simple home** page template: a short introduction,
+equal detached task cards and recent work below. Create, Open, Modernize and
+Monitor use the same cards, without a hero or illustration. The layout uses
+one, two or three columns according to the available content width.
+**Create a function app** opens the existing creation setup. It does not create
+files until you review the setup. Shared work rows show saved recent apps with
+their existing source checks and removal menus. A compact toolkit navigation
+header holds the product mark and name. Jump to uses the shared quiet header
+control, with its keyboard shortcut in the tooltip. History, app context,
+Commands and creation actions keep their existing behavior.
+The page composition is adapted from the toolkit's
+`examples/page-templates` guide; it is not a separate public component API.
+Recent app names and paths wrap in narrow panes. Rows can grow to keep that
+text readable, and overflow actions stay separate from the open control.
+
 Ask **Open Azure Functions canvas**. It opens Home without scanning your
 project, running your app or starting a deployment. Choose a task on Home, open the hamburger
 menu (**Browse**) for grouped tasks. **Jump to** (Ctrl+J or Command+J) offers
@@ -40,9 +55,9 @@ workspace before selection, without preparing another checkout or silently
 opening the source as local files. GitHub source remains available in Open function app
 and Modernize, not local-only Run or Deploy.
 Home also shows **Recent apps** below the main tasks, using the same saved
-Local and GitHub history. The two most recent apps appear first. **View more**
-reveals the remaining saved apps in place; **View less** returns to two without
-removing history. A fresh page starts with two again.
+Local and GitHub history. Home shows up to five apps, newest first, without a
+disclosure. This display limit does not trim saved history or change the
+separate header menu.
 Select an app to open its source dialog in Open function app,
 without an extra confirmation card. Local apps prepare the saved folder:
 **Open** confirms the folder and runs its checks; closing the dialog leaves
@@ -229,6 +244,7 @@ tasks that use them, not to open the canvas.
 | Task | Required tools |
 |---|---|
 | Create from a template or deploy | Azure Developer CLI (`azd`); deployment also needs Azure access |
+| Create from a template in a repository subfolder | Git and Azure Developer CLI (`azd`) |
 | Run an app locally | Azure Functions Core Tools 4 (`func`), plus the app's language dependencies |
 | Use GitHub source | Git, GitHub CLI (`gh`) signed in, and access to the repository |
 | Check an app in Azure | Azure CLI (`az`), signed in to an account with access to the app |
@@ -362,9 +378,21 @@ Open the new repository and continue with app creation.
 
 Choose **Create a function app**, then an event or starter from the official Azure
 Functions template catalog. All choices lead to **Set up your function app**.
+The catalog includes templates at the repository root and in subfolders.
+Both require infrastructure definitions. For a subfolder template, creation
+uses Git to fetch the catalog's tag or branch into a temporary directory, then
+passes only the selected folder to `azd init` as a local template.
+The new app keeps that folder's source, hidden files, infrastructure and
+deployment scripts, not the repository's other apps. The selected folder must
+be self-contained; files outside it are not copied. Links are rejected.
+The temporary checkout is removed after initialization or failure.
+Browsing and preparing the form do not fetch the template repository.
 The **Local / GitHub** tabs appear when choosing the new app's save destination,
 not on the initial function-kind screen or other creation questions.
 Choosing a kind does not change your source or create anything.
+Create checks the destination before template execution. If the folder is not
+empty or cannot be read, the setup form shows an inline error and keeps your
+inputs and existing files. Choose another project name or folder, then retry.
 
 1. **Check the configuration.** Python is the default unless you have a saved
    language choice. Use **Change configuration** to change the type, language,
@@ -491,15 +519,63 @@ Publishing the result is a separate step.
 
 Open **Run and test** for the selected project. The action row appears below
 the app fields; select an app first only when the workspace contains
-more than one. Opening the page does not install or run anything. Prerequisite
+more than one. Selection and opening Run inspect the actual local environment,
+without installation or startup. A usable app needs no preparation clicks.
+Necessary app changes use one combined **Apply**, with conflict choices on the
+same review. Run and Send remain separate actions. Prerequisite
 checks still run on startup; use **Browse → Check prerequisites** for a separate
 tool review without leaving the task.
 
+Run selects a function that matches the trusted template trigger when that
+metadata is available. Otherwise, it prefers an actual non-Timer trigger over
+an auxiliary Timer. All functions remain in the selector. Your selection and
+each function's message draft remain through progress updates.
+For Durable apps, the actual HTTP starter is selected before a health endpoint
+when no other template trigger or user selection applies. One registered
+orchestrator fills its starter route automatically; multiple orchestrators
+keep the explicit choice. Run starts only the host. Send starts the
+orchestration and follows its returned instance status.
+**Local preparation** starts collapsed, with **Apply** shown only when app
+changes are needed. Expand its heading to inspect files, dependencies and
+settings. Required conflict choices and errors stay visible; Apply stays
+disabled until each conflict has an explicit choice.
+If inspection fails, **Check again** stays visible outside the collapsed
+details. It repeats read-only inspection; it does not download or start a service.
+Run keeps the verified image reference shown during preparation across download,
+configuration and startup. **Logs and results** records the failed task and its
+redacted cause, including failures before a subprocess can write an error.
+While Run is active, **Open dashboard** checks the current DTS loopback address
+and sends it to the default browser on the machine running the app. It does not
+use a canvas popup. Browser handoff does not prove that a window opened. Launcher
+failures appear in **Logs and results** with the URL for manual use.
+**Timer schedule** starts collapsed when another trigger is selected. Selecting
+a Timer opens its schedule controls. The startup Timer warning remains visible.
+During Apply or Run, the current preparation stage stays visible. The existing
+**Logs and results** panel opens automatically when you start either action.
+If you close it, later output does not reopen it during that preparation. Docker image
+pull lines appear while the pull is pending. Credentials and private paths
+are removed before publication; inspection payloads and command arguments are
+not streamed. The compact progress row does not duplicate logs while the output
+panel is open. The **Logs and results** icon can reopen a closed panel.
+Progress does not change Run, Stop, lease or Send permissions.
+
+For Service Bus, Run starts the reviewed SQL Server dependency and emulator,
+then waits for emulator health before it verifies SQL Server 2022 Developer
+edition. Queue and topic/subscription names come from the selected app's
+bindings. A successful send means broker acceptance, not function completion.
+Stop keeps managed containers when their data cannot be safely removed;
+it does not stop borrowed services.
+
 The action row places **Send** immediately before **Stop** when the host is running.
 Before startup, the labeled outline-triangle **Run** button uses primary styling
-and Send stays hidden. The single VS Code icon button uses the branded logo,
+and Send is visible but disabled when a function draft is available. The single VS Code icon button uses the branded logo,
 secondary styling, an accessible name and a tooltip. It opens the selected project
-for editing and debugging.
+for editing and debugging. Run and Jump to also open the selected function's
+verified source file. Without a function selection, one unambiguous entry file
+can open. Missing, ambiguous or unsupported source targets open the same folder
+normally, without creating a file. Local, GitHub and completed-review editor
+actions keep their existing folder scope. REDACTED mode opens the matching file
+in the scrubbed copy. Editor permission and launch failures still show errors.
 The question-mark **Run help** button opens setup details on demand.
 **Setup guides**, inside Run help, opens optional documentation:
 the VS Code development guide and setup guides for Azurite, Service Bus,
@@ -526,14 +602,11 @@ instead of a success banner. Idle and stopped states do not add a URL hint or
 retain a stopped progress disclosure. Startup/cleanup progress and
 actionable errors remain visible.
 
-Leaving **Run** through Home, task navigation, or canvas Back/Forward does not
-ask for confirmation or stop the app. Keeping a local app running for testing
-is normal. Other task views show a non-blocking **Local app running in the
-background** reminder with **Stop app**, which uses the same owned Stop action
-as Run. Starting, stopping, and unconfirmed process states use accurate copy;
-Stop stays disabled while stopping or when the display cannot verify its target.
-The reminder clears after confirmed shutdown. Task navigation within Build
-preserves invocation drafts, including when a Stop is pending or fails.
+Leaving **Run** through actual task or page navigation stops its Functions host
+first, then releases this run's temporary services. Redisplaying Run does not
+stop it. Navigation waits for confirmed cleanup; a failure keeps Run available
+for recovery. A stale departure cannot stop a replacement run. Invocation
+drafts are kept. No extra preparation confirmation is shown.
 
 The existing **Change app** dialog explains that the local app must be stopped
 before changing apps and provides **Stop app** without stacking another dialog.
@@ -547,13 +620,32 @@ closure, switching conversations, or closing the desktop app. The public host
 contract has no cancellable pre-close hook for this panel. There is no
 stop-on-unload handler, beacon, or automatic stop added by this feature.
 
-**Stop stops the app, not storage.** Run reuses a healthy Azurite service set
-on ports 10000-10002, or starts Azurite if all three ports are free. An incomplete
-or occupied service set is an error; the canvas never replaces it. Azurite
-started by the canvas stays running across app Stop, reset and subsequent Run.
-Its process handle, data location and active run consumers are tracked separately
-from each app controller. Stopping or resetting never deletes storage data.
-Storage is started only by an approved Run, never by opening the panel.
+**Stop stops the host first.** Managed temporary services are released only
+after host shutdown and the last consumer. Borrowed or preexisting services
+are never stopped. Occupied ports use a different free allocation, not service
+replacement. Images, saved storage files and configuration files are kept.
+The current Docker runner has no proved persistent storage path for emulator
+writable layers. It stops and keeps those containers, their network and the
+ownership journal, and reports removal as incomplete. It does not remove
+containers and claim that their saved data was kept. The next Run can restart
+the same retained scope after it verifies the current image, app configuration,
+network, resource limits and stopped container identities. Host shutdown
+releases the run lease; it does not erase the retained resource journal.
+Automatic container removal remains unavailable without a proved storage path.
+In-memory DTS orchestration state is not promised to survive Stop.
+Storage is never started by opening the panel.
+
+SQL triggers and SQL input/output bindings are outside canvas-local Run and
+Send support. Their presence blocks app startup before file or dependency
+preparation, including HTTP functions that use SQL bindings. Declared unknown
+bindings are also blocked, not omitted from discovery. Open these apps in
+VS Code and configure the required test service and binding settings there.
+The canvas does not provision SQL or use cloud connections as a fallback.
+
+Docker image checks also inspect official digest-only cache entries when the
+expected tag is absent. A verified cached Linux amd64 image does not prove
+configuration, ownership or running service health. Fixed-version images
+without matching version evidence remain unverified, not missing or ready.
 
 Owned app shutdown is bounded. Unix uses the owned detached process group,
 with a forced signal after an orderly grace period and a bounded group-status
@@ -576,7 +668,8 @@ Manager, macOS Activity Monitor or your OS process manager and clean up any
 verified residuals manually. The failed state, app lock and port reservation
 are retained; another Stop cannot reconstruct lost ownership. This explicit
 notification is the supported fallback, not automatic orphan recovery.
-Other partial failures keep Stop available for retry and never stop storage.
+Other partial failures keep Stop available for retry. Dependent services remain
+while host shutdown is unconfirmed.
 
 Preparation commands have a separate, existing completion contract: a completed
 command is removed from the preparation list regardless of its exit code.
@@ -587,9 +680,8 @@ not proof that arbitrary detached descendants exited; that existing limitation
 also applies to successful installation/build commands. Functions-host ownership
 is separate and is not released merely because its wrapper closed.
 
-There is no general Stop storage action: another app outside the canvas may use
-the same emulator, so exclusive ownership cannot be established. Closing a
-controller does not stop storage. The registry lasts for the extension process;
+There is no general Stop storage action for a borrowed service: another app may
+use it. Only verified managed runtime services can be cleaned up. The registry lasts for the extension process;
 after a host restart/reload, surviving healthy storage is reused as external,
 not reclaimed by guessing from a PID, port or data path. Storage survival across
 canvas/extension teardown, an operating-system shutdown or host process-tree
@@ -656,13 +748,20 @@ changes; collapsing logs removes the divider and frees space for results.
 **Restore panel size** or Escape returns to the dock without stopping the host,
 resending a request or changing the saved dock size. Closing the panel clears
 the expanded view; the next open uses the normal dock.
-Raw host output starts expanded before a response is available, then defaults
-to collapsed so the result has room. Explicitly opening, reading or scrolling
-the logs preserves that choice for the current run.
+Run opens the output panel for preparation and host logs. Raw host output
+starts expanded and a response does not collapse it. Closing the panel or
+changing the raw-output disclosure keeps that choice for the current run.
+Read-only preparation failures also appear in the retained Run logs before
+a host starts. Java diagnostics identify the failed metadata check and report
+missing tools, permission failures, timeouts or exit codes. When `JAVA_HOME`
+is set, it selects the JDK instead of PATH. Check its `java` and `javap` tools;
+after an environment change, restart the host app and review local settings again.
+Diagnostics omit local paths, environment values and raw command errors.
 Expand **Raw output** for chronological host logs. **Jump to latest** appears
 when you scroll away from the bottom. Opening the panel or raw output, resizing
-the expanded view, and incoming updates return the logs to the latest output
-without moving keyboard focus.
+the expanded view, or selecting **Jump to latest** returns to the latest output.
+Incoming updates follow only when you were already at the bottom. They do not
+move keyboard focus or replace a historical log position.
 Preparation logs are available in the expandable status row only while the panel
 is closed. Opening the panel hides that inline log, leaving preparation task
 status available; closing restores the inline log with the current history.
@@ -672,23 +771,25 @@ any in-flight request continue. Use **Stop** in the Run toolbar to stop the owne
 app without closing its output. If stopping fails, ownership and the Stop action
 remain available for retry. The log icon reopens retained output. There is no
 separate startup-output button below the form. **Send** opens the panel again; **Commands**
-also shows request results above startup and host logs. Escape, navigation and switching detail panels
-only dismiss the view; they never implicitly stop an app. Late output does not
-force a dismissed panel open.
+also shows request results above startup and host logs. Escape and switching
+detail panels only dismiss the view. Leaving Run stops the owned app first;
+if stopping fails, Run stays open. Late output does not force a dismissed panel open.
 Queue acceptance still does not certify that a consumer processed the message.
 A missing response or disconnected display shows an unconfirmed outcome,
 not successful completion. Check the existing request before retrying.
 
 ### Start the app
 
-A short warning beside the controls explains that Start may install dependencies
-and run project scripts. Open **Run help** to review setup and affected files,
-then select **Start** only for a project you trust.
-Start may download dependencies and run the project's build and startup scripts.
-It also creates missing VS Code debug files and `local.settings.json`, adds
-local-only ignore entries, and prepares Azurite when needed. Existing settings
-and debug files are kept. SDKs, Core Tools and VS Code extensions are not
-installed automatically.
+The combined **Apply** reviews required settings, safe exclusions, declared
+dependencies/build and local Blob resources. It preserves comments, unrelated
+values and editor files. Optional debug files are not a Run prerequisite.
+Installed package metadata, interpreter compatibility and current build outputs
+determine readiness, not canvas markers.
+
+**Run** prepares missing bounded local runtime services and starts Functions.
+Folded details show images, allocated ports and applicable product-use terms.
+Core Tools, Docker Desktop, WSL and VS Code extensions are not installed or
+started automatically. Run does not repeat app dependency or settings approval.
 
 | Language | Local preparation |
 |---|---|
@@ -706,7 +807,7 @@ A printed URL alone does not mean the host is ready.
 
 Missing local storage settings use Azurite (`UseDevelopmentStorage=true`).
 An existing compatible emulator can be reused, or one is started for this run;
-Azurite may be downloaded if needed. A reused emulator can contain existing
+Installing a missing Azurite tool belongs to Apply. A reused emulator can contain existing
 messages or blobs. Settings that point to cloud storage are kept, but require
 manual review in VS Code before local startup.
 Python trigger discovery ignores commented decorators and multiline string
@@ -731,13 +832,24 @@ choose it explicitly; if no example is available, the canvas says which input
 still needs review rather than inventing an application payload. No settings,
 credentials or recorded request bodies are used for examples.
 
-Once the app is running, select a function and fill in its request:
+Before startup, select a discovered function and edit its draft. When a matching
+`test.http` contains a safe local request, the canvas uses its method, body and
+query and shows its file, function and source fingerprint. It reads only the
+selected app and validated workspace roots. Request files are data, not setup
+instructions; external targets and credential-bearing samples are not used.
+The host's actual index and identity must be verified before Send is enabled.
 
 | Function | What you can send |
 |---|---|
 | HTTP | Choose the method, fill in route or query parameters and headers, and enter JSON or leave the body empty. Select **Send**. |
 | Azure Storage Queue | Enter a message and select **Send**. It is sent to the binding's queue in Azurite. |
-| Other event sources | Test from VS Code or the event source's own tools; this screen does not provide a sender. |
+| Timer | Enter a JSON object (default `{}`), then select **Send** for a manual invocation of the actual indexed Timer. A 202 response is acceptance, not function completion or proof of schedule firing. |
+| Event Hubs | Edit a JSON event, then publish to the binding's reviewed local hub. Completion requires the unique event in fresh output beyond the pre-send partition watermarks. Startup Timer events cannot prove this send completed. |
+| Service Bus | Edit a message, then publish to the actual local queue or topic. Acceptance does not prove consumer processing. Keep the starter's processing delay; do not send again to obtain an immediate result. |
+| Cosmos DB | Outside current canvas-local Run and Send support, including HTTP input/output dependencies. Use VS Code and configure the test service manually. Template creation and Azure deployment are unchanged. |
+| Blob | Select a PDF up to 2 MiB or use a synthetic PDF, then review its name and content type. Send uploads the binary bytes as a uniquely named local blob, verifies it, and sends a simulated BlobCreated notification for that same blob. Only fresh matching output proves completion. This is not a full Event Grid emulator. |
+| Durable HTTP starter | Use the actual starter, not a health endpoint. Follow its returned local instance receipt to a terminal state. Some starters ignore the body or use source settings instead. `Completed` with error-valued output is not business success. |
+| Unsupported modes | Use VS Code and the matching source tools. Missing setup and unsupported SDK, API or runtime combinations are distinct; neither permits a cloud fallback. |
 
 HTTP tests initially select POST when the function supports it; otherwise they
 select the first advertised method. You can still choose GET when available.
@@ -752,32 +864,250 @@ revision resets the method to that function's default. Replacing the host
 does not clear the request-body draft. Only supported methods are offered,
 and changing the selection never sends a request.
 
+Durable starter drafts also prefer POST when it is supported. If the source
+clearly uses a route parameter to select an orchestration, a single discovered
+orchestrator name fills that parameter. With several names, select the
+orchestration or edit the route JSON. Activity names are not offered as
+orchestrators. Other route parameters remain yours to fill. **Send** stays
+disabled while a required parameter is missing or the route JSON is invalid.
+Checks and source refreshes keep your edited draft; a changed orchestration
+name needs your review.
+
 Queue success means the message was enqueued, not that the function processed it.
 Check the startup logs and the app's output to verify processing.
 Starting the host does not automatically send an HTTP request or queue message.
+Starting an app enables its Timer schedules. A Timer with `runOnStartup` can
+run immediately, including an automatic event producer in a mixed-trigger app.
+Review the warning before Run.
+
+### Automatic local preparation
+
+**Local emulators** checks Docker only for bindings and backends that need it.
+HTTP, Timer and native Azurite do not require Docker. The checks distinguish a
+missing executable, an unreachable engine, an unsupported platform, missing
+images, unreviewed configuration, stopped containers and real readiness.
+A running container or an open port alone is not Ready.
+
+Blob templates select the Blob sender by default, including Event Grid-based Blob
+bindings. Reopened apps also prefer a supported Blob sender over an unrelated
+health endpoint. An explicit function choice or source-bound test draft takes
+precedence. Run does not upload or send data; Send is a separate action. The
+existing Logs and results panel shows upload, notification and output progress.
+Failures keep their delivery stage and do not trigger an automatic repeat.
+
+Local port reservations close incoming readiness connections. If the selected
+source changes, inspection releases its old reservations before checking storage
+endpoints again. These reservations are not running Azurite services; releasing
+them does not stop another service.
+
+For Blob, automatic inspection reads actual
+local readiness and binding-derived input/output containers without changing
+files or services. Review local settings first if the connection is not local.
+Missing Azurite offers deterministic guidance and a canvas-local
+`azurite@3.37.0` installation in Apply. That same approval includes missing Blob
+resources. Run starts missing owned loopback storage and checks or creates only
+approved containers. Apply does not start Functions, upload a Blob or send a
+notification. Existing containers and service data are kept. Run checks
+the local settings and both containers again; a ready Blob app needs no AI receipt.
+No separate file, dependency, storage or registration stage click is required.
+Material external changes require a fresh review; expected changes from Apply
+do not require a second approval.
+
+Event Hubs, Service Bus and DTS have fixed internal Run stages for image verification,
+configuration, bounded startup and identity/health verification.
+Image review reuses verified official cached images, including digest-only
+entries when the required version can be proved. A missing suitable image
+shows its exact official Linux amd64 manifest and compressed size before a download.
+Docker can report either the verified manifest digest or configuration digest
+as the image ID. Review accepts both representations with the exact repository,
+manifest and Linux amd64 configuration evidence. The reported ID must remain
+unchanged between review and execution.
+Automatic downloads are limited to 4 GiB per image. It does not
+download an image just to replace a verified compatible cached image.
+Provide only nonsecret entity references, such as `{"INPUT":"input"}`.
+Connection settings still have their own review.
+App changes remain in Apply. Runtime startup belongs to Run, not another setup
+or registration click.
+
+Run shows the applicable product-use notice before use. Opening the canvas is
+not acceptance. Event Hubs shows its terms and Azurite's MIT license. Service Bus shows
+its terms and the SQL Server 2022 Developer terms, not the old preview terms
+returned by the guide's SQL link. Changed terms invalidate the Run notice.
+The review also shows local ports and each container's memory/CPU bounds.
+Docker writes and registration use the reviewed local engine. An engine identity
+or capacity change stops subsequent resource writes.
+Docker free disk capacity is not verified; allow at least 5 GB before setup.
+SQL credentials are generated privately for the owned containers. They are
+not passed as command arguments, saved in the journal or written to app settings.
+Registration requires a read-only SQL Server 2022 Developer version/edition
+check as well as the broker's configuration, isolation and health checks.
+
+Configuration and a nonsecret setup journal use the app-owned workbench state
+directory, not the app folder. Dependency containers have no published host
+ports. The canvas keeps partial resources after a failure. Unknown startup
+delivery requires read-only reconciliation of the recorded resources before
+another create/start action. Missing or manually started resources are checked
+against their actual identities, configuration and readiness. A verified image cache or completed
+startup is not a registered, ready environment. A restarted canvas can verify
+the retained owned resources rather than replace them.
+Source and service changes trigger fresh inspection. Actual matching Docker
+configuration and protocol readiness can be reused without a canvas receipt.
+Borrowed services are never reconfigured or stopped. Stop and leaving Run stop
+the Functions host first. Managed services stop only after their final consumer.
+Containers and networks with unproved durable storage are retained to protect
+writable-layer data; removal is incomplete. The next Run reuses the verified
+retained containers, images, ports and resources, without a new SQL password.
+An uncertain previous host or worker identity keeps its ownership lock. The
+canvas does not guess process identities or claim orphan recovery.
+
+Automatic configuration is limited to ten local entities, ten explicit Event
+Hubs groups per hub and five Service Bus subscriptions per topic. Session
+bindings and larger configurations need manual review. Cosmos local testing and
+preparation are outside current scope. Even an existing Cosmos receipt cannot
+enable Run or Send; no Cosmos Docker or certificate check is attempted.
+
+DTS uses one task hub from the existing `azureManaged` host configuration.
+Task hub references use the existing app setting, or `default` when absent. Configuration
+records `DTS_TASK_HUB_NAMES`; it does not edit `host.json` or local settings.
+Startup uses one immutable image, a dedicated owned network, 1 GiB and one CPU,
+and allocated loopback ports mapped to 8080 (gRPC) and 8082 (dashboard). Occupied
+ports receive a free allocation; other services are not stopped. Connections
+and the dashboard use actual mappings. Registration checks the actual task hub
+and gRPC readiness; Apply and Run remain separate.
+The [official DTS emulator instructions](https://learn.microsoft.com/azure/durable-task/scheduler/develop-with-durable-task-scheduler)
+do not specify an acceptance flag. Applicable product-specific terms have not
+been verified; the review states this without inventing an EULA gate, acceptance
+record or flag. It does not use another SDK's license.
+
+Use the official setup guide for cases outside these controls. **Plan emulator setup
+with AI** appears only for unresolved preparation failures, with their
+reason. Missing Docker or an unreachable engine first shows deterministic
+guidance, not an automatic AI request. Opening Run and requesting a plan do not
+approve image downloads, container startup, resource creation or license terms.
+Run uses the current images, local ports, resources and linked product-use notice.
+Apply approves the shown app changes once. The canvas does not launch or install Docker/WSL, change
+certificate stores, disable TLS validation or change an Azure account.
+**Discard setup request** discards tracking only. It cannot stop chat operations,
+remove resources or retract an accepted event.
+
+A setup report is checked against the selected app's source revision, immutable
+images, app-owned network and container identities, loopback ports, exact reviewed
+resource limits, running entity configuration and actual readiness. Event Hubs
+needs its Azurite dependency and input/output hubs. Its `$Default` group is
+implicit and must not be listed twice. Service Bus needs SQL Server 2022
+**Developer**, not SQL Edge, and uses AMQP TCP rather than WebSockets or JMS.
+Partitioned Service Bus entities are not admitted. Configure topic subscriptions
+before startup. Event Hubs supports AMQP and Kafka; Functions uses AMQP.
+Configuration changes need a separately reviewed restart. Keep the emulators'
+documented entity/data persistence limits in mind.
+The current official Event Hubs image uses `UserConfig.NamespaceConfig` with
+`Type: "EventHub"`; Service Bus uses `UserConfig.Namespaces`. The verifier checks
+the applicable schema, not a combined substitute. Both retain actual entity,
+listener and output-proof checks.
+
+The private setup receipt is retained only in the current canvas process.
+Startup and Send recheck it; a changed image, resource limit, network, entity
+configuration or source cannot reuse the old approval. If the canvas process
+restarts, verify existing resources again rather than creating replacements.
+The canvas never stops an unrelated process or container.
+
+Apply includes a key-only preview derived from actual
+trigger, input/output, lease and Durable backend references. Existing connection
+values are not displayed. Replacing a value or removing a conflicting
+`__fullyQualifiedNamespace` or `__accountEndpoint` key needs an explicit choice
+on that same review. A conflicting process-environment setting must be corrected
+outside the canvas. Apply checks the exact file, source
+and environment revisions, preserves other values/comments and writes only the
+reviewed local file. It does not start the host or change deployed settings.
+Azurite preparation reuses verified local endpoints or allocates three free
+loopback ports. `UseDevelopmentStorage=true` is only for standard 10000–10002
+mappings. Other allocations use verified explicit Blob, Queue and Table endpoints.
+
+Durable uses the backend in `host.json`. An `azureManaged` app needs the real DTS
+emulator, compatible host extensions and a verified local task hub; readiness
+uses a bounded read-only gRPC query. Emulator readiness does not prove Functions
+extension compatibility. The actual host needs bundle 4.32.0 or newer, or a
+compatible explicit DTS extension; a declared bundle range alone is not proof.
+Changing backends or dependencies needs its
+own reviewed file changes. A local backend does not make activities that fetch
+Microsoft Learn pages offline. For an unfinished receipt, **Check status** reads
+only that run's retained instance capability and never submits the starter again.
+Stopping the host does not cancel an orchestration or retract delivered messages.
+
+**Open dashboard** appears only when the retained DTS setup matches the app
+source, the owned container maps its dashboard to the reviewed loopback port,
+and the dashboard returns HTTP 200. The link is checked separately from gRPC
+readiness and disappears after an unverified check, a source change or an app
+switch. The canvas does not open the dashboard for you. **Check again** does
+not approve service startup or app execution.
+
+### Blob SDK compatibility
+
+Node Event Grid Blob functions with `sdkBinding: true` check the **installed**
+package metadata and actual resolved module identities. Missing dependencies
+are not a proved incompatibility, and a package range or unequal version strings
+alone do not establish failure. This gate does not block unrelated Node HTTP,
+Timer or non-SDK Blob paths, or other languages.
+The metadata-only probe needs Node 22.14 or later in the canvas host. An older
+host reports unverified SDK support, not a proved workload incompatibility.
+
+An untouched official TypeScript Blob v1.0.1 execution failed with
+`Factory for type "AzureStorageBlobs" is not registered` when Functions 4.16.0
+resolved extensions-base 0.3.0 but the Blob SDK extension resolved its own 0.2.0
+registry. The check identifies that verified layout; other separate registries
+are reported as unverified, not automatically labelled incompatible.
+Do not silently rewrite dependencies to make a template test pass. The untouched
+official Java v1.0.1 Blob upload/webhook/processed-PDF execution passed; that
+does not establish success for the TypeScript template or every language.
+If a later stage fails, keep the input/output receipt and inspect it before any
+new send. A successful upload is not successful notification or processing.
+
+### Change a Timer schedule
+
+For a Timer starter, Create includes a six-field Azure Functions NCRONTAB
+schedule. Five-field Unix cron is not accepted. The selected value is written
+into the new Timer source before creation completes. This does not deploy it.
+
+For an existing app, select its actual Timer under **Timer schedule** in Run.
+Stop the host before edits. Enter a schedule, select **Review schedule change**,
+then select **Apply reviewed schedule** to apply that exact review. Source and
+settings revisions are checked again before the write. Apply does not restart
+the host; select Run separately.
+
+Direct literals and unique literal constants can be changed in source. A
+`%SETTING_NAME%` reference changes only that named local setting and preserves
+other local settings. Its preview states that Azure and deployment settings
+are unchanged. Shared setting references and expressions that cannot be changed
+safely must be edited in VS Code. Other timers, `runOnStartup` and `useMonitor`
+are preserved. Azure uses the new source schedule only after a separate
+deployment. Default time is UTC; time-zone support depends on the hosting plan
+and operating system, including Flex/Linux limits.
 
 Select **Stop** when finished. It stops processes started for this run, not
 another app's emulator.
 
 ### If local startup or debugging needs more setup
 
-Select **Open in VS Code** and use its Run and Debug view. Missing debug files
-are prepared when you approve **Start**; existing files may need your own updates.
+Select **Open in VS Code** and use its Run and Debug view. Debug files are not a Run readiness requirement and Run does not create them.
+Use VS Code to configure debugging; existing files may need your own updates.
 See the [VS Code guide](https://learn.microsoft.com/azure/azure-functions/functions-develop-vs-code).
 For Java, replace `<function_build_path>` if it appears in the generated debug task.
 
 Azurite emulates Storage Blob, Queue and Table, not every Azure event source.
-For an unsupported source, use VS Code with the matching emulator:
+For manual setup or an unsupported local mode, use VS Code with the matching emulator:
 
 | Emulator | Setup guide |
 |---|---|
 | Azurite | [Azure Storage emulator](https://learn.microsoft.com/azure/storage/common/storage-install-azurite) |
 | Service Bus | [Service Bus emulator](https://learn.microsoft.com/azure/service-bus-messaging/overview-emulator) |
 | Event Hubs | [Event Hubs emulator](https://learn.microsoft.com/azure/event-hubs/overview-emulator) |
-| Cosmos DB | [Cosmos DB emulator](https://learn.microsoft.com/azure/cosmos-db/emulator) |
+| Cosmos DB | [NoSQL vNext emulator](https://learn.microsoft.com/azure/cosmos-db/emulator-linux) |
+| Durable Task Scheduler | [DTS emulator](https://learn.microsoft.com/azure/durable-task/scheduler/develop-with-durable-task-scheduler) |
 
-These have separate OS, container and API requirements and are not installed
-automatically by the canvas. A failed local run does not prevent you from
+These have separate OS, container and API requirements. Run can prepare the
+supported local services after its product-use notice; Cosmos remains manual
+and unsupported in canvas-local Run. The canvas does not install Docker or WSL.
+A failed local run does not prevent you from
 reviewing deployment settings.
 
 ## Deploy to Azure
