@@ -2,11 +2,11 @@
   "schemaVersion": 2,
   "format": "plugin",
   "name": "containers",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "mutableDocumentation": true,
   "publicationRepository": "microsoft/azure-dev-tools",
   "plugin": {
-    "manifest": ".github/plugin/plugin.json",
+    "manifest": "plugin.json",
     "extension": {
       "name": "containers",
       "canvasId": "containers",
@@ -27,25 +27,29 @@
     ]
   },
   "files": [
-    ".github/plugin/plugin.json",
     "THIRD_PARTY_NOTICES.txt",
     "assets/preview.png",
+    "com.github.copilot/extensions/containers/assets/toolkit/canvas-ui/base.css",
+    "com.github.copilot/extensions/containers/assets/toolkit/canvas-ui/styles.css",
+    "com.github.copilot/extensions/containers/assets/toolkit/ui.mjs",
     "com.github.copilot/extensions/containers/extension.mjs",
-    "com.github.copilot/extensions/containers/ui/chunks/CodeView-PYLDCJHZ.js",
-    "com.github.copilot/extensions/containers/ui/chunks/DockerfileView-3CSKYYIR.js",
-    "com.github.copilot/extensions/containers/ui/chunks/ExecView-BHERHOAC.js",
-    "com.github.copilot/extensions/containers/ui/chunks/FilesView-CRSRRNJT.js",
-    "com.github.copilot/extensions/containers/ui/chunks/LayersView-4YXU37N7.js",
-    "com.github.copilot/extensions/containers/ui/chunks/LogView-4WTED7AR.js",
-    "com.github.copilot/extensions/containers/ui/chunks/RunImageDialog-WOTBFMEV.js",
-    "com.github.copilot/extensions/containers/ui/chunks/StatsView-RUJQVEBR.js",
-    "com.github.copilot/extensions/containers/ui/chunks/chunk-2P6IKGIS.js",
+    "com.github.copilot/extensions/containers/ui/chunks/CodeView-MDCHQMZF.js",
+    "com.github.copilot/extensions/containers/ui/chunks/DockerfileView-OKMAUTIG.js",
+    "com.github.copilot/extensions/containers/ui/chunks/ExecView-AOIBGNDA.js",
+    "com.github.copilot/extensions/containers/ui/chunks/FilesView-6H47URSE.js",
+    "com.github.copilot/extensions/containers/ui/chunks/LayersView-5DCGGZZY.js",
+    "com.github.copilot/extensions/containers/ui/chunks/LogView-TFSJXRTN.js",
+    "com.github.copilot/extensions/containers/ui/chunks/RunImageDialog-ZPDHFAXL.js",
+    "com.github.copilot/extensions/containers/ui/chunks/StatsView-IYQKL2Q2.js",
     "com.github.copilot/extensions/containers/ui/chunks/chunk-2TH4JAED.js",
-    "com.github.copilot/extensions/containers/ui/chunks/chunk-7QG3U2SL.js",
-    "com.github.copilot/extensions/containers/ui/chunks/chunk-KZ4CRFXB.js",
+    "com.github.copilot/extensions/containers/ui/chunks/chunk-55FN5IQ3.js",
+    "com.github.copilot/extensions/containers/ui/chunks/chunk-A6TCURMY.js",
+    "com.github.copilot/extensions/containers/ui/chunks/chunk-CG6YZ2HY.js",
+    "com.github.copilot/extensions/containers/ui/chunks/chunk-ECP5LVF7.js",
     "com.github.copilot/extensions/containers/ui/index.html",
     "com.github.copilot/extensions/containers/ui/main.js",
     "package.json",
+    "plugin.json",
     "skills/containers/SKILL.md"
   ],
   "status": "publication-controlled-by-external-approval",
@@ -56,10 +60,20 @@
   },
   "build": {
     "esbuild": "0.25.12",
-    "lockSha256": "fa9d854451db4371f0b00311130929a71c25d91c55ebcada7128466693ed503e",
-    "inputSha256": "af702881e7e28a373e3d6bdd3749ff41b9d340350d16b07c4017322f67313628"
+    "lockSha256": "429a4c12b47d55c57be4387341c0227265dfe1146afa2e25f64b9909b50f55ed",
+    "inputSha256": "4283e5cf645c4a3aea41c4ff987c51ee5d4629bb0e7f13f9030bbe1688ae77c4"
   },
   "dependencies": [
+    {
+      "name": "@cloud-foundation/containers-core",
+      "version": "0.1.0",
+      "license": null
+    },
+    {
+      "name": "@cloud-foundation/studio-runtime",
+      "version": "0.1.0",
+      "license": null
+    },
     {
       "name": "@emotion/hash",
       "version": "0.9.2",
@@ -87,52 +101,52 @@
     },
     {
       "name": "@fluentui/react-accordion",
-      "version": "9.12.4",
+      "version": "9.12.5",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-aria",
-      "version": "9.17.15",
-      "license": "MIT"
-    },
-    {
-      "name": "@fluentui/react-badge",
-      "version": "9.5.6",
+      "version": "9.17.16",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-button",
-      "version": "9.11.1",
+      "version": "9.11.3",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-checkbox",
-      "version": "9.6.5",
+      "version": "9.6.6",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-combobox",
-      "version": "9.17.7",
+      "version": "9.17.8",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-context-selector",
-      "version": "9.2.20",
+      "version": "9.2.21",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-dialog",
-      "version": "9.18.5",
+      "version": "9.18.6",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-divider",
-      "version": "9.7.5",
+      "version": "9.7.6",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-field",
-      "version": "9.5.5",
+      "version": "9.5.6",
+      "license": "MIT"
+    },
+    {
+      "name": "@fluentui/react-headless-components-preview",
+      "version": "0.3.2",
       "license": "MIT"
     },
     {
@@ -142,62 +156,67 @@
     },
     {
       "name": "@fluentui/react-input",
-      "version": "9.8.7",
+      "version": "9.8.8",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-jsx-runtime",
-      "version": "9.4.6",
+      "version": "9.4.7",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-label",
-      "version": "9.4.5",
+      "version": "9.4.6",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-link",
-      "version": "9.8.5",
+      "version": "9.8.6",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-menu",
-      "version": "9.25.6",
-      "license": "MIT"
-    },
-    {
-      "name": "@fluentui/react-message-bar",
-      "version": "9.7.7",
+      "version": "9.25.8",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-motion",
-      "version": "9.16.4",
+      "version": "9.16.5",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-motion-components-preview",
-      "version": "0.15.9",
+      "version": "0.15.10",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-portal",
-      "version": "9.8.16",
+      "version": "9.8.17",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-positioning",
-      "version": "9.23.3",
+      "version": "9.23.4",
+      "license": "MIT"
+    },
+    {
+      "name": "@fluentui/react-progress",
+      "version": "9.5.7",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-provider",
-      "version": "9.22.21",
+      "version": "9.22.23",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-radio",
-      "version": "9.6.6",
+      "version": "9.6.7",
+      "license": "MIT"
+    },
+    {
+      "name": "@fluentui/react-select",
+      "version": "9.5.7",
       "license": "MIT"
     },
     {
@@ -206,13 +225,8 @@
       "license": "MIT"
     },
     {
-      "name": "@fluentui/react-spinner",
-      "version": "9.8.6",
-      "license": "MIT"
-    },
-    {
       "name": "@fluentui/react-switch",
-      "version": "9.7.6",
+      "version": "9.7.7",
       "license": "MIT"
     },
     {
@@ -222,32 +236,32 @@
     },
     {
       "name": "@fluentui/react-tabs",
-      "version": "9.12.5",
+      "version": "9.12.6",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-tabster",
-      "version": "9.26.18",
+      "version": "9.26.19",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-text",
-      "version": "9.6.20",
+      "version": "9.6.21",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-textarea",
-      "version": "9.7.7",
+      "version": "9.7.8",
       "license": "MIT"
     },
     {
-      "name": "@fluentui/react-tooltip",
-      "version": "9.10.7",
+      "name": "@fluentui/react-toolbar",
+      "version": "9.8.7",
       "license": "MIT"
     },
     {
       "name": "@fluentui/react-utilities",
-      "version": "9.26.7",
+      "version": "9.27.0",
       "license": "MIT"
     },
     {
@@ -271,8 +285,18 @@
       "license": "MIT"
     },
     {
+      "name": "@microsoft/focusgroup-polyfill",
+      "version": "1.6.0",
+      "license": "MIT"
+    },
+    {
       "name": "@microsoft/vscode-ext-webview",
       "version": "0.10.1",
+      "license": "MIT"
+    },
+    {
+      "name": "@primer/octicons-react",
+      "version": "19.38.0",
       "license": "MIT"
     },
     {
@@ -288,11 +312,6 @@
     {
       "name": "keyborg",
       "version": "3.498.0",
-      "license": "MIT"
-    },
-    {
-      "name": "keyborg",
-      "version": "2.14.1",
       "license": "MIT"
     },
     {
@@ -338,55 +357,63 @@
   ],
   "modules": [
     {
-      "file": "com.github.copilot/extensions/containers/extension.mjs",
+      "file": "com.github.copilot/extensions/containers/assets/toolkit/ui.mjs",
       "platform": "node"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/chunk-2P6IKGIS.js",
-      "platform": "browser"
+      "file": "com.github.copilot/extensions/containers/extension.mjs",
+      "platform": "node"
     },
     {
       "file": "com.github.copilot/extensions/containers/ui/chunks/chunk-2TH4JAED.js",
       "platform": "browser"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/chunk-7QG3U2SL.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/chunk-55FN5IQ3.js",
       "platform": "browser"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/chunk-KZ4CRFXB.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/chunk-A6TCURMY.js",
       "platform": "browser"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/CodeView-PYLDCJHZ.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/chunk-CG6YZ2HY.js",
       "platform": "browser"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/DockerfileView-3CSKYYIR.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/chunk-ECP5LVF7.js",
       "platform": "browser"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/ExecView-BHERHOAC.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/CodeView-MDCHQMZF.js",
       "platform": "browser"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/FilesView-CRSRRNJT.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/DockerfileView-OKMAUTIG.js",
       "platform": "browser"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/LayersView-4YXU37N7.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/ExecView-AOIBGNDA.js",
       "platform": "browser"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/LogView-4WTED7AR.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/FilesView-6H47URSE.js",
       "platform": "browser"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/RunImageDialog-WOTBFMEV.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/LayersView-5DCGGZZY.js",
       "platform": "browser"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/StatsView-RUJQVEBR.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/LogView-TFSJXRTN.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/containers/ui/chunks/RunImageDialog-ZPDHFAXL.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/containers/ui/chunks/StatsView-IYQKL2Q2.js",
       "platform": "browser"
     },
     {
@@ -396,9 +423,14 @@
   ],
   "assets": [
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/chunk-2P6IKGIS.js",
-      "route": "chunks/chunk-2P6IKGIS.js",
-      "mime": "text/javascript; charset=utf-8"
+      "file": "com.github.copilot/extensions/containers/assets/toolkit/canvas-ui/base.css",
+      "route": "canvas-ui/base.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/containers/assets/toolkit/canvas-ui/styles.css",
+      "route": "canvas-ui/styles.css",
+      "mime": "text/css; charset=utf-8"
     },
     {
       "file": "com.github.copilot/extensions/containers/ui/chunks/chunk-2TH4JAED.js",
@@ -406,53 +438,63 @@
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/chunk-7QG3U2SL.js",
-      "route": "chunks/chunk-7QG3U2SL.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/chunk-55FN5IQ3.js",
+      "route": "chunks/chunk-55FN5IQ3.js",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/chunk-KZ4CRFXB.js",
-      "route": "chunks/chunk-KZ4CRFXB.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/chunk-A6TCURMY.js",
+      "route": "chunks/chunk-A6TCURMY.js",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/CodeView-PYLDCJHZ.js",
-      "route": "chunks/CodeView-PYLDCJHZ.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/chunk-CG6YZ2HY.js",
+      "route": "chunks/chunk-CG6YZ2HY.js",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/DockerfileView-3CSKYYIR.js",
-      "route": "chunks/DockerfileView-3CSKYYIR.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/chunk-ECP5LVF7.js",
+      "route": "chunks/chunk-ECP5LVF7.js",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/ExecView-BHERHOAC.js",
-      "route": "chunks/ExecView-BHERHOAC.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/CodeView-MDCHQMZF.js",
+      "route": "chunks/CodeView-MDCHQMZF.js",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/FilesView-CRSRRNJT.js",
-      "route": "chunks/FilesView-CRSRRNJT.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/DockerfileView-OKMAUTIG.js",
+      "route": "chunks/DockerfileView-OKMAUTIG.js",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/LayersView-4YXU37N7.js",
-      "route": "chunks/LayersView-4YXU37N7.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/ExecView-AOIBGNDA.js",
+      "route": "chunks/ExecView-AOIBGNDA.js",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/LogView-4WTED7AR.js",
-      "route": "chunks/LogView-4WTED7AR.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/FilesView-6H47URSE.js",
+      "route": "chunks/FilesView-6H47URSE.js",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/RunImageDialog-WOTBFMEV.js",
-      "route": "chunks/RunImageDialog-WOTBFMEV.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/LayersView-5DCGGZZY.js",
+      "route": "chunks/LayersView-5DCGGZZY.js",
       "mime": "text/javascript; charset=utf-8"
     },
     {
-      "file": "com.github.copilot/extensions/containers/ui/chunks/StatsView-RUJQVEBR.js",
-      "route": "chunks/StatsView-RUJQVEBR.js",
+      "file": "com.github.copilot/extensions/containers/ui/chunks/LogView-TFSJXRTN.js",
+      "route": "chunks/LogView-TFSJXRTN.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/containers/ui/chunks/RunImageDialog-ZPDHFAXL.js",
+      "route": "chunks/RunImageDialog-ZPDHFAXL.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/containers/ui/chunks/StatsView-IYQKL2Q2.js",
+      "route": "chunks/StatsView-IYQKL2Q2.js",
       "mime": "text/javascript; charset=utf-8"
     },
     {
