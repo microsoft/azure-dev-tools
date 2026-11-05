@@ -46,7 +46,7 @@
     },
     {
       "name": "containers",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "description": "Copilot canvas extension for local Docker and Podman: sortable container and image lists, live log streaming, CPU and memory charts, a filesystem browser, image layer size breakdown, and Dockerfile provenance.",
       "source": "canvases/containers"
     },
