@@ -9,6 +9,8 @@
             content="default-src 'none'; connect-src 'self'; img-src 'self' data:; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:;"
         />
         <title>Containers</title>
+        <link rel="stylesheet" href="./canvas-ui/styles.css" />
+        <link rel="stylesheet" href="./canvas-ui/base.css" />
         <style>
             html, body, #root { height: 100%; margin: 0; }
 
@@ -30,7 +32,28 @@
                whenever one opens. Size the real provider with a selector the
                portal cannot match, and make body-level providers transparent. */
             #root > .fui-FluentProvider { height: 100%; }
+            #root > .fui-FluentProvider > .ct-provider { height: 100%; }
             body > .fui-FluentProvider { background-color: transparent; }
+
+            .ct-button > .ct-button-icon {
+                font-size: 20px;
+                width: 20px;
+                height: 20px;
+                justify-content: center;
+            }
+            .ct-button[data-size="large"] > .ct-button-icon {
+                font-size: 24px;
+                width: 24px;
+                height: 24px;
+            }
+
+            .container-view-head { flex-wrap: wrap; row-gap: 8px; }
+            .container-view-head > .fui-Title3 {
+                flex: 1 1 180px;
+                min-width: 0;
+                overflow-wrap: anywhere;
+            }
+            .container-view-head > :not(.fui-Title3) { flex-shrink: 0; }
 
             /* ----------------------------------------------------------------
                Component-level matching.
@@ -54,11 +77,9 @@
                 --colorNeutralBackground1: var(--background-color-control-rest);
                 --colorNeutralBackground1Hover: var(--background-color-control-hover);
                 --colorNeutralBackground1Pressed: var(--background-color-control-active);
-                /* GitHub's controls are medium, not semibold. Fluent uses
-                   semibold at default size and regular at small, which reads as
-                   two different button styles in one toolbar. */
-                --fontWeightRegular: var(--font-weight-medium, 500);
-                --fontWeightSemibold: var(--font-weight-medium, 500);
+                /* Keep control text normal weight at every button size. */
+                --fontWeightRegular: var(--font-weight-normal, 400);
+                --fontWeightSemibold: var(--font-weight-normal, 400);
             }
 
             /* Headings use GitHub's display face (Mona Sans); body text stays
