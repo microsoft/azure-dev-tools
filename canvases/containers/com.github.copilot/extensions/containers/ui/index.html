@@ -54,11 +54,9 @@
                 --colorNeutralBackground1: var(--background-color-control-rest);
                 --colorNeutralBackground1Hover: var(--background-color-control-hover);
                 --colorNeutralBackground1Pressed: var(--background-color-control-active);
-                /* GitHub's controls are medium, not semibold. Fluent uses
-                   semibold at default size and regular at small, which reads as
-                   two different button styles in one toolbar. */
-                --fontWeightRegular: var(--font-weight-medium, 500);
-                --fontWeightSemibold: var(--font-weight-medium, 500);
+                /* Keep control text normal weight at every button size. */
+                --fontWeightRegular: var(--font-weight-normal, 400);
+                --fontWeightSemibold: var(--font-weight-normal, 400);
             }
 
             /* Headings use GitHub's display face (Mona Sans); body text stays
