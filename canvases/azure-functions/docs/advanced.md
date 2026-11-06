@@ -521,8 +521,17 @@ Open **Run and test** for the selected project. The action row appears below
 the app fields; select an app first only when the workspace contains
 more than one. Selection and opening Run inspect the actual local environment,
 without installation or startup. A usable app needs no preparation clicks.
-Necessary app changes use one combined **Apply**, with conflict choices on the
-same review. Run and Send remain separate actions. Prerequisite
+Click **Run** to start the Host, or **Invoke** to start it when needed and send
+the selected test input after verified readiness.
+The [Run and Invoke specification](specs/run-preparation.md) defines
+automatic preparation and supported fallback, without a routine preparation
+approval. Only **Open an existing**
+updates to an existing `local.settings.json` need a short settings confirmation
+and a verified backup before the write. **Create a function** needs neither,
+even when generated settings already exist. Template metadata does not change
+that rule. Backups have unique names under the app's `.local-settings-backups/`
+directory, excluded from Git and deployment. Confirmation continues the original operation; cancellation sends
+no input. Prerequisite
 checks still run on startup; use **Browse → Check prerequisites** for a separate
 tool review without leaving the task.
 
@@ -530,15 +539,18 @@ Run selects a function that matches the trusted template trigger when that
 metadata is available. Otherwise, it prefers an actual non-Timer trigger over
 an auxiliary Timer. All functions remain in the selector. Your selection and
 each function's message draft remain through progress updates.
+With no explicit selection, HTTP selection must prefer a POST-capable function;
+GET-only functions keep their valid GET method and bindings.
 For Durable apps, the actual HTTP starter is selected before a health endpoint
 when no other template trigger or user selection applies. One registered
 orchestrator fills its starter route automatically; multiple orchestrators
-keep the explicit choice. Run starts only the host. Send starts the
+keep the explicit choice. Run starts only the host. Invoke starts the
 orchestration and follows its returned instance status.
-**Local preparation** starts collapsed, with **Apply** shown only when app
-changes are needed. Expand its heading to inspect files, dependencies and
-settings. Required conflict choices and errors stay visible; Apply stays
-disabled until each conflict has an explicit choice.
+**Local runtime details** starts collapsed. The settings confirmation
+shows only required settings changes, not unrelated dependency commands.
+Preparation progress and unresolved failures stay in Logs and results.
+The Host is shared by all app functions. Other listeners can run when their
+events arrive, including scheduled Timer executions.
 If inspection fails, **Check again** stays visible outside the collapsed
 details. It repeats read-only inspection; it does not download or start a service.
 Run keeps the verified image reference shown during preparation across download,
@@ -550,14 +562,16 @@ use a canvas popup. Browser handoff does not prove that a window opened. Launche
 failures appear in **Logs and results** with the URL for manual use.
 **Timer schedule** starts collapsed when another trigger is selected. Selecting
 a Timer opens its schedule controls. The startup Timer warning remains visible.
-During Apply or Run, the current preparation stage stays visible. The existing
+During Run or Invoke, the current preparation stage stays visible. The existing
 **Logs and results** panel opens automatically when you start either action.
 If you close it, later output does not reopen it during that preparation. Docker image
 pull lines appear while the pull is pending. Credentials and private paths
 are removed before publication; inspection payloads and command arguments are
 not streamed. The compact progress row does not duplicate logs while the output
 panel is open. The **Logs and results** icon can reopen a closed panel.
-Progress does not change Run, Stop, lease or Send permissions.
+Progress does not change approval, Stop or lease permissions. A failed required
+service or Host startup stops the operation before test input is sent.
+Approved changes and partial results are kept; there is no automatic resend.
 
 For Service Bus, Run starts the reviewed SQL Server dependency and emulator,
 then waits for emulator health before it verifies SQL Server 2022 Developer
@@ -566,9 +580,10 @@ bindings. A successful send means broker acceptance, not function completion.
 Stop keeps managed containers when their data cannot be safely removed;
 it does not stop borrowed services.
 
-The action row places **Send** immediately before **Stop** when the host is running.
+The action row places **Invoke** immediately before **Stop** when the Host is running.
 Before startup, the labeled outline-triangle **Run** button uses primary styling
-and Send is visible but disabled when a function draft is available. The single VS Code icon button uses the branded logo,
+and **Invoke** is available for a supported function draft. It starts the Host
+before it sends that input. The single VS Code icon button uses the branded logo,
 secondary styling, an accessible name and a tooltip. It opens the selected project
 for editing and debugging. Run and Jump to also open the selected function's
 verified source file. Without a function selection, one unambiguous entry file
@@ -688,15 +703,22 @@ canvas/extension teardown, an operating-system shutdown or host process-tree
 teardown is not guaranteed or required.
 This is a local development process, not an installed system service.
 
-Python dependency restoration prefers an already installed `uv`, using
-`uv pip install --python <selected-app .venv interpreter> -r requirements.txt`.
-If `uv` is not found, Run uses that same environment's `python -m pip install`
-as before. Run never installs `uv` automatically or changes dependency declarations.
-The activity output identifies the selected tool. A failed uv check or restore
-is reported as an error, not silently retried with pip. Both paths use the
-existing package-index, proxy and certificate environment.
-A matching dependency marker still reuses the prepared environment without
-another restore. Deployment and VS Code debug tasks retain their own setup paths.
+Python preparation prefers an installed `uv` for interpreter discovery,
+environment creation and dependency installation. A uv-managed interpreter
+does not require a global `python` or `python3` command. Read-only checks do
+not create an environment or download Python.
+If uv is absent or fails, approved preparation uses a compatible installed
+Python and pip. Dependency fallback keeps the same selected environment and
+requirements. If that environment lacks pip, preparation uses Python's bundled
+`ensurepip`. Both paths keep the same package-index, proxy and certificate policy.
+The progress line says **uv is unavailable; preparing with Python/pip.**
+Details stay in the output; success clears the fallback status.
+Preparation does not install uv, download Python, change dependency declarations
+or overwrite an existing incomplete environment.
+Verified installed dependencies are reused without another restore.
+New optional VS Code debug tasks verify the prepared `.venv`; they do not
+repeat bootstrap with a global Python command. Existing debug files are kept.
+Deployment retains its separate preparation and approval.
 
 Local preparation starts as a single-line status showing the current task.
 Its spinner becomes a chevron on hover or keyboard focus; touch devices show
@@ -780,16 +802,19 @@ not successful completion. Check the existing request before retrying.
 
 ### Start the app
 
-The combined **Apply** reviews required settings, safe exclusions, declared
-dependencies/build and local Blob resources. It preserves comments, unrelated
-values and editor files. Optional debug files are not a Run prerequisite.
+**Run** and **Invoke** prepare required settings, safe exclusions, declared
+dependencies/build and local Blob resources automatically. Only an existing
+settings update through **Open an existing** needs confirmation and backup.
+Comments, unrelated values and editor files are preserved. Optional debug files are not a Run prerequisite.
 Installed package metadata, interpreter compatibility and current build outputs
 determine readiness, not canvas markers.
 
 **Run** prepares missing bounded local runtime services and starts Functions.
 Folded details show images, allocated ports and applicable product-use terms.
 Core Tools, Docker Desktop, WSL and VS Code extensions are not installed or
-started automatically. Run does not repeat app dependency or settings approval.
+started automatically. Invoke can start a stopped Host and sends only after
+readiness is verified. Supported fallback runs automatically; unresolved failures
+show their cause and recovery guidance without resending input.
 
 | Language | Local preparation |
 |---|---|
@@ -903,15 +928,14 @@ them does not stop another service.
 For Blob, automatic inspection reads actual
 local readiness and binding-derived input/output containers without changing
 files or services. Review local settings first if the connection is not local.
-Missing Azurite offers deterministic guidance and a canvas-local
-`azurite@3.37.0` installation in Apply. That same approval includes missing Blob
-resources. Run starts missing owned loopback storage and checks or creates only
-approved containers. Apply does not start Functions, upload a Blob or send a
-notification. Existing containers and service data are kept. Run checks
+Missing Azurite uses a canvas-local `azurite@3.37.0` installation during
+Run or Invoke. The same operation starts missing owned loopback storage and
+checks or creates only missing required local Blob containers. Run does not
+upload a Blob or send a notification. Existing containers and service data are kept. Run checks
 the local settings and both containers again; a ready Blob app needs no AI receipt.
 No separate file, dependency, storage or registration stage click is required.
-Material external changes require a fresh review; expected changes from Apply
-do not require a second approval.
+Material external changes invalidate the operation; expected preparation changes
+do not require a separate approval.
 
 Event Hubs, Service Bus and DTS have fixed internal Run stages for image verification,
 configuration, bounded startup and identity/health verification.
@@ -1194,13 +1218,20 @@ blank optional values use the template defaults.
 
 | Infrastructure | Input inspection |
 |---|---|
-| Bicep | Uses the installed Bicep compiler without restoring modules. If referenced modules are missing, restore them in a terminal, then select **Reload deployment settings**. An existing ARM JSON entry is also supported. |
+| Bicep | Checks the installed compiler's cache first. Selecting **Deploy to Azure** or **Reload deployment settings** permits one internal restore when modules are missing, followed by another inspection. Recovery does not start deployment or change project files. If recovery fails, the canvas shows the cause and next action. An existing ARM JSON entry is also supported. |
 | Terraform | Install [terraform-config-inspect](https://github.com/hashicorp/terraform-config-inspect) and add it to PATH. Inspection reads configuration; it does not run Terraform. |
 
 If inspection fails, resolve the reported dependency or configuration error
 and select **Reload deployment settings** above the fields. This rereads the
 project configuration without deploying. Changes to infrastructure files require a
 fresh input review before deployment.
+
+**Commands** records Bicep compilation, one permitted module restore
+and recompilation, including BCP codes and safe file locations. Dependent
+BCP104/BCP062 errors do not prevent a restore attempt when modules can be the
+cause. Remaining errors still stop preparation. See the
+[deployment preparation](specs/deployment-preparation.md) and
+[Bicep recovery](specs/bicep-recovery.md) specifications.
 
 Reloading keeps unsent template input drafts, including secrets, in the current
 panel while inspection is loading or fails. When fields change, only drafts
@@ -1481,6 +1512,11 @@ returns you to this reconnect control instead of asking AI to fix the connection
 If reconnection fails, the notice keeps the error and lets you try reconnecting
 again; it does not retry an app operation. Already accepted requests remain
 tracked until they settle.
+
+Normal waiting uses task progress, not a reconnect warning. Template creation
+is acknowledged before initialization finishes. Other accepted requests remain
+tracked while the server confirms that they are active. See the
+[progress and display recovery specification](specs/display-recovery.md).
 
 The header Home action only changes the display and retains tracking.
 Neither action restarts the provider, repeats work or changes Azure/sign-in.

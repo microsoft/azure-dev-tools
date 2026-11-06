@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "format": "plugin",
   "name": "azure-functions",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "mutableDocumentation": true,
   "legalNotices": [
     "notices/emulator-sdk-MIT-LICENSE.txt"
@@ -474,8 +474,8 @@
   },
   "build": {
     "esbuild": "0.25.12",
-    "lockSha256": "b1cd88485fe244afe1835df54e1eefc954dc3059c958c385872992215f10c91f",
-    "inputSha256": "8125c3f1c3906684b4abbabf7efd7bee761648adfa052b4d6e8bc7d3771c45e5"
+    "lockSha256": "c6a0b35c8d68631367f0e56ca558b178bdf52b4d48d1ca9c6ea69f4dc3aa1117",
+    "inputSha256": "bdf12fe680c21771d284d4005601ac28e4d1e18c6d2518d1dbe34657b95a79fe"
   },
   "dependencies": [
     {

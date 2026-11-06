@@ -100,15 +100,23 @@ user's explicit confirmation. Do not call canvas actions such as
   template, then opens Customize: the user can open the editor, optionally ask
   AI for changes, or go directly to Run and test.
 - Run uses the selected app, including an explicit monorepo app choice.
-  A ready app needs only **Run**. Required app settings, dependencies/build and
-  missing Blob resources use one combined **Apply** with the shown conflict
-  choices. Do not require Check, Review or per-service preparation clicks.
-  **Run** then prepares missing local services using the current product-use
+  **Run** and **Invoke** automatically prepare required app settings,
+  dependencies/build and missing local Blob resources, including supported
+  fallback. Do not require Apply or per-service preparation clicks. Only
+  **Open an existing** updates to an existing `local.settings.json` need one
+  short settings confirmation and a verified backup before the write.
+  **Create a function** needs neither, even when generated settings already
+  exist. The entry route, not template metadata, determines this rule.
+  **Run** prepares missing local services using the current product-use
   notice and verified images, ports and configuration. Compatible borrowed
   services are not changed or stopped. Stop and leaving Run stop the host
   first; owned services stop after their last consumer. Containers and networks
   remain when removal could lose data. Report retained resources, not complete
-  cleanup. **Send** remains separate. AI setup is a last resort after an
+  cleanup. **Invoke** starts a stopped Host when needed, verifies readiness,
+  then sends the selected input once. Run itself sends no input. Default HTTP
+  selection prefers a POST-capable function unless a function or trusted test
+  request was explicitly selected. Keep GET-only bindings unchanged.
+  AI setup is a last resort after an
   actionable failure, not the normal flow. Cosmos and SQL remain unsupported
   for local Run; Hosted Skills uses its separate workflow.
 - The optional **Create with AI help** uses a trusted template skeleton first,

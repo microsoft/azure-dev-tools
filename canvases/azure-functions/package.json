@@ -1,6 +1,6 @@
 {
   "name": "azure-functions",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "type": "module",
   "main": "com.github.copilot/extensions/azure-functions/extension.mjs",
