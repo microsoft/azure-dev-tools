@@ -14,10 +14,13 @@ Use this reference when `azure-functions-create`, diagnostics, or best-practices
 
 With the panel open, selecting Run automatically checks the selected app using
 bounded read-only metadata and readiness probes. Do not install, build or execute
-app code during this scan. A ready app needs no preparation click. Required app
-changes use one combined Apply; Run then prepares missing local runtime services.
+app code during this scan. Run and Invoke automatically prepare required app
+changes and missing local runtime services, with supported fallback. Only
+Open an existing updates to an existing `local.settings.json` require
+confirmation and a verified local backup. Create a function needs neither.
 Do not impose the manual verification stages below as extra canvas buttons.
-Run uses the displayed product-use notice. Send requires its own action.
+Run uses the displayed product-use notice and sends no input. Invoke starts
+the Host when needed and sends once after readiness is verified.
 Compatible borrowed services remain unchanged. Stop and leaving Run stop the
 host first and release only this run's service leases. Data, images and borrowed
 services are kept. Managed containers and networks are stopped and retained when

@@ -35,7 +35,7 @@
     <dialog id="local-preparation" aria-labelledby="run-help-title" aria-describedby="run-help-description" data-tabster='{"uncontrolled":{"completely":true}}'>
       <div class="row between"><h2 id="run-help-title" data-i18n="run.preparation">Run help</h2><button class="btn ghost" type="button" id="close-run-help" data-i18n="workbench.close">Close</button></div>
       <div class="run-help-body">
-        <p id="run-help-description" data-i18n="run.approval">Start may download dependencies and run app build and startup scripts. Missing debug/local settings are created; existing settings are kept. Local-only exclusions are added to ignore files.</p>
+        <p id="run-help-description" data-i18n="run.approval">Run and Invoke prepare the app automatically. Open existing asks before backing up and updating existing local settings. Create needs no settings confirmation or backup.</p>
         <p class="muted" data-i18n="run.hostScope">Running confirms the host is up, not that a function succeeded.</p>
         <p class="muted" data-i18n-code="run.note" data-cmd="func start">Prepare language dependencies, VS Code debug files and Azurite, then run <code>func start</code>.</p>
         <div id="local-plan"></div>
@@ -343,8 +343,9 @@
         </section>
         <section id="local-settings" class="card" hidden>
           <details id="local-settings-details">
-          <summary data-i18n="run.settings.title">Local preparation</summary>
-          <p class="muted" data-i18n="run.settings.note">Inspection makes no changes. Apply required app changes once, then Run. Send remains separate.</p>
+          <summary id="local-review-title" data-i18n="run.settings.title">Local runtime details</summary>
+          <p id="local-settings-note" class="muted" data-i18n="run.settings.note">Run and Invoke prepare the app automatically. Inspection makes no changes.</p>
+          <p id="local-operation-status" class="muted" role="status" aria-live="polite"></p>
           <div class="row actions-row">
             <button id="request-local-setup" type="button" class="btn ghost" data-i18n="run.setup.request">Plan emulator setup with AI</button>
             <button id="discard-local-setup" type="button" class="btn ghost" hidden data-i18n="run.setup.discard">Discard setup request</button>
@@ -354,14 +355,17 @@
             <p id="local-preparation-preview" class="muted" role="status"></p>
           </div>
           <div id="local-settings-review" hidden>
-            <p class="muted" data-i18n="run.settings.scope">Changes apply only to local.settings.json. Other values and comments are kept. No Azure settings change.</p>
+            <p id="local-settings-scope" class="muted" data-i18n="run.settings.scope">Changes apply only to local.settings.json. Other values and comments are kept. No Azure settings change.</p>
             <div id="local-settings-changes" role="status"></div>
           </div>
           </details>
           <p id="local-preparation-status" class="muted" role="status"></p>
           <button id="local-emulator-refresh" type="button" class="btn ghost" hidden data-i18n="run.emulator.refresh">Check again</button>
           <div id="local-settings-conflicts"></div>
-          <button id="apply-local-preparation" type="button" class="btn primary" hidden data-i18n="run.preparation.apply">Apply</button>
+          <div class="row actions-row">
+            <button id="apply-local-preparation" type="button" class="btn primary" hidden>Back up and update</button>
+            <button id="local-operation-cancel" type="button" class="btn ghost" hidden data-i18n="run.operation.cancel">Cancel</button>
+          </div>
         </section>
         <section id="local-timer-settings" class="card" hidden>
           <details id="local-timer-details">
@@ -380,7 +384,7 @@
         </section>
         <div id="local-run-warnings" class="muted" role="status"></div>
         <div class="row actions-row run-actions" id="local-actions">
-          <button class="btn primary" type="button" id="local-send" aria-label="Send" data-i18n-aria-label="run.send" title="Send" data-i18n-title="run.send" hidden disabled><svg class="run-play-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m2 2 12 6-12 6 2-6-2-6ZM4 8h10"/></svg><span class="label" data-i18n="run.send">Send</span></button>
+          <button class="btn primary" type="button" id="local-send" aria-label="Invoke" data-i18n-aria-label="run.send" title="Invoke" data-i18n-title="run.send" hidden disabled><svg class="run-play-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m2 2 12 6-12 6 2-6-2-6ZM4 8h10"/></svg><span class="label" data-i18n="run.send">Invoke</span></button>
           <button class="btn primary" type="button" id="start-local" aria-label="Run" data-i18n-aria-label="run.start" title="Run" data-i18n-title="run.start" aria-describedby="local-approval" disabled><svg class="run-play-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path d="M4 2.5v11L13 8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="label" data-i18n="run.start">Run</span></button>
           <button class="btn ghost icon-button" type="button" id="local-show-result" aria-label="Logs and results" title="Logs and results" data-i18n-aria-label="run.logs" data-i18n-title="run.logs" aria-controls="local-output" aria-expanded="false" hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h4"/></svg></button>
           <button class="btn ghost icon-button" type="button" id="run-open-vscode" aria-label="Open in VS Code" data-i18n-aria-label="run.openVsCode" title="Open in VS Code" data-i18n-title="run.openVsCode" disabled></button>
@@ -389,7 +393,7 @@
         </div>
         <div id="local-progress" class="action-feedback" hidden></div>
         <div id="local-message" class="muted action-feedback" role="status"></div>
-        <p id="local-approval" class="muted" data-i18n="run.startWarning" hidden>Apply may install declared dependencies and run the required build.</p>
+        <p id="local-approval" class="muted" data-i18n="run.startWarning">Run starts the shared Host. Invoke starts it if needed, then sends the selected test input. Other listeners can also run.</p>
         <div id="local-fallback" class="inline-notice" hidden></div>
       </section>
     </div>

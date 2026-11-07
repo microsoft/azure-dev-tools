@@ -13,8 +13,22 @@ In the GitHub Copilot app, open **Customize → Plugins** and install
 a fresh chat.
 
 **Azure Functions Hosted Skills** is a separate plugin, not an installation
-of this one. See the [prerequisites](docs/advanced.md#prerequisites) for the
-tools needed for each task.
+of this one.
+
+## Prerequisites
+
+Opening the canvas does not require the tools below. Install them for the tasks
+you use, then open **Check prerequisites** in the canvas.
+
+| Task | Required tools |
+|---|---|
+| Create from a template or deploy | Azure Developer CLI (`azd`); deployment also needs Azure access |
+| Run locally | Azure Functions Core Tools 4 (`func`) and the app's language dependencies |
+| Open GitHub source | Git and GitHub CLI (`gh`), signed in with access to the repository |
+| Check an app in Azure | Azure CLI (`az`), signed in with access to the app |
+
+Templates in a repository subfolder also need Git. VS Code and its `code`
+command are optional, for **Open in VS Code**.
 
 ## Try it
 
@@ -90,5 +104,5 @@ Copilot's own telemetry is separate.
 
 ## Learn more
 
-See the [detailed usage guide](docs/advanced.md), the
-[check catalog](docs/checks.md), and [lifecycle data](docs/lifecycle-data.md).
+See the [release notes](docs/release-notes.md) and
+[Azure Functions documentation](https://learn.microsoft.com/azure/azure-functions/).
