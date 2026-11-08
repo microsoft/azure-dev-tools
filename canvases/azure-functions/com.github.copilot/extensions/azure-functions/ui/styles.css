@@ -240,12 +240,9 @@ p.muted { margin: 8px 0; }
 .task-disclosure-icon { display: grid; flex: 0 0 16px; width: 16px; height: 16px; place-items: center; }
 .task-disclosure-icon > * { grid-area: 1 / 1; }
 .task-summary-icon { color: var(--muted); }
-.task-chevron { width: 7px; height: 7px; border-top: 1.5px solid currentColor; border-right: 1.5px solid currentColor; transform: rotate(45deg); visibility: hidden; }
+.task-chevron { width: 7px; height: 7px; border-top: 1.5px solid currentColor; border-right: 1.5px solid currentColor; transform: rotate(45deg); visibility: visible; }
 .task-progress[open] > summary .task-chevron { transform: rotate(135deg); visibility: visible; }
-.task-progress[open] > summary .task-summary-icon { visibility: hidden; }
 .task-progress > summary[data-pointer-focus] { outline: none; }
-.task-progress > summary:is(:hover, :focus-visible:not([data-pointer-focus])) .task-chevron { visibility: visible; }
-.task-progress > summary:is(:hover, :focus-visible:not([data-pointer-focus])) :is(.task-spinner, .task-summary-icon) { visibility: hidden; }
 .task-checklist { list-style: none; padding: 0; margin: 12px 0; }
 .task-checklist > li { display: flex; align-items: baseline; gap: 9px; min-height: 28px; padding-block: 4px; color: var(--muted); font-size: 14px; font-weight: 400; }
 .task-checklist > li[data-state="running"] { color: var(--ink); }
@@ -268,15 +265,14 @@ p.muted { margin: 8px 0; }
 }
 @media (hover: none) {
     .task-progress .task-chevron { visibility: visible; }
-    .task-progress > summary :is(.task-spinner, .task-summary-icon) { visibility: hidden; }
 }
 .run-editor { position: relative; max-width: 100%; }
 .app:has([data-panel="run"]:not([hidden])) > .workbench-header { box-shadow: 0 -8px 0 var(--bg); }
 .run-actions { position: sticky; top: calc(var(--run-header-height, 32px) + 8px); z-index: 4; gap: 8px; padding-block: 8px; background: var(--bg); box-shadow: 0 1px 0 var(--line), 0 -8px 0 var(--bg); }
 .run-actions { container: run-actions / inline-size; }
 @container run-actions (width < 480px) {
-    .canvas-ui :is(#local-send, #start-local, #run-deployment-setup) { width: 32px; height: 32px; padding: 0; }
-    :is(#local-send, #start-local, #run-deployment-setup) > .label { display: none; }
+    .canvas-ui :is(#local-send, #start-local, #run-deployment-setup, #run-add-function) { width: 32px; height: 32px; padding: 0; }
+    :is(#local-send, #start-local, #run-deployment-setup, #run-add-function) > .label { display: none; }
 }
 #local-functions :is(input, select, textarea, button) { scroll-margin-top: calc(var(--run-header-height, 32px) + var(--run-actions-height, 48px) + 16px); }
 .run-actions > .icon-button, #function-editor-actions > .icon-button { width: 32px; height: 32px; padding: 0; }

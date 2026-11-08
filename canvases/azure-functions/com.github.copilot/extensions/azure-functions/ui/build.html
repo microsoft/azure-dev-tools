@@ -117,28 +117,42 @@
     </div>
 
     <div data-panel="project" hidden>
-      <h2 class="page-title" id="customize-heading" hidden data-i18n="workbench.edit">Edit a function app</h2>
+      <h2 class="page-title" id="customize-heading" hidden data-i18n="switch.build">Build</h2>
       <section class="card" id="project-selector">
         <div id="existing-folder-field"></div>
         <div id="project-browser" class="folder-browser" role="region" aria-label="Choose a folder" data-i18n-aria-label="folders.title" hidden></div>
+      </section>
+      <section class="card" id="build-overview-card" hidden>
+        <h2 class="target-title" id="build-contents-heading">Contents of the app</h2>
         <div id="project-facts"></div>
         <div class="row actions-row" id="project-facts-actions" hidden>
-          <button class="btn ghost" type="button" id="open-vscode"><span class="label" data-i18n="project.openVsCode">Open in VS Code</span></button>
+          <button class="btn primary" type="button" id="build-run" data-i18n="run.start">Run</button>
+          <button class="btn ghost vscode-button" type="button" id="open-vscode" aria-label="Open in VS Code" data-i18n-aria-label="project.openVsCode" title="Open in VS Code" data-i18n-title="project.openVsCode"><span class="label" data-i18n="function.edit">Edit</span></button>
+          <button class="btn ghost" type="button" id="build-add-function" data-metric-id="function-add" data-i18n="function.add">Add function</button>
+          <button class="btn ghost" type="button" id="build-deploy" data-i18n="page.deploy">Deploy</button>
         </div>
       </section>
-      <div id="function-authoring">
-        <div id="function-editor-actions" class="row actions-row" hidden></div>
-        <div id="function-edit-options" class="tasks joined"></div>
-        <div id="add-function-flow" hidden></div>
-      </div>
-      <div id="customize-ai">
-      <h2 class="section-label" data-i18n="ai.label">CUSTOMIZE WITH AI</h2>
-      <section class="card">
-        <p class="muted" data-i18n="ai.note">Describe changes to this function app project, including individual functions. Review the proposed edits in chat before files change.</p>
-        <textarea id="ai-text" maxlength="2000" placeholder="For example: add a Kafka trigger, or edit an existing function" aria-label="Request for AI" data-i18n-placeholder="workbench.edit.placeholder" data-i18n-aria-label="ai.request"></textarea>
-        <div class="row actions-row"><button class="btn primary" type="button" id="ask-ai" data-i18n="workbench.edit">Edit a function app</button><span id="ai-status" class="muted"></span></div>
+      <section class="card" id="build-functions-card" hidden>
+        <div class="row"><h2 class="target-title">Functions</h2><span id="build-functions-count" class="badge">0</span></div>
+        <div id="build-functions-list" class="stack"></div>
       </section>
+      <section class="card" id="build-files-card" hidden>
+        <div class="row"><h2 class="target-title">local.settings.json</h2><span id="build-files-count" class="badge">0</span></div>
+        <div id="build-files-list" class="stack"></div>
+      </section>
+      <div id="function-authoring" hidden>
+        <div id="function-editor-actions" class="row actions-row" hidden></div>
+        <div id="function-edit-options" class="tasks joined" hidden></div>
+        <div id="add-function-flow"></div>
       </div>
+      <details id="customize-ai" class="workbench-disclosure" hidden>
+        <summary data-i18n="ai.label">Customize with AI (optional)</summary>
+        <section class="card">
+          <p class="muted" data-i18n="ai.note">Describe changes to this function app project, including individual functions. Review the proposed edits in chat before files change.</p>
+          <textarea id="ai-text" maxlength="2000" placeholder="For example: add a Kafka trigger, or edit an existing function" aria-label="Request for AI" data-i18n-placeholder="workbench.edit.placeholder" data-i18n-aria-label="ai.request"></textarea>
+          <div class="row actions-row"><button class="btn primary" type="button" id="ask-ai" data-i18n="workbench.edit">Edit a function app</button><span id="ai-status" class="muted"></span></div>
+        </section>
+      </details>
       <div class="row actions-row" id="customize-next" hidden>
         <button class="btn primary" type="button" data-tab="run" data-i18n="page.run">Run and test</button>
         <button class="btn ghost" type="button" data-tab="deploy" data-i18n="page.deploy">Deploy</button>
@@ -184,8 +198,20 @@
         </section>
         <p id="location-context" class="flow-context"></p>
         <section id="create-timer-settings" class="card" hidden>
-          <label class="stack"><span data-i18n="run.timer.schedule">Timer schedule</span><input id="create-timer-schedule" type="text" value="0 */5 * * * *" aria-describedby="create-timer-help create-timer-error"></label>
-          <p id="create-timer-help" class="muted" data-i18n="run.timer.creation">Six fields: second minute hour day month day-of-week. Create writes this schedule into the Timer source. Default time zone is UTC; hosting plans have different time-zone limits.</p>
+          <label class="stack">
+            <span data-i18n="run.timer.schedule">Timer schedule</span>
+            <select id="create-timer-preset" aria-label="Timer schedule preset">
+              <option value="">Custom schedule</option>
+              <option value="*/30 * * * * *">Every 30 seconds (*/30 * * * * *)</option>
+              <option value="0 */1 * * * *">Every 1 minute (0 */1 * * * *)</option>
+              <option value="0 */5 * * * *" selected>Every 5 minutes (0 */5 * * * *)</option>
+              <option value="0 */15 * * * *">Every 15 minutes (0 */15 * * * *)</option>
+              <option value="0 0 * * * *">Hourly (0 0 * * * *)</option>
+              <option value="0 0 0 * * *">Daily at midnight UTC (0 0 0 * * *)</option>
+            </select>
+            <input id="create-timer-schedule" type="text" value="0 */5 * * * *" aria-describedby="create-timer-error">
+          </label>
+          <p id="create-timer-help" class="muted" hidden></p>
           <p id="create-timer-error" role="status" class="muted"></p>
         </section>
         <details id="setup-instructions" class="workbench-disclosure" open hidden>
@@ -286,7 +312,8 @@
         </div>
       <div class="row actions-row" id="creation-next" hidden>
         <button class="btn primary" type="button" data-tab="run" data-i18n="page.run">Run and test</button>
-        <button class="btn ghost" type="button" id="creation-open-vscode"><span class="label" data-i18n="project.openVsCode">Open in VS Code</span></button>
+        <button class="btn ghost" type="button" id="creation-add-function" data-i18n="function.add">Add function</button>
+        <button class="btn ghost vscode-button" type="button" id="creation-open-vscode" aria-label="Open in VS Code" data-i18n-aria-label="project.openVsCode" title="Open in VS Code" data-i18n-title="project.openVsCode"><span class="label" data-i18n="function.edit">Edit</span></button>
       </div>
       </section>
       <section class="card result-output" id="creation-output" hidden aria-labelledby="creation-output-title"><div class="row"><h2 id="creation-output-title" data-i18n="run.output">Output</h2><span id="create-status" class="muted"></span></div><div id="create-log"></div></section>
@@ -300,7 +327,7 @@
           <p id="hosted-review-summary" class="generation-detail-copy"></p>
           <p class="muted" data-i18n="hosted.review.files">Open the current .agent.md, agents.config.yaml and mcp.json files in VS Code to check instructions, triggers, model settings and tools.</p>
           <div class="row actions-row">
-            <button class="btn ghost" type="button" id="hosted-review-open-vscode"><span class="label" data-i18n="project.openVsCode">Open in VS Code</span></button>
+            <button class="btn ghost vscode-button" type="button" id="hosted-review-open-vscode" aria-label="Open in VS Code" data-i18n-aria-label="project.openVsCode" title="Open in VS Code" data-i18n-title="project.openVsCode"><span class="label" data-i18n="function.edit">Edit</span></button>
           </div>
         </section>
         <p class="muted" data-i18n="hosted.review.verification">Model and connector calls still need cloud services. After deployment approval, verify the deployed trigger and its real output in chat; file review is not runtime verification.</p>
@@ -309,6 +336,12 @@
         </div>
       </section>
       <section class="flow-output">
+        <div id="run-target-bar" class="row actions-row" hidden>
+          <span class="muted">Target:</span>
+          <button id="run-target-local" class="btn small primary" type="button">Local</button>
+          <button id="run-target-azure" class="btn small ghost" type="button">Azure</button>
+          <span id="run-target-azure-host" class="muted"></span>
+        </div>
         <p id="local-test-context" class="muted" role="status" aria-live="polite" hidden></p>
         <label class="stack" id="local-app-field" hidden><span data-i18n="run.app">Function App</span><select id="local-app"></select></label>
         <div id="local-functions" hidden>
@@ -369,10 +402,22 @@
         </section>
         <section id="local-timer-settings" class="card" hidden>
           <details id="local-timer-details">
-          <summary data-i18n="run.timer.schedule">Timer schedule</summary>
+          <summary><span data-i18n="run.timer.schedule">Timer schedule</span><span id="local-timer-summary" class="muted"></span></summary>
           <label class="stack"><span data-i18n="run.functions">Function</span><select id="local-timer-function"></select></label>
-          <label class="stack"><span data-i18n="run.timer.schedule">Timer schedule</span><input id="local-timer-schedule" type="text" aria-describedby="local-timer-help local-timer-error"></label>
-          <p id="local-timer-help" class="muted" data-i18n="run.timer.help">Six fields: second minute hour day month day-of-week. Stop the host before edits. Apply does not restart the host or deploy to Azure.</p>
+          <label class="stack">
+            <span data-i18n="run.timer.schedule">Timer schedule</span>
+            <select id="local-timer-preset" aria-label="Timer schedule preset">
+              <option value="">Custom schedule</option>
+              <option value="*/30 * * * * *">Every 30 seconds (*/30 * * * * *)</option>
+              <option value="0 */1 * * * *">Every 1 minute (0 */1 * * * *)</option>
+              <option value="0 */5 * * * *">Every 5 minutes (0 */5 * * * *)</option>
+              <option value="0 */15 * * * *">Every 15 minutes (0 */15 * * * *)</option>
+              <option value="0 0 * * * *">Hourly (0 0 * * * *)</option>
+              <option value="0 0 0 * * *">Daily at midnight UTC (0 0 0 * * *)</option>
+            </select>
+            <input id="local-timer-schedule" type="text" aria-describedby="local-timer-error">
+          </label>
+          <p id="local-timer-help" class="muted" hidden></p>
           <p id="local-timer-error" class="muted" role="status"></p>
           <button id="review-timer-schedule" type="button" class="btn ghost" data-i18n="run.timer.review">Review schedule change</button>
           <div id="local-timer-review" hidden>
@@ -394,6 +439,9 @@
         <div id="local-progress" class="action-feedback" hidden></div>
         <div id="local-message" class="muted action-feedback" role="status"></div>
         <p id="local-approval" class="muted" data-i18n="run.startWarning">Run starts the shared Host. Invoke starts it if needed, then sends the selected test input. Other listeners can also run.</p>
+        <div class="row actions-row">
+          <button class="btn ghost" type="button" id="run-add-function" aria-label="Add function" data-i18n-aria-label="function.add" title="Add function" data-i18n-title="function.add"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M8 3.5v9M3.5 8h9"/></svg><span class="label" data-i18n="function.add">Add function</span></button>
+        </div>
         <div id="local-fallback" class="inline-notice" hidden></div>
       </section>
     </div>
@@ -470,7 +518,6 @@
         <div id="deploy-input-status" role="status"></div>
         <div id="deploy-input-changes" role="status" aria-live="polite"></div>
         <div id="deploy-inputs" class="deployment-inputs"></div>
-        <p class="confirm"><label><input type="checkbox" id="deploy-confirm"> <span data-i18n="deploy.confirm">I understand this deployment can create or update Azure resources and incur charges.</span></label></p>
         <div class="row actions-row">
           <button class="btn primary" type="button" id="deploy" data-i18n="page.deploy">Deploy</button>
           <button class="btn ghost danger" type="button" id="cancel-deploy" data-i18n="common.stop">Stop</button>

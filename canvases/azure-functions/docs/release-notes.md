@@ -1,5 +1,13 @@
 # Azure Functions release notes
 
+## 0.1.5
+
+- **Build and edit functions.** Improve the Build screen and Add function flow.
+- **Review Timer schedules.** Improve schedule editing and invocation results.
+- **Recover local startup.** Use another available port when port 7071 is busy
+  and improve startup failure recovery without stopping unrelated services.
+- **Follow deployment progress.** Improve the deployment flow and status display.
+
 ## 0.1.4
 
 - **Run without a separate Apply step.** Run and Invoke prepare required
