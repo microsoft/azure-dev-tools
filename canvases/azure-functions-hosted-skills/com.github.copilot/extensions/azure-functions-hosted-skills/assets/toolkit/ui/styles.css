@@ -5,6 +5,8 @@
   --canvas-muted: var(--text-color-muted, light-dark(#656d76, #9da7b3));
   --canvas-border: var(--border-color-default, light-dark(#d1d9e0, #30363d));
   --canvas-accent: var(--text-color-accent, var(--true-color-blue, light-dark(#0969da, #79b8ff)));
+  --canvas-button-primary-bg: light-dark(#0969da, #79b8ff);
+  --canvas-button-primary-fg: light-dark(#ffffff, #0d1117);
   --canvas-danger: var(--text-color-danger, var(--true-color-red, light-dark(#cf222e, #ff7b72)));
   --canvas-success: var(--text-color-success, light-dark(#1a7f37, #3fb950));
   --canvas-attention: var(--text-color-attention, light-dark(#9a6700, #d29922));
@@ -67,7 +69,7 @@
   line-height: var(--canvas-line);
 }
 .canvas-ui :where(input, textarea)::placeholder { color: var(--canvas-muted); opacity: 1; }
-.canvas-ui input[type="checkbox"] {
+.canvas-ui :is(input[type="checkbox"], input[type="radio"]) {
   width: 16px; height: 16px; min-height: 0; padding: 0; margin: 0;
   accent-color: var(--canvas-accent); flex: 0 0 auto; cursor: default;
 }
@@ -125,8 +127,8 @@
 }
 .canvas-ui .text-button { min-height: 28px; padding: 3px 8px; font-size: var(--canvas-small); }
 .canvas-ui .icon-button { width: 28px; min-width: 28px; min-height: 28px; padding: 5px; }
-:where(.pointer-on-hover) .canvas-ui :where(button, select, input[type="checkbox"], summary):not(:disabled),
-.canvas-ui.pointer-on-hover :where(button, select, input[type="checkbox"], summary):not(:disabled) { cursor: pointer; }
+:where(.pointer-on-hover) .canvas-ui :where(button, select, input[type="checkbox"], input[type="radio"], summary):not(:disabled),
+.canvas-ui.pointer-on-hover :where(button, select, input[type="checkbox"], input[type="radio"], summary):not(:disabled) { cursor: pointer; }
 .canvas-list {
   min-width: 0;
   background: var(--canvas-bg);

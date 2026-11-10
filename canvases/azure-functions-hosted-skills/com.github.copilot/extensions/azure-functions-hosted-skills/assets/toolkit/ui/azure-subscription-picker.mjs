@@ -55,6 +55,10 @@ function createAzureSubscriptionPicker({
     singleGroup: true,
     onApply: async (items) => {
       const available = pickerAccounts(state.accounts);
+      if (!items.length && options.commitMode === "immediate" && options.selectionMode !== "single") {
+        await onApply({ tenantId: "", cloud: "AzureCloud", subscriptionIds: [], subscriptions: [], selectedKeys: [] });
+        return;
+      }
       if (!items.length || items.length > 1e3 || items.some((item) => !available.some((candidate) => candidate.key === item.key && !candidate.disabled))) {
         throw new Error("Choose between 1 and 1000 available subscriptions. Refresh subscriptions if access has changed.");
       }

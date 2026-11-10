@@ -2,11 +2,11 @@
   "schemaVersion": 2,
   "format": "plugin",
   "name": "azure-functions-hosted-skills",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "mutableDocumentation": true,
   "publicationRepository": "microsoft/azure-dev-tools",
   "plugin": {
-    "manifest": ".github/plugin/plugin.json",
+    "manifest": "plugin.json",
     "extension": {
       "name": "azure-functions-hosted-skills",
       "canvasId": "azure-functions-hosted-skills",
@@ -37,7 +37,6 @@
   },
   "runtimeIdentity": "com.github.copilot/extensions/azure-functions-hosted-skills/studio-package.json",
   "files": [
-    ".github/plugin/plugin.json",
     "THIRD_PARTY_NOTICES.txt",
     "assets/preview.png",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/Function-Apps.provenance.json",
@@ -45,16 +44,33 @@
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/icons/Subscription.svg",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui.mjs",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/azure-subscription-picker.mjs",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/base.css",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/browser/THIRD_PARTY_NOTICES.txt",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/browser/base.mjs",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/browser/fluent.mjs",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/browser/react-runtime.mjs",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/commands-log.css",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/commands-log.mjs",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/component-helpers.mjs",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/components.css",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/components.mjs",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/content.mjs",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/fluent.css",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/forms.mjs",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/hosts/github-app/design.md",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/hosts/github-app/theming.md",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/hosts/index.md",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/icons.mjs",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/locations.mjs",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/navigation.mjs",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/profiles/coreai-azure.css",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/profiles/github-app.css",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/styles.css",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/subscription-picker.css",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/subscription-picker.mjs",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/telemetry.mjs",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/theme.mjs",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/visual-profiles.mjs",
     "com.github.copilot/extensions/azure-functions-hosted-skills/azure-auth.mjs",
     "com.github.copilot/extensions/azure-functions-hosted-skills/extension.mjs",
     "com.github.copilot/extensions/azure-functions-hosted-skills/funcignore-policy.mjs",
@@ -79,6 +95,7 @@
     "com.github.copilot/extensions/azure-functions-hosted-skills/templates/hosted-skill/src/host.json",
     "com.github.copilot/extensions/azure-functions-hosted-skills/templates/hosted-skill/src/requirements.txt",
     "package.json",
+    "plugin.json",
     "skills/azure-functions-hosted-skills-canvas/SKILL.md",
     "skills/azure-functions-hosted-skills-canvas/resolve-canvas-launch.mjs",
     "skills/azure-functions-hosted-skills-github-daily-digest/SKILL.md",
@@ -92,8 +109,8 @@
   },
   "build": {
     "esbuild": "0.25.12",
-    "lockSha256": "0172a79caa720e5eac81e6db0c203ab705ea3aecbe5fada39cb48f954fe78488",
-    "inputSha256": "d880ff1e93eee9eeb7f0865cf7b1e65147771b1a9348f949620ea840b043c375"
+    "lockSha256": "bef015806c72749d75de2bfd780c4df8971f0c25442a6248288bf51346bf6a0b",
+    "inputSha256": "819b290d31c5d0e4e09a1d871dcf7ad745d83e301f400a53b2641bb320477441"
   },
   "dependencies": [
     {
@@ -128,7 +145,7 @@
     },
     {
       "name": "@azure/identity",
-      "version": "4.13.3",
+      "version": "4.14.1",
       "license": "MIT"
     },
     {
@@ -138,12 +155,12 @@
     },
     {
       "name": "@azure/msal-common",
-      "version": "16.14.1",
+      "version": "16.16.1",
       "license": "MIT"
     },
     {
       "name": "@azure/msal-node",
-      "version": "6.0.1",
+      "version": "7.2.1",
       "license": "MIT"
     },
     {
@@ -282,7 +299,35 @@
       "platform": "browser"
     },
     {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/browser/base.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/browser/fluent.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/browser/react-runtime.mjs",
+      "platform": "browser"
+    },
+    {
       "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/commands-log.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/component-helpers.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/components.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/content.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/forms.mjs",
       "platform": "browser"
     },
     {
@@ -291,6 +336,10 @@
     },
     {
       "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/locations.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/navigation.mjs",
       "platform": "browser"
     },
     {
@@ -303,6 +352,10 @@
     },
     {
       "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/theme.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/visual-profiles.mjs",
       "platform": "browser"
     },
     {
@@ -338,6 +391,31 @@
       "mime": "text/javascript; charset=utf-8"
     },
     {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/base.css",
+      "route": "canvas-ui/base.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/browser/base.mjs",
+      "route": "canvas-ui/base.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/browser/fluent.mjs",
+      "route": "canvas-ui/fluent.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/browser/react-runtime.mjs",
+      "route": "canvas-ui/react-runtime.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/browser/THIRD_PARTY_NOTICES.txt",
+      "route": "canvas-ui/THIRD_PARTY_NOTICES.txt",
+      "mime": "text/plain; charset=utf-8"
+    },
+    {
       "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/commands-log.css",
       "route": "canvas-ui/commands-log.css",
       "mime": "text/css; charset=utf-8"
@@ -346,6 +424,51 @@
       "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/commands-log.mjs",
       "route": "canvas-ui/commands-log.mjs",
       "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/component-helpers.mjs",
+      "route": "canvas-ui/component-helpers.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/components.css",
+      "route": "canvas-ui/components.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/components.mjs",
+      "route": "canvas-ui/components.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/content.mjs",
+      "route": "canvas-ui/content.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/fluent.css",
+      "route": "canvas-ui/fluent.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/forms.mjs",
+      "route": "canvas-ui/forms.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/hosts/github-app/design.md",
+      "route": "canvas-ui/hosts/github-app/design.md",
+      "mime": "text/markdown; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/hosts/github-app/theming.md",
+      "route": "canvas-ui/hosts/github-app/theming.md",
+      "mime": "text/markdown; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/hosts/index.md",
+      "route": "canvas-ui/hosts/index.md",
+      "mime": "text/markdown; charset=utf-8"
     },
     {
       "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/icons.mjs",
@@ -358,8 +481,18 @@
       "mime": "text/javascript; charset=utf-8"
     },
     {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/navigation.mjs",
+      "route": "canvas-ui/navigation.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
       "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/profiles/coreai-azure.css",
       "route": "canvas-ui/profiles/coreai-azure.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/profiles/github-app.css",
+      "route": "canvas-ui/profiles/github-app.css",
       "mime": "text/css; charset=utf-8"
     },
     {
@@ -385,6 +518,11 @@
     {
       "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/theme.mjs",
       "route": "canvas-ui/theme.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/visual-profiles.mjs",
+      "route": "canvas-ui/visual-profiles.mjs",
       "mime": "text/javascript; charset=utf-8"
     }
   ]

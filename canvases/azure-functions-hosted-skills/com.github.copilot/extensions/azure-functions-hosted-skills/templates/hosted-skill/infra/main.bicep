@@ -6,7 +6,7 @@ targetScope = 'subscription'
 param environmentName string
 
 @minLength(1)
-@description('Primary location for all resources. Must support Azure Functions Flex Consumption, ACA session pools, and the default Microsoft Foundry gpt-4.1 Global Standard deployment.')
+@description('Primary location for all resources. Must support Azure Functions Flex Consumption, ACA session pools, and the default Microsoft Foundry gpt-5.4-mini Global Standard deployment.')
 @allowed([
   'centralus'
   'eastus'
@@ -26,18 +26,18 @@ param location string
 param toEmail string = ''
 
 @description('Microsoft Foundry model deployment name.')
-param foundryModel string = 'gpt-4.1'
+param foundryModel string = 'gpt-mini-latest'
 
 @description('Microsoft Foundry model name.')
-param foundryModelName string = 'gpt-4.1'
+param foundryModelName string = 'gpt-5.4-mini'
 
 @description('Microsoft Foundry model version.')
-param foundryModelVersion string = '2025-04-14'
+param foundryModelVersion string = '2026-03-17'
 
 @description('Microsoft Foundry deployment capacity.')
 param foundryDeploymentCapacity int = 200
 
-@description('Optional reasoning effort for supported Foundry reasoning models. Leave empty for older models such as gpt-4.1, which do not support reasoning settings.')
+@description('Optional reasoning effort for supported Foundry reasoning models.')
 @allowed([
   ''
   'none'

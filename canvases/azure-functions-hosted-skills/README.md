@@ -39,6 +39,16 @@ request to the selected Azure Function App and requires your confirmation.
 - Invoke a trigger and inspect both its agent digest and activity in one view.
 - Select an existing Function App to invoke a supported deployed function, with confirmation.
 
+## Usage data
+
+Usage telemetry is enabled by default to help improve this plugin. It sends
+basic usage data and, when available, your numeric GitHub user ID to the
+[usage metrics service](https://canvas-metrics-pilot-0b8944-add3hsghhddcbxe9.b01.azurefd.net/api/events).
+Prompts, tool inputs/outputs and credentials are excluded.
+
+You can [disable usage telemetry](https://github.com/microsoft/azure-dev-tools#disable-usage-telemetry).
+Copilot's own telemetry is separate.
+
 ## Prompts to try
 
 > Open Azure Functions Hosted Skills canvas and run Doctor before I build a local skill.
