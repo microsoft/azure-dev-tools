@@ -824,6 +824,7 @@ function createCliAuthSource({
       let closed = false;
       let progressWarningReported = false;
       let terminationWarningReported = false;
+      const pendingProgressReports = /* @__PURE__ */ new Set();
       function reportProgressFailure() {
         if (progressWarningReported) return;
         progressWarningReported = true;
@@ -842,7 +843,8 @@ function createCliAuthSource({
         const safeText = progressText(text2);
         if (!safeText.trim()) return;
         try {
-          Promise.resolve(onProgress(safeText)).catch(reportProgressFailure);
+          const report = Promise.resolve(onProgress(safeText)).catch(reportProgressFailure).finally(() => pendingProgressReports.delete(report));
+          pendingProgressReports.add(report);
         } catch {
           reportProgressFailure();
         }
@@ -981,7 +983,7 @@ function createCliAuthSource({
         }
         finish(failure(error?.code === "ENOENT" ? "cli-not-found" : kind === "login" ? "login-failed" : kind === "token" ? "token-failed" : "cli-failed"));
       });
-      child.on("close", (code) => {
+      child.on("close", async (code) => {
         closed = true;
         if (settled) {
           if (platform === "win32") forget();
@@ -989,6 +991,7 @@ function createCliAuthSource({
           return;
         }
         if (kind === "login") emitProgress(pendingProgress + decoder.end());
+        if (pendingProgressReports.size) await Promise.allSettled([...pendingProgressReports]);
         finish(code === 0 ? void 0 : kind === "token" ? tokenFailure("exit", tokenStderr, code) : failure(kind === "login" ? "login-failed" : "cli-failed"));
       });
       timer = setTimeout(() => finish(kind === "token" ? tokenFailure("timeout", tokenStderr) : failure("cli-timeout")), deadlines[kind]);
@@ -6329,7 +6332,7 @@ init_auth_errors();
 init_auth_cli();
 
 // node_modules/@azure/identity/dist/esm/constants.js
-var SDK_VERSION = `4.13.3`;
+var SDK_VERSION = `4.14.1`;
 var AzureAuthorityHosts;
 (function(AzureAuthorityHosts2) {
   AzureAuthorityHosts2["AzureChina"] = "https://login.chinacloudapi.cn";
@@ -6791,7 +6794,7 @@ var tracingClient = createTracingClient({
 // node_modules/@azure/identity/dist/esm/credentials/chainedTokenCredential.js
 var logger2 = credentialLogger("ChainedTokenCredential");
 
-// node_modules/@azure/msal-common/dist/constants/AADServerParamKeys.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/constants/AADServerParamKeys.mjs
 var AADServerParamKeys_exports = {};
 __export(AADServerParamKeys_exports, {
   ACCESS_TOKEN: () => ACCESS_TOKEN,
@@ -6831,6 +6834,7 @@ __export(AADServerParamKeys_exports, {
   NONCE: () => NONCE,
   OBO_ASSERTION: () => OBO_ASSERTION,
   ON_BEHALF_OF: () => ON_BEHALF_OF,
+  POPUP_ORIGIN_CHECK_DONE: () => POPUP_ORIGIN_CHECK_DONE,
   POST_LOGOUT_URI: () => POST_LOGOUT_URI,
   PROMPT: () => PROMPT,
   REDIRECT_URI: () => REDIRECT_URI,
@@ -6927,8 +6931,9 @@ var USERNAME = "username";
 var USER_ID = "user_id";
 var FMI_PATH = "fmi_path";
 var ATTRIBUTE_TOKENS = "attribute_tokens";
+var POPUP_ORIGIN_CHECK_DONE = "pocd";
 
-// node_modules/@azure/msal-common/dist/utils/Constants.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/utils/Constants.mjs
 var Constants_exports = {};
 __export(Constants_exports, {
   AADAuthority: () => AADAuthority,
@@ -7253,7 +7258,7 @@ var EncodingTypes = {
   UTF8: "utf-8"
 };
 
-// node_modules/@azure/msal-common/dist/error/AuthError.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/error/AuthError.mjs
 function getDefaultErrorMessage(code) {
   return `See https://aka.ms/msal.js.errors#${code} for details`;
 }
@@ -7274,7 +7279,7 @@ function createAuthError(code, correlationId, additionalMessage) {
   return new AuthError2(code, correlationId, additionalMessage || getDefaultErrorMessage(code));
 }
 
-// node_modules/@azure/msal-common/dist/error/ClientAuthError.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/error/ClientAuthError.mjs
 var ClientAuthError = class _ClientAuthError extends AuthError2 {
   constructor(errorCode, correlationId, additionalMessage) {
     super(errorCode, correlationId, additionalMessage);
@@ -7286,7 +7291,7 @@ function createClientAuthError(errorCode, correlationId, additionalMessage) {
   return new ClientAuthError(errorCode, correlationId, additionalMessage);
 }
 
-// node_modules/@azure/msal-common/dist/error/ClientAuthErrorCodes.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/error/ClientAuthErrorCodes.mjs
 var ClientAuthErrorCodes_exports = {};
 __export(ClientAuthErrorCodes_exports, {
   authorizationCodeMissingFromServerResponse: () => authorizationCodeMissingFromServerResponse,
@@ -7367,7 +7372,7 @@ var platformBrokerError = "platform_broker_error";
 var resourceParameterRequired = "resource_parameter_required";
 var misplacedResourceParam = "misplaced_resource_parameter";
 
-// node_modules/@azure/msal-common/dist/account/ClientInfo.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/account/ClientInfo.mjs
 function buildClientInfo(rawClientInfo, base64Decode) {
   if (!rawClientInfo) {
     throw createClientAuthError(clientInfoEmptyError, "");
@@ -7380,7 +7385,7 @@ function buildClientInfo(rawClientInfo, base64Decode) {
   }
 }
 
-// node_modules/@azure/msal-common/dist/account/AuthToken.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/account/AuthToken.mjs
 function extractTokenClaims(encodedToken, base64Decode, correlationId) {
   const jswPayload = getJWSPayload(encodedToken, correlationId);
   try {
@@ -7409,7 +7414,7 @@ function getJWSPayload(authToken, correlationId) {
   return matches[2];
 }
 
-// node_modules/@azure/msal-common/dist/account/AccountInfo.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/account/AccountInfo.mjs
 function tenantIdMatchesHomeTenant(tenantId, homeAccountId) {
   return !!tenantId && !!homeAccountId && tenantId === homeAccountId.split(".")[1];
 }
@@ -7457,14 +7462,14 @@ function updateAccountTenantProfileData(baseAccountInfo, tenantProfile, idTokenC
   return updatedAccountInfo;
 }
 
-// node_modules/@azure/msal-common/dist/authority/AuthorityType.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/authority/AuthorityType.mjs
 var AuthorityType = {
   Default: 0,
   Adfs: 1,
   Ciam: 3
 };
 
-// node_modules/@azure/msal-common/dist/account/TokenClaims.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/account/TokenClaims.mjs
 function getTenantIdFromIdTokenClaims(idTokenClaims) {
   if (idTokenClaims) {
     const tenantId = idTokenClaims.tid || idTokenClaims.tfp || idTokenClaims.acr;
@@ -7473,7 +7478,7 @@ function getTenantIdFromIdTokenClaims(idTokenClaims) {
   return null;
 }
 
-// node_modules/@azure/msal-common/dist/authority/ProtocolMode.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/authority/ProtocolMode.mjs
 var ProtocolMode = {
   /**
    * Auth Code + PKCE with Entra ID (formerly AAD) specific optimizations and features
@@ -7490,7 +7495,7 @@ var ProtocolMode = {
   EAR: "EAR"
 };
 
-// node_modules/@azure/msal-common/dist/cache/utils/AccountEntityUtils.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/cache/utils/AccountEntityUtils.mjs
 function getAccountInfo(accountEntity) {
   const tenantProfiles = accountEntity.tenantProfiles || [];
   if (tenantProfiles.length === 0 && accountEntity.realm && accountEntity.localAccountId) {
@@ -7584,7 +7589,7 @@ function generateHomeAccountId(serverClientInfo, authType, logger27, cryptoObj, 
   return idTokenClaims?.sub || "";
 }
 
-// node_modules/@azure/msal-common/dist/error/ClientConfigurationError.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/error/ClientConfigurationError.mjs
 var ClientConfigurationError = class _ClientConfigurationError extends AuthError2 {
   constructor(errorCode, correlationId) {
     super(errorCode, correlationId);
@@ -7596,7 +7601,7 @@ function createClientConfigurationError(errorCode, correlationId) {
   return new ClientConfigurationError(errorCode, correlationId);
 }
 
-// node_modules/@azure/msal-common/dist/error/ClientConfigurationErrorCodes.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/error/ClientConfigurationErrorCodes.mjs
 var authorityUriInsecure = "authority_uri_insecure";
 var urlParseError = "url_parse_error";
 var urlEmptyError = "empty_url_error";
@@ -7606,7 +7611,7 @@ var invalidDpopHtu = "invalid_dpop_htu";
 var invalidDpopNonce = "invalid_dpop_nonce";
 var dpopMissingResourceContext = "dpop_missing_resource_context";
 
-// node_modules/@azure/msal-common/dist/utils/StringUtils.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/utils/StringUtils.mjs
 var StringUtils = class {
   /**
    * Check if stringified object is empty
@@ -7677,7 +7682,7 @@ var StringUtils = class {
   }
 };
 
-// node_modules/@azure/msal-common/dist/url/UrlString.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/url/UrlString.mjs
 var UrlString = class _UrlString {
   get urlString() {
     return this._urlString;
@@ -7804,7 +7809,7 @@ var UrlString = class _UrlString {
   }
 };
 
-// node_modules/@azure/msal-common/dist/authority/AuthorityOptions.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/authority/AuthorityOptions.mjs
 var AzureCloudInstance = {
   // AzureCloudInstance is not specified.
   None: "none",
@@ -7818,10 +7823,10 @@ var AzureCloudInstance = {
   AzureUsGovernment: "https://login.microsoftonline.us"
 };
 
-// node_modules/@azure/msal-common/dist/telemetry/performance/PerformanceEvents.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/telemetry/performance/PerformanceEvents.mjs
 var PopTokenGenerateCnf = "popTokenGenerateCnf";
 
-// node_modules/@azure/msal-common/dist/utils/FunctionWrappers.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/utils/FunctionWrappers.mjs
 var invokeAsync = (callback, eventName, logger27, telemetryClient, correlationId) => {
   return (...args) => {
     logger27.trace(`Executing function '${eventName}'`, correlationId);
@@ -7850,7 +7855,7 @@ var invokeAsync = (callback, eventName, logger27, telemetryClient, correlationId
   };
 };
 
-// node_modules/@azure/msal-common/dist/utils/TimeUtils.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/utils/TimeUtils.mjs
 var TimeUtils_exports = {};
 __export(TimeUtils_exports, {
   delay: () => delay,
@@ -7890,7 +7895,7 @@ function delay(t, value) {
   return new Promise((resolve) => setTimeout(() => resolve(value), t));
 }
 
-// node_modules/@azure/msal-common/dist/cache/utils/CacheHelpers.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/cache/utils/CacheHelpers.mjs
 function createIdTokenEntity(homeAccountId, environment, idToken, clientId, tenantId) {
   const idTokenEntity = {
     credentialType: CredentialType.ID_TOKEN,
@@ -7979,7 +7984,7 @@ function serializeAttributeTokens(attributeTokens) {
   return [...attributeTokens].sort().join(" ");
 }
 
-// node_modules/@azure/msal-common/dist/request/ScopeSet.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/request/ScopeSet.mjs
 var ScopeSet = class _ScopeSet {
   constructor(inputScopes, correlationId) {
     this.correlationId = correlationId;
@@ -8149,13 +8154,13 @@ var ScopeSet = class _ScopeSet {
   }
 };
 
-// node_modules/@azure/msal-common/dist/crypto/ICrypto.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/crypto/ICrypto.mjs
 var JsonWebTokenAlgorithms = {
   ES256: "ES256",
   RS256: "RS256"
 };
 
-// node_modules/@azure/msal-common/dist/crypto/ITokenBindingKeyManager.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/crypto/ITokenBindingKeyManager.mjs
 var DEFAULT_TOKEN_BINDING_KEY_MANAGER = {
   async provisionTokenBindingKey(request) {
     throw createClientAuthError(methodNotImplemented, request.correlationId);
@@ -8168,7 +8173,7 @@ var DEFAULT_TOKEN_BINDING_KEY_MANAGER = {
   }
 };
 
-// node_modules/@azure/msal-common/dist/logger/Logger.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/logger/Logger.mjs
 var LogLevel;
 (function(LogLevel2) {
   LogLevel2[LogLevel2["Error"] = 0] = "Error";
@@ -8178,14 +8183,14 @@ var LogLevel;
   LogLevel2[LogLevel2["Trace"] = 4] = "Trace";
 })(LogLevel || (LogLevel = {}));
 
-// node_modules/@azure/msal-common/dist/telemetry/performance/PerformanceEvent.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/telemetry/performance/PerformanceEvent.mjs
 var PerformanceEventStatus = {
   NotStarted: 0,
   InProgress: 1,
   Completed: 2
 };
 
-// node_modules/@azure/msal-common/dist/telemetry/performance/StubPerformanceClient.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/telemetry/performance/StubPerformanceClient.mjs
 var StubPerformanceClient = class {
   generateId() {
     return "callback-id";
@@ -8241,7 +8246,7 @@ var StubPerformanceClient = class {
   }
 };
 
-// node_modules/@azure/msal-common/dist/cache/persistence/TokenCacheContext.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/cache/persistence/TokenCacheContext.mjs
 var TokenCacheContext = class {
   constructor(tokenCache, hasChanged) {
     this.cache = tokenCache;
@@ -8261,7 +8266,7 @@ var TokenCacheContext = class {
   }
 };
 
-// node_modules/@azure/msal-common/dist/error/JoseHeaderError.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/error/JoseHeaderError.mjs
 var JoseHeaderError = class _JoseHeaderError extends AuthError2 {
   constructor(errorCode, correlationId, errorMessage) {
     super(errorCode, correlationId, errorMessage);
@@ -8273,7 +8278,7 @@ function createJoseHeaderError(code, correlationId) {
   return new JoseHeaderError(code, correlationId);
 }
 
-// node_modules/@azure/msal-common/dist/utils/ObjectUtils.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/utils/ObjectUtils.mjs
 function isPlainObject(value) {
   if (typeof value !== "object" || value === null || Object.prototype.toString.call(value) !== "[object Object]") {
     return false;
@@ -8288,13 +8293,13 @@ function isPlainObject(value) {
   return Object.getPrototypeOf(value) === proto;
 }
 
-// node_modules/@azure/msal-common/dist/error/JoseHeaderErrorCodes.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/error/JoseHeaderErrorCodes.mjs
 var missingKidError = "missing_kid_error";
 var missingAlgError = "missing_alg_error";
 var missingJwkError = "missing_jwk_error";
 var invalidJwkError = "invalid_jwk_error";
 
-// node_modules/@azure/msal-common/dist/crypto/JoseHeader.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/crypto/JoseHeader.mjs
 var JoseHeader = class _JoseHeader {
   constructor(options, correlationId) {
     if (typeof options.alg !== "string" || !options.alg) {
@@ -8352,7 +8357,7 @@ var JoseHeader = class _JoseHeader {
   }
 };
 
-// node_modules/@azure/msal-common/dist/crypto/PopTokenGenerator.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/crypto/PopTokenGenerator.mjs
 var KeyLocation = {
   SW: "sw"
 };
@@ -8441,7 +8446,7 @@ var PopTokenGenerator = class {
   }
 };
 
-// node_modules/@azure/msal-common/dist/crypto/DpopProofGenerator.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/crypto/DpopProofGenerator.mjs
 var DPOP_HTM_REGEX = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
 var DPOP_TOKEN_BINDING_KEY_TYPE = "dpop";
 var DPOP_JWT_HEADER_ALGORITHM = JsonWebTokenAlgorithms.ES256;
@@ -8475,6 +8480,12 @@ function validateDpopNonce(nonce, correlationId) {
   if (nonce !== void 0 && nonce.trim().length === 0) {
     throw createClientConfigurationError(invalidDpopNonce, correlationId);
   }
+}
+function normalizeDpopResourceRequestContext(context3, correlationId = "") {
+  return {
+    htm: normalizeHtm(context3.htm, correlationId),
+    htu: normalizeHtu(context3.htu, correlationId)
+  };
 }
 var DpopProofGenerator = class {
   constructor(cryptoUtils, tokenBindingKeyManager) {
@@ -8526,10 +8537,11 @@ var DpopProofGenerator = class {
    */
   buildResourceProofClaims(params, correlationId = "") {
     validateDpopNonce(params.nonce, correlationId);
+    const resourceContext = normalizeDpopResourceRequestContext(params, correlationId);
     const claims = {
       jti: this.cryptoUtils.createNewGuid(),
-      htm: normalizeHtm(params.htm, correlationId),
-      htu: normalizeHtu(params.htu, correlationId),
+      htm: resourceContext.htm,
+      htu: resourceContext.htu,
       ath: params.ath,
       iat: nowSeconds()
     };
@@ -8560,7 +8572,7 @@ var DpopProofGenerator = class {
   }
 };
 
-// node_modules/@azure/msal-common/dist/error/InteractionRequiredAuthErrorCodes.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/error/InteractionRequiredAuthErrorCodes.mjs
 var uiNotAllowed = "ui_not_allowed";
 var interactionRequired = "interaction_required";
 var consentRequired = "consent_required";
@@ -8568,7 +8580,7 @@ var loginRequired = "login_required";
 var badToken = "bad_token";
 var interruptedUser = "interrupted_user";
 
-// node_modules/@azure/msal-common/dist/error/InteractionRequiredAuthError.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/error/InteractionRequiredAuthError.mjs
 var InteractionRequiredServerErrorMessage = [
   interactionRequired,
   consentRequired,
@@ -8607,7 +8619,7 @@ function isInteractionRequiredError(errorCode, errorString, subError) {
   return isInteractionRequiredErrorCode || isInteractionRequiredErrorDesc || isInteractionRequiredSubError;
 }
 
-// node_modules/@azure/msal-common/dist/error/ServerError.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/error/ServerError.mjs
 var ServerError = class _ServerError extends AuthError2 {
   constructor(errorCode, correlationId, errorMessage, subError, errorNo, status) {
     super(errorCode, correlationId, errorMessage, subError);
@@ -8618,7 +8630,7 @@ var ServerError = class _ServerError extends AuthError2 {
   }
 };
 
-// node_modules/@azure/msal-common/dist/utils/ProtocolUtils.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/utils/ProtocolUtils.mjs
 function parseRequestState(base64Decode, state3, correlationId) {
   if (!base64Decode) {
     throw createClientAuthError(noCryptoObject, correlationId);
@@ -8641,7 +8653,7 @@ function parseRequestState(base64Decode, state3, correlationId) {
   }
 }
 
-// node_modules/@azure/msal-common/dist/response/ResponseHandler.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/response/ResponseHandler.mjs
 var ResponseHandler = class _ResponseHandler {
   constructor(clientId, cacheStorage, cryptoObj, logger27, performanceClient, serializableCache, persistencePlugin, tokenBindingKeyManager = DEFAULT_TOKEN_BINDING_KEY_MANAGER) {
     this.clientId = clientId;
@@ -8965,7 +8977,7 @@ function buildAccountToCache(cacheStorage, authority, homeAccountId, base64Decod
   return baseAccount;
 }
 
-// node_modules/@azure/msal-common/dist/error/NetworkError.mjs
+// node_modules/@azure/msal-node/node_modules/@azure/msal-common/dist/error/NetworkError.mjs
 var NetworkError = class _NetworkError extends AuthError2 {
   constructor(error, httpStatus, responseHeaders) {
     super(error.errorCode, error.correlationId, error.errorMessage, error.subError);
@@ -10572,6 +10584,11 @@ var msalLogger = credentialLogger("MsalClient");
 // node_modules/@azure/identity/dist/esm/credentials/clientCertificateCredential.js
 import { createHash as createHash3, createPrivateKey } from "node:crypto";
 import { readFile } from "node:fs/promises";
+
+// node_modules/@azure/identity/dist/esm/util/certificatesUtils.js
+import { X509Certificate } from "node:crypto";
+
+// node_modules/@azure/identity/dist/esm/credentials/clientCertificateCredential.js
 var credentialName = "ClientCertificateCredential";
 var logger7 = credentialLogger(credentialName);
 
@@ -10597,6 +10614,7 @@ var logger12 = credentialLogger("ClientAssertionCredential");
 
 // node_modules/@azure/identity/dist/esm/credentials/workloadIdentityCredential.js
 import { readFile as readFile2 } from "node:fs/promises";
+import { readFileSync as readFileSync2 } from "node:fs";
 var credentialName3 = "WorkloadIdentityCredential";
 var logger13 = credentialLogger(credentialName3);
 
@@ -11591,7 +11609,7 @@ function createArmClient({ session, fetchImpl = fetch } = {}) {
 // packages/studio-runtime/src/studio-commands.mjs
 import { execFile as execFile3, spawn as spawn3, spawnSync as spawnSync3 } from "node:child_process";
 import { createHash as createHash6 } from "node:crypto";
-import { accessSync as accessSync3, constants as constants3, readFileSync as readFileSync2 } from "node:fs";
+import { accessSync as accessSync3, constants as constants3, readFileSync as readFileSync3 } from "node:fs";
 import { cp, lstat, mkdir, mkdtemp, readFile as readFile5, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import os3 from "node:os";
 import path5 from "node:path";
@@ -11634,6 +11652,7 @@ var AZURE_CLI_ENV_KEYS = [
   "COMSPEC",
   "PATHEXT",
   "AZURE_CONFIG_DIR",
+  "AZURE_CORE_CHECK_VERSION",
   "XDG_CONFIG_HOME",
   "HTTP_PROXY",
   "HTTPS_PROXY",

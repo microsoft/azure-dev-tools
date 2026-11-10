@@ -13,6 +13,7 @@ function createSubscriptionPicker({
   triggerVariant = "toolbar",
   mount = document?.body,
   selectionMode = "multiple",
+  commitMode = "explicit",
   singleGroup = false,
   onApply,
   onRefresh,
@@ -22,6 +23,8 @@ function createSubscriptionPicker({
   if (!document?.createElement || !mount?.append) throw new TypeError("A document and dialog mount are required.");
   if (typeof id !== "string" || !id || /\s/.test(id)) throw new TypeError("A unique, nonempty id without whitespace is required.");
   if (!["multiple", "single"].includes(selectionMode)) throw new TypeError("selectionMode must be multiple or single.");
+  if (!["explicit", "immediate"].includes(commitMode)) throw new TypeError("commitMode must be explicit or immediate.");
+  const immediate = commitMode === "immediate";
   if (!["toolbar", "field"].includes(triggerVariant)) throw new TypeError("triggerVariant must be toolbar or field.");
   if (typeof onApply !== "function") throw new TypeError("onApply is required.");
   if (onRefresh !== void 0 && typeof onRefresh !== "function") throw new TypeError("onRefresh must be a function.");
@@ -57,6 +60,7 @@ function createSubscriptionPicker({
   let refreshing = false;
   let refreshDisabledReason = "";
   let busy = false;
+  let queuedSelection = null;
   let opened = false;
   let destroyed = false;
   let operation = 0;
@@ -179,9 +183,10 @@ function createSubscriptionPicker({
   const actions = element("footer", "footer");
   const selectionCount = identified("span", "count");
   selectionCount.setAttribute("role", "status");
-  const cancel = button("cancel", "Cancel");
+  const cancel = button("cancel", immediate ? "Done" : "Cancel");
   const apply = button("apply", "Apply", "primary");
-  actions.append(selectionCount, cancel, apply);
+  actions.append(selectionCount, cancel);
+  if (!immediate) actions.append(apply);
   dialog.append(header, defaultCard, selection, error, defaultActions, actions);
   mount.append(dialog);
   trigger.classList.add(`${prefix}-trigger`);
@@ -207,7 +212,7 @@ function createSubscriptionPicker({
   }
   function validation(keys) {
     const candidates = subscriptionsByKey;
-    if (!keys.size) return "Select at least one subscription.";
+    if (!keys.size) return immediate && selectionMode === "multiple" ? "" : "Select at least one subscription.";
     if ([...keys].some((key) => !candidates.has(key))) return "Some selected subscriptions are no longer available. Clear selection and choose again.";
     const items = [...keys].map((key) => candidates.get(key));
     if (items.some((item) => item.disabled)) return "Some selected subscriptions are unavailable. Clear selection and choose again.";
@@ -226,24 +231,24 @@ function createSubscriptionPicker({
   }
   function renderSummary() {
     const candidates = subscriptionsByKey;
-    const names = [...applied].map((key) => candidates.get(key)?.name ?? key);
+    const names = [...immediate && opened ? draft : applied].map((key) => candidates.get(key)?.name ?? key);
     summary.textContent = names.length === 1 ? names[0] : names.length ? countLabel(names.length) : "Choose subscriptions";
     const label = names.length ? `Change subscriptions. ${countLabel(names.length)} selected: ${names.join(", ")}` : "Choose subscriptions";
     trigger.title = label;
     trigger.setAttribute("aria-label", label);
   }
   function updateControls() {
-    const locked = busy || loading || refreshing;
+    const locked = !immediate && busy || loading || refreshing;
     const invalid = validation(draft);
     const candidate = defaultSubscription();
-    dialog.setAttribute("aria-busy", String(locked));
-    selectionCount.textContent = `${draft.size} selected`;
+    dialog.setAttribute("aria-busy", String(busy || locked));
+    selectionCount.textContent = `${draft.size} selected${busy ? " - Updating..." : ""}`;
     apply.disabled = locked || !!invalid;
     apply.textContent = busy ? "Applying..." : "Apply";
     proceed.disabled = locked || !candidate;
     proceed.textContent = busy ? "Continuing..." : "Continue";
     for (const control of [cancel, dismiss, back, choose]) control.disabled = busy || refreshing;
-    refresh.disabled = locked || !!refreshDisabledReason;
+    refresh.disabled = busy || locked || !!refreshDisabledReason;
     refresh.title = refreshDisabledReason || (refreshing ? "Refreshing subscriptions..." : "Refresh subscriptions");
     search.disabled = locked;
     const eligible = matching().filter((item) => !item.disabled);
@@ -349,7 +354,7 @@ ${item.tenantId}`;
     actions.hidden = defaultStep;
     back.hidden = !confirmDefault || defaultStep || !candidate || loading;
     title.textContent = defaultStep ? "Use your default subscription?" : "Select subscriptions";
-    description.textContent = defaultStep ? "Continue with this subscription, or choose others." : selectionMode === "single" ? "Choose one subscription." : "Choose one or more subscriptions.";
+    description.textContent = defaultStep ? "Continue with this subscription, or choose others." : immediate ? "Changes take effect immediately. Choose one or more subscriptions." : selectionMode === "single" ? "Choose one subscription." : "Choose one or more subscriptions.";
     defaultName.textContent = candidate?.name ?? "";
     defaultName.title = candidate?.name ?? "";
     defaultId.textContent = candidate?.id ?? "";
@@ -362,6 +367,7 @@ ${item.tenantId}`;
     opened = false;
     operation++;
     busy = false;
+    queuedSelection = null;
     pointerStartedOutside = false;
     draft = new Set(applied);
     if (dialog.open) dialog.close();
@@ -393,7 +399,11 @@ ${item.tenantId}`;
     onOpenChange?.(true);
   }
   async function applySelection(keys) {
-    if (destroyed || !opened || busy || loading || refreshing) return;
+    if (destroyed || !opened || loading || refreshing) return;
+    if (busy) {
+      if (immediate) queuedSelection = new Set(keys);
+      return;
+    }
     const invalid = validation(keys);
     if (invalid) {
       applyError = invalid;
@@ -412,14 +422,25 @@ ${item.tenantId}`;
       const stale = validation(keys);
       if (stale) throw new Error(stale);
       applied = new Set(keys);
-      finish(false);
+      if (!immediate || defaultStep || selectionMode === "single") finish(false);
     } catch (failure) {
       if (destroyed || currentOperation !== operation) return;
       applyError = errorMessage(failure) || "Could not apply subscriptions. Try again.";
+      if (immediate && !queuedSelection) draft = new Set(applied);
       busy = false;
       updateControls();
-      const retry = defaultStep ? proceed : apply;
-      (retry.disabled ? dismiss : retry).focus();
+      if (!immediate) {
+        const retry = defaultStep ? proceed : apply;
+        (retry.disabled ? dismiss : retry).focus();
+      }
+    } finally {
+      if (immediate && !destroyed && currentOperation === operation) {
+        busy = false;
+        const next = queuedSelection;
+        queuedSelection = null;
+        updateControls();
+        if (next) await applySelection(next);
+      }
     }
   }
   async function refreshSubscriptions() {
@@ -470,7 +491,7 @@ ${item.tenantId}`;
   listen(trigger, "click", () => open());
   const cancelSelection = () => close({ cancelled: true });
   listen(dismiss, "click", cancelSelection);
-  listen(cancel, "click", cancelSelection);
+  listen(cancel, "click", immediate ? () => close() : cancelSelection);
   listen(choose, "click", () => {
     if (!busy && !refreshing) showStep(false);
   });
@@ -507,7 +528,7 @@ ${item.tenantId}`;
     if (dismissOutside) cancelSelection();
   });
   listen(search, "input", () => {
-    if (busy || loading || refreshing) return;
+    if (!immediate && busy || loading || refreshing) return;
     list.scrollTop = 0;
     renderList();
   });
@@ -518,6 +539,11 @@ ${item.tenantId}`;
     }
   });
   listen(list, "keydown", (event) => {
+    if (immediate && event.key === "Enter" && rows.some(({ input }) => input === event.target)) {
+      event.preventDefault();
+      event.target.click();
+      return;
+    }
     if (!["ArrowDown", "ArrowUp"].includes(event.key)) return;
     const inputs = rows.map((row) => row.input).filter((input) => !input.disabled);
     const index = inputs.indexOf(document.activeElement);
@@ -534,7 +560,7 @@ ${item.tenantId}`;
     const row = rows.find(({ input: input2 }) => input2 === event.target);
     if (!row) return;
     const { input, item } = row;
-    if (busy || loading || refreshing || item.disabled || blockedByGroup(item)) {
+    if (!immediate && busy || loading || refreshing || item.disabled || blockedByGroup(item)) {
       updateControls();
       return;
     }
@@ -544,9 +570,10 @@ ${item.tenantId}`;
     } else draft.delete(item.key);
     applyError = "";
     updateControls();
+    if (immediate) void applySelection(new Set(draft));
   });
   listen(bulk, "click", () => {
-    if (busy || loading || refreshing) return;
+    if (!immediate && busy || loading || refreshing) return;
     if (bulkClears()) {
       if (singleGroup || selectionMode === "single" || validation(draft)) draft.clear();
       else for (const item of matching()) if (!item.disabled) draft.delete(item.key);
@@ -557,6 +584,7 @@ ${item.tenantId}`;
     }
     applyError = "";
     updateControls();
+    if (immediate) void applySelection(new Set(draft));
   });
   renderList();
   showStep(false, false);

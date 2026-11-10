@@ -2,10 +2,10 @@ param accountName string
 param projectName string
 param location string = resourceGroup().location
 param tags object = {}
-param modelDeploymentName string = 'gpt-4.1'
-param modelName string = 'gpt-4.1'
-param modelVersion string = '2025-04-14'
-param deploymentCapacity int = 50
+param modelDeploymentName string = 'gpt-mini-latest'
+param modelName string = 'gpt-5.4-mini'
+param modelVersion string = '2026-03-17'
+param deploymentCapacity int = 200
 param managedIdentityPrincipalId string
 param deployerPrincipalId string = ''
 
@@ -40,7 +40,7 @@ resource foundryProject 'Microsoft.CognitiveServices/accounts/projects@2025-10-0
   }
 }
 
-resource foundryModelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
+resource foundryModelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-04-01-preview' = {
   parent: foundryAccount
   name: modelDeploymentName
   sku: {

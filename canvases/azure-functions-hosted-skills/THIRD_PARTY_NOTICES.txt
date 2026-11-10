@@ -178,7 +178,7 @@ SOFTWARE.
 
 --------------------
 
-@azure/identity@4.13.3
+@azure/identity@4.14.1
 License: MIT
 
 --------------------
@@ -238,7 +238,7 @@ SOFTWARE.
 
 --------------------
 
-@azure/msal-common@16.14.1
+@azure/msal-common@16.16.1
 License: MIT
 
 --------------------
@@ -268,7 +268,7 @@ SOFTWARE
 
 --------------------
 
-@azure/msal-node@6.0.1
+@azure/msal-node@7.2.1
 License: MIT
 
 --------------------

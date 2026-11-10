@@ -7,7 +7,7 @@ import { spawn as spawn2 } from "node:child_process";
 import { chmod, cp as cp3, mkdir as mkdir6, readdir as readdir6, readFile as readFile10, rename as rename6, rm as rm8, writeFile as writeFile4 } from "node:fs/promises";
 import { createHash as createHash8, randomUUID as randomUUID7, timingSafeEqual } from "node:crypto";
 import net from "node:net";
-import path12 from "node:path";
+import path13 from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
 import { createCanvas, joinSession } from "@github/copilot-sdk/extension";
 import { canvasUiAssets } from "./assets/toolkit/ui.mjs";
@@ -18,8 +18,16 @@ var COREAI_AZURE_VISUAL_PROFILE = Object.freeze({
   className: "canvas-profile-coreai-azure",
   stylesheet: "canvas-ui/profiles/coreai-azure.css"
 });
+var GITHUB_APP_VISUAL_PROFILE = Object.freeze({
+  id: "github-app",
+  className: "canvas-profile-github-app",
+  stylesheet: "canvas-ui/profiles/github-app.css",
+  designGuide: "canvas-ui/hosts/github-app/design.md",
+  themingGuide: "canvas-ui/hosts/github-app/theming.md"
+});
 var canvasVisualProfiles = Object.freeze({
-  [COREAI_AZURE_VISUAL_PROFILE.id]: COREAI_AZURE_VISUAL_PROFILE
+  [COREAI_AZURE_VISUAL_PROFILE.id]: COREAI_AZURE_VISUAL_PROFILE,
+  [GITHUB_APP_VISUAL_PROFILE.id]: GITHUB_APP_VISUAL_PROFILE
 });
 
 // canvases/azure-functions-hosted-skills/src/canvas-identity.mjs
@@ -42,6 +50,53 @@ import { cp, lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, stat, writeFi
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+// packages/studio-runtime/src/azd-failure.mjs
+function createAzdFailureTracker() {
+  let discovery = null;
+  let category = "unknown";
+  let publicationObserved = false;
+  let conflicting = false;
+  let recent = "";
+  const deployments = /* @__PURE__ */ new Set();
+  return {
+    feed(text) {
+      recent = `${recent}
+${text}`.slice(-8192);
+      if (/\b(?:uploading|uploaded|updating container image|publishing package|deployment started|zip deploy|one deploy)\b|Publishing service.*completed|SUCCESS:.*deployed/i.test(text)) publicationObserved = true;
+      for (const match of recent.matchAll(/publishing service ([a-zA-Z][\w-]{0,63}): getting target resource: resource not found:\s*unable to find a resource tagged with ['"]azd-service-name:\s*([a-zA-Z][\w-]{0,63})['"]/gi)) {
+        if (match[1] !== match[2] || discovery && discovery.service !== match[1]) conflicting = true;
+        if (match[1] === match[2]) discovery = { service: match[1] };
+      }
+      if (/\b(?:AADSTS\d+|AuthenticationFailed|InvalidAuthenticationToken)\b|please run ['"]?az(?:d)? (?:auth )?login/i.test(text)) category = "authentication";
+      else if (/\b(?:AuthorizationFailed|Forbidden|AccessDenied|AuthorizationPermissionMismatch)\b/i.test(text) && category !== "authentication") category = "authorization";
+      else if (/invalid (?:configuration|template|parameter)|\bInvalidTemplate\b|failed parsing.*azure\.yaml/i.test(text) && category === "unknown") category = "configuration";
+      else if (/failed (?:building|restoring|packaging)|error (?:building|packaging)/i.test(text) && category === "unknown") category = "build";
+      let decoded = text;
+      try {
+        decoded = decodeURIComponent(decodeURIComponent(text));
+      } catch {
+      }
+      const identity = /\/subscriptions\/[0-9a-f-]{36}\/(?:resourceGroups\/[^/\s?#]+\/)?providers\/Microsoft\.Resources\/deployments\/[\w.()-]+/i.exec(decoded)?.[0];
+      if (identity && deployments.size < 2) deployments.add(identity.toLowerCase());
+    },
+    finish({ ok, cancelled, started, code, signal }) {
+      if (ok) return null;
+      if (cancelled) return { category: "cancelled", publication: "unknown" };
+      if (!started || code == null || signal) return { category: "unknown", publication: "unknown" };
+      if (category !== "unknown") return { category, publication: "unknown" };
+      if (discovery && !conflicting && !publicationObserved) return {
+        category: "target_discovery",
+        service: discovery.service,
+        publication: "not_started_candidate",
+        deploymentId: deployments.size === 1 ? [...deployments][0] : null
+      };
+      return { category: publicationObserved ? "publishing" : "unknown", publication: "unknown" };
+    }
+  };
+}
+
+// packages/studio-runtime/src/studio-commands.mjs
 var RUNTIME_MODE = { LOCAL: "local", CLOUD: "cloud" };
 var AZD_DOCS_URL = "https://learn.microsoft.com/azure/developer/azure-developer-cli/";
 function resolveStudioRoot(moduleUrl) {
@@ -483,6 +538,7 @@ var AZURE_CLI_ENV_KEYS = [
   "COMSPEC",
   "PATHEXT",
   "AZURE_CONFIG_DIR",
+  "AZURE_CORE_CHECK_VERSION",
   "XDG_CONFIG_HOME",
   "HTTP_PROXY",
   "HTTPS_PROXY",
@@ -723,11 +779,20 @@ async function runAzureCliJson(args, subscription, {
   env = process.env,
   execute = execFileText,
   locate = locateAzureCli,
-  osName = os.platform()
+  osName = os.platform(),
+  signal
 } = {}) {
   const full = subscription ? [...args, "--subscription", subscription] : [...args];
   const withFlag = full.includes("--only-show-errors") ? full : [...full, "--only-show-errors"];
-  const { stdout } = await runAzureCliText(withFlag, { env, maxBuffer, timeout, execute, locate, osName });
+  const { stdout } = await runAzureCliText(withFlag, {
+    env,
+    maxBuffer,
+    timeout,
+    execute,
+    locate,
+    osName,
+    ...signal ? { signal } : {}
+  });
   const text = stdout.trim();
   return text ? JSON.parse(text) : null;
 }
@@ -954,7 +1019,7 @@ function createAzdPhaseTracker({ now = () => Date.now() } = {}) {
   );
   const emit = (name, state, detail = "") => {
     const phase = phases[name];
-    if (!phase || phase.state === state || ["completed", "failed", "cancelled"].includes(phase.state)) {
+    if (!phase || phase.state === state || ["completed", "failed", "cancelled", "unknown"].includes(phase.state)) {
       return null;
     }
     const timestamp = now();
@@ -968,7 +1033,7 @@ function createAzdPhaseTracker({ now = () => Date.now() } = {}) {
       phase.durationMs = Math.max(0, timestamp - phase.startedAt);
     }
     phase.detail = detail;
-    return { ...phase };
+    return { ...phase, reported: true };
   };
   const feed = (line) => {
     const text = redactDeploymentOutput(line).trim();
@@ -976,7 +1041,7 @@ function createAzdPhaseTracker({ now = () => Date.now() } = {}) {
     const push = (event) => {
       if (event) events.push(event);
     };
-    if (/Provisioning Azure resources(?:\s*\(azd provision\))?/i.test(text)) {
+    if (/Provisioning Azure resources(?:\s*\(azd provision\))?|Provisioning and deploying(?:\s*\(azd up\))?/i.test(text)) {
       push(emit("provision", "started", text));
     }
     if (/SUCCESS:.*\bprovisioned\b/i.test(text)) {
@@ -985,13 +1050,18 @@ function createAzdPhaseTracker({ now = () => Date.now() } = {}) {
     if (/Packaging services?(?:\s*\(azd package\))?|Packaging service\b/i.test(text)) {
       if (phases.provision.state === "started") push(emit("provision", "completed", "azd advanced to package"));
       push(emit("package", "started", text));
+    } else if (/Packaging overlaps with provisioning|:\s*Packaging\b/i.test(text)) {
+      push(emit("package", "started", text));
     }
-    if (/SUCCESS:.*\bpackaged\b/i.test(text)) {
+    if (/SUCCESS:.*\bpackaged\b|Compressing deployment artifacts/i.test(text)) {
       push(emit("package", "completed", text));
     }
     if (/Deploying services?(?:\s*\(azd deploy\))?/i.test(text)) {
+      const hadProvision = phases.provision.state !== "pending";
       if (phases.provision.state === "started") push(emit("provision", "completed", "azd advanced to deploy"));
-      if (phases.package.state === "started") push(emit("package", "completed", "azd advanced to deploy"));
+      if (phases.package.state === "started" || hadProvision && phases.package.state === "pending") {
+        push(emit("package", "completed", "azd advanced to deploy"));
+      }
       push(emit("deploy", "started", text));
     }
     if (/SUCCESS:.*\bdeployed\b/i.test(text)) {
@@ -1001,13 +1071,14 @@ function createAzdPhaseTracker({ now = () => Date.now() } = {}) {
   };
   const finish = ({ ok, cancelled = false, detail = "" }) => {
     const events = [];
-    const terminalState = cancelled ? "cancelled" : ok ? "completed" : "failed";
     for (const name of ["provision", "package", "deploy"]) {
       const phase = phases[name];
-      if (["completed", "failed", "cancelled"].includes(phase.state)) continue;
+      if (["completed", "failed", "cancelled", "unknown"].includes(phase.state)) continue;
+      const reported = phase.state !== "pending";
+      const terminalState = !reported && !ok ? "unknown" : cancelled ? "cancelled" : ok ? "completed" : "failed";
       const suffix = phase.state === "pending" && ok ? " This azd version did not emit a separate phase heading." : phase.state === "pending" ? " azd exited before reporting this phase." : "";
       const event = emit(name, terminalState, `${detail}${suffix}`.trim());
-      if (event) events.push(event);
+      if (event) events.push({ ...event, reported });
     }
     return events;
   };
@@ -1093,24 +1164,31 @@ async function deployToAzure(dir, {
   subscription,
   location,
   noPrompt = false,
+  publishService,
   spawnProcess = spawn,
   runCommand = execFileText,
   resolveCommand = externalCommandSpawnSpec
 } = {}) {
-  const azdArgs = ["up"];
+  if (publishService !== void 0 && !/^[a-zA-Z][\w-]{0,63}$/.test(publishService)) throw new Error("Specify one valid azd service for publish-only recovery.");
+  const operation = publishService ? `deploy ${publishService}` : "up";
+  const azdArgs = publishService ? ["deploy", publishService] : ["up"];
   if (environmentName) azdArgs.push("--environment", environmentName);
-  if (subscription) azdArgs.push("--subscription", subscription);
-  if (location) azdArgs.push("--location", location);
+  if (subscription && !publishService) azdArgs.push("--subscription", subscription);
+  if (location && !publishService) azdArgs.push("--location", location);
   if (noPrompt) azdArgs.push("--no-prompt");
   const command = `cd ${dir} && azd ${azdArgs.join(" ")}`;
   const tracker = createAzdPhaseTracker();
+  const evidence = createAzdFailureTracker();
   let sequence = 0;
   let cancelRequested = false;
   const lineBuffers = { stdout: "", stderr: "" };
   const notify = (patch) => {
     if (typeof onStatus === "function") onStatus(patch);
   };
+  let exitNotified = false;
   const notifyExit = (result) => {
+    if (exitNotified) return;
+    exitNotified = true;
     if (typeof onProcessExit === "function") onProcessExit(result);
   };
   const emitMilestones = (events) => {
@@ -1154,6 +1232,7 @@ async function deployToAzure(dir, {
       if (!text) return;
       const event = { sequence: ++sequence, stream, text, at: Date.now() };
       if (typeof onOutput === "function") onOutput(event);
+      evidence.feed(text);
       emitMilestones(tracker.feed(text));
     };
     const consume = (stream, chunk) => {
@@ -1169,7 +1248,7 @@ async function deployToAzure(dir, {
     child.stdout?.on("data", (chunk) => consume("stdout", chunk));
     child.stderr?.on("data", (chunk) => consume("stderr", chunk));
     child.once("error", (error) => {
-      const message = `Unable to launch azd up: ${shortError(error)}`;
+      const message = `Unable to launch azd ${operation}: ${shortError(error)}`;
       emitMilestones(tracker.finish({ ok: false, detail: message }));
       notify({ deployMode: RUNTIME_MODE.CLOUD, deployStatus: message, deployDir: dir, deployCommand: command });
       notifyExit({ ok: false, started: false, code: null, signal: null, message });
@@ -1177,7 +1256,7 @@ async function deployToAzure(dir, {
     });
     child.once("spawn", () => {
       child.unref();
-      const message = `azd up launched in ${dir}`;
+      const message = `azd ${operation} launched in ${dir}`;
       notify({
         deployMode: RUNTIME_MODE.CLOUD,
         deployStatus: message,
@@ -1203,9 +1282,10 @@ async function deployToAzure(dir, {
         }
         const cancelled = cancelRequested || signal === "SIGTERM";
         const ok = code === 0 && !cancelled;
-        const message2 = cancelled ? "Local azd command stopped; Azure operations already submitted may continue." : `azd up exited (code ${code ?? "null"}${signal ? `, signal ${signal}` : ""})`;
+        const message2 = cancelled ? "Local azd command stopped; Azure operations already submitted may continue." : `azd ${operation} exited (code ${code ?? "null"}${signal ? `, signal ${signal}` : ""})`;
         emitMilestones(tracker.finish({ ok, cancelled, detail: message2 }));
-        notifyExit({ ok, cancelled, started: true, code, signal, message: message2 });
+        const result = { ok, cancelled, started: true, code, signal, message: message2 };
+        notifyExit({ ...result, evidence: evidence.finish(result) });
       });
     });
   });
@@ -1281,9 +1361,9 @@ function contract(canvasId, host, versions, actions, controls) {
 var FUNCTION_STUDIO_USAGE_CONTRACT = contract(
   "azure-functions-hosted-skills",
   "copilot_app",
-  ["0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.5.4", "0.5.5"],
+  ["0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.5.4", "0.5.5", "0.5.6"],
   {
-    installation_status: usage("installation.status", "installation"),
+    installation_status: usage("app.installation_status.read", "integration", "excluded"),
     set_trigger: usage("trigger.select", "authoring"),
     set_target: usage("runtime.target.select", "execution"),
     set_timer_schedule: usage("trigger.timer.schedule", "authoring"),
@@ -1297,6 +1377,12 @@ var FUNCTION_STUDIO_USAGE_CONTRACT = contract(
     select_azure_function_app: usage("azure.function_app.select", "azure"),
     select_azure_function: usage("azure.function.select", "azure"),
     invoke_trigger: usage("function.invoke", "execution", "intentional", true),
+    invoke_local: usage("run.invoke.local", "execution", "intentional", true),
+    invoke_azure: usage("run.invoke.azure", "execution", "intentional", true),
+    deploy_azure: usage("deploy.run", "deployment", "intentional", true),
+    cancel_deploy_azure: usage("deploy.cancel", "deployment", "intentional", true),
+    open_deploy_run_azure: usage("deploy.run_azure", "deployment"),
+    open_deploy_monitor: usage("deploy.monitor", "deployment"),
     run_load_test: usage("function.load_test.start", "testing", "intentional", true),
     stop_load_test: usage("function.load_test.stop", "testing", "intentional", true),
     clear_invocations: usage("activity.clear", "activity", "intentional", true),
@@ -1353,6 +1439,8 @@ var FUNCTION_STUDIO_USAGE_CONTRACT = contract(
     "deployment-preflight": "button",
     "deployment-cancel": "button",
     "deployment-output": "details",
+    "deploy-run-azure": "button",
+    "deploy-monitor": "button",
     "trigger-option": "button",
     "trigger-test-input": "textarea",
     "parameters-panel": "details",
@@ -1388,7 +1476,7 @@ var FUNCTION_APP_OPERATIONS_USAGE_CONTRACT = contract(
   ["0.2.0"],
   {
     open_function_studio: usage("canvas.open", "navigation"),
-    view_function_state: usage("state.view", "navigation", "automatic"),
+    view_function_state: usage("state.view", "navigation", "excluded"),
     diagnose_function_auth: usage("diagnostics.auth", "diagnostics"),
     list_function_subscriptions: usage("azure.subscription.list", "azure", "automatic"),
     list_function_apps: usage("azure.function_app.list", "azure", "automatic"),
@@ -1785,7 +1873,6 @@ ${withToolkitSubscriptions ? '<link rel="stylesheet" href="./canvas-ui/styles.cs
   .inline-note.warn { color: var(--warn, #d9a441); }
   .inline-note code { background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; }
   .btn.warn-outline { border: 1px solid var(--warn, #d9a441); }
-  .scope-note { margin: .45rem 0 .8rem; max-width: 760px; }
 
   .chips { display: flex; flex-wrap: wrap; gap: .4rem; margin: .3rem 0 .8rem; }
   .trigger-tabs { max-width: 100%; margin: .3rem 0 .8rem; overflow-x: auto; }
@@ -2132,7 +2219,6 @@ ${withCoreAiAzureProfile ? '<link rel="stylesheet" href="./canvas-ui/profiles/co
 <body${withCoreAiAzureProfile ? ' class="canvas-profile-coreai-azure"' : ""} data-usage-metrics-enabled="${usageMetricsEnabled}">
   <div class="wrap">
     <div class="topline">
-      <span class="badge">Initial Concept</span>
       <span class="tag" id="target-badge">Target: Local</span>
       <span class="tag" id="trigger-badge">Trigger: Timer</span>
       <button class="tag" id="doctor-toggle" aria-expanded="false">
@@ -2161,7 +2247,6 @@ ${withCoreAiAzureProfile ? '<link rel="stylesheet" href="./canvas-ui/profiles/co
         <button type="button" role="tab" id="target-local" aria-selected="true" aria-controls="source-workspace-panel" tabindex="0">Local Function App</button>${withAzureExistingApp ? '\n        <button type="button" role="tab" id="target-azure" aria-selected="false" aria-controls="azure-function-app-panel" tabindex="-1">Azure Function App</button>' : ""}
       </div>
     </div>
-    <p class="inline-note scope-note" id="target-scope-note"></p>
     <div class="local-path" id="source-workspace-panel">
       <div class="local-path-head">
         <span class="local-path-label">Local function path</span>
@@ -2511,7 +2596,6 @@ ${commandClientScript()}
   }
   const statusEl = document.getElementById('status');
   const invokeResult = document.getElementById('invoke-result');
-  const targetScopeNote = document.getElementById('target-scope-note');
   function setStatus(message, url) {
     statusEl.textContent = message || '';
     if (url) {
@@ -2761,11 +2845,13 @@ ${commandClientScript()}
     if (state.skillSelectionNotice) setStatus(state.skillSelectionNotice);
   }
 
+  let renderedTriggerMarkup = '';
   function renderTriggers(state) {
     const schedule = state.timerSchedule || { cadence: 'daily', localTime: '09:00', weekday: 1, hourlyMinute: 0, status: '', error: '' };
     if (state.target === 'azure') {
       const selected = (state.azure.functions || []).find((fn) => fn.name === state.azure.functionName);
       triggersEl.innerHTML = '';
+      renderedTriggerMarkup = '';
       azureFunctionPicker.innerHTML = (state.azure.functions || []).map((fn) => {
         const on = fn.name === state.azure.functionName ? ' on' : '';
         const unsupported = fn.supportsInvoke ? '' : ' nyi';
@@ -2773,11 +2859,13 @@ ${commandClientScript()}
           ? '<span class="nyi-tag">RBAC</span>'
           : fn.supportsInvoke ? '' : '<span class="nyi-tag">unsupported</span>';
         return '<button class="trig' + on + unsupported + '"${usageMetricsEnabled ? ' data-metric-id="trigger-option"' : ""} data-function="' + esc(fn.name) + '" title="' + esc(fn.hostedSkillNote + '. ' + fn.guidance) + '">' + esc(fn.name + ' \xB7 ' + fn.label) + tag + '</button>';
-      }).join('') || '<span class="inline-note">Select an app to discover its deployed functions and trigger bindings.</span>';
+      }).join('');
+      azureFunctionPicker.hidden = !(state.azure.functions || []).length;
       triggerBadge.textContent = selected ? ('Function: ' + selected.name + ' \xB7 ' + selected.label) : 'Trigger: none';
     } else {
       azureFunctionPicker.innerHTML = '';
-      triggersEl.innerHTML = state.triggerTypes.map((t) => {
+      azureFunctionPicker.hidden = true;
+      const triggerMarkup = state.triggerTypes.map((t) => {
         const unavailable = t.nyi || t.id === 'connector';
         const on = t.id === state.trigger ? ' on' : '';
         const nyi = unavailable ? ' nyi' : '';
@@ -2785,6 +2873,12 @@ ${commandClientScript()}
         const title = unavailable ? 'Not implemented in this canvas yet' : 'Manually invoke via ' + t.label;
         return '<button type="button" role="tab" class="trig' + on + nyi + '"${usageMetricsEnabled ? ' data-metric-id="trigger-option"' : ""} data-id="' + t.id + '" aria-selected="' + String(t.id === state.trigger) + '" tabindex="' + (t.id === state.trigger ? '0' : '-1') + '" title="' + title + '"' + (unavailable || !state.sourceWorkspace.materialized || state.azdOperation.active ? ' disabled' : '') + '>' + t.label + tag + '</button>';
       }).join('');
+      // Rebuild only on change: a rebuild replaces the focused tab, so a key
+      // press during an unrelated state update would go to a detached element.
+      if (renderedTriggerMarkup !== triggerMarkup) {
+        triggersEl.innerHTML = triggerMarkup;
+        renderedTriggerMarkup = triggerMarkup;
+      }
       if (triggerFocusId) {
         const focusTarget = triggersEl.querySelector('[data-id="' + triggerFocusId + '"]:not(:disabled)');
         triggerFocusId = '';
@@ -3066,9 +3160,6 @@ ${commandClientScript()}
     if (targetAzureBtn) targetAzureBtn.tabIndex = state.target === 'azure' ? 0 : -1;
     targetBadge.textContent = 'Target: ' + (state.target === 'azure' ? ('Azure' + (state.azure.app ? ' \xB7 ' + state.azure.app.name : '')) : 'Local');
     const showAzure = state.target === 'azure';
-    targetScopeNote.textContent = showAzure
-      ? 'Azure mode discovers deployed functions because Azure exposes no reliable Hosted Skill marker. Only supported HTTP, Timer, and safely resolved Storage Queue functions can be tested; unsupported trigger types stay disabled and are never guessed.'
-      : 'Local mode authors and tests Hosted Skills projects. Open an existing local Function App only when it contains host.json and at least one valid .agent.md Hosted Skill; switching apps preserves developer-owned files and follows the selected workspace.';
     const attached = state.sourceWorkspace?.sourceMode === 'attached';
     openExistingAppBtn.hidden = showAzure;
     returnGeneratedAppBtn.hidden = showAzure || !attached;
@@ -4123,6 +4214,11 @@ async function optional(operation) {
     throw error;
   }
 }
+async function readPluginManifest(directory) {
+  const rootManifest = await optional(() => readFile2(path3.join(directory, "plugin.json"), "utf8"));
+  if (rootManifest !== null) return rootManifest;
+  return optional(() => readFile2(path3.join(directory, ".github/plugin/plugin.json"), "utf8"));
+}
 function pluginExtensionPath(manifest, id) {
   if (!manifest || !identities.has(id)) return null;
   if (["./extensions", "extensions"].includes(manifest.extensions)) return path3.join("extensions", id);
@@ -4137,7 +4233,7 @@ async function installationStatus({
 } = {}) {
   const found = /* @__PURE__ */ new Map();
   async function inspect(directory, inferredId, readManifest = true) {
-    const manifestText = readManifest ? await optional(() => readFile2(path3.join(directory, ".github/plugin/plugin.json"), "utf8")) : null;
+    const manifestText = readManifest ? await readPluginManifest(directory) : null;
     const manifest = manifestText ? JSON.parse(manifestText) : null;
     const id = manifest ? manifest.name : inferredId;
     const extensionPath = pluginExtensionPath(manifest, id);
@@ -4185,9 +4281,13 @@ var package_default = {
     "./package.json": "./package.json",
     "./arm-rest": "./src/arm-rest.mjs",
     "./http-request": "./src/http-request.mjs",
+    "./python-environment": "./src/python-environment.mjs",
+    "./local-readiness": "./src/local-readiness.mjs",
     "./runtime": "./src/function-app-runtime.mjs",
     "./telemetry": "./src/application-insights.mjs",
-    "./usage-contract": "./src/usage-contract.mjs"
+    "./usage-contract": "./src/usage-contract.mjs",
+    "./azure-functions-canvas-usage-contract": "./src/azure-functions-canvas-usage-contract.mjs",
+    "./azure-functions-skill-usage-contract": "./src/azure-functions-skill-usage-contract.mjs"
   }
 };
 
@@ -4218,13 +4318,15 @@ var MAX_HANDLED_TOOL_CALLS = 256;
 var SESSION_KEY_PATTERN = /^[A-Za-z0-9_-]{20,128}$/;
 var TOOL_NAME_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 var ALLOWED_ROLES = /* @__PURE__ */ new Set(["system", "developer", "user", "assistant", "tool"]);
-async function requireRegularFile(file, inspectFile = stat2) {
-  try {
-    if ((await inspectFile(file)).isFile()) return file;
-  } catch (error) {
-    if (error?.code !== "ENOENT") throw error;
+async function requireRegularFile(files, inspectFile = stat2) {
+  for (const file of files) {
+    try {
+      if ((await inspectFile(file)).isFile()) return file;
+    } catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+    }
   }
-  throw new CopilotSdkBridgeError(`GitHub Copilot CLI was not found at ${file}.`, 503);
+  throw new CopilotSdkBridgeError(`GitHub Copilot CLI was not found at ${files.join(" or ")}.`, 503);
 }
 async function resolveHostCopilotCliPath({
   environment = process.env,
@@ -4239,7 +4341,7 @@ async function resolveHostCopilotCliPath({
     if (!pathApi.isAbsolute(explicit)) {
       throw new CopilotSdkBridgeError("COPILOT_CLI_PATH must be an absolute path.", 503);
     }
-    return requireRegularFile(explicit, inspectFile);
+    return requireRegularFile([explicit], inspectFile);
   }
   const sdkRoot = String(environment.COPILOT_SDK_PATH || "").trim();
   if (!sdkRoot) return "";
@@ -4262,7 +4364,7 @@ async function resolveHostCopilotCliPath({
   const cacheBase = platform === "win32" ? String(environment.LOCALAPPDATA || pathApi.join(homeDirectory, "AppData", "Local")) : platform === "darwin" ? pathApi.join(homeDirectory, "Library", "Caches") : String(environment.XDG_CACHE_HOME || pathApi.join(homeDirectory, ".cache"));
   const executable = platform === "win32" ? "copilot.exe" : "copilot";
   return requireRegularFile(
-    pathApi.join(cacheBase, "github-copilot-sdk", "cli", version, executable),
+    [version, `copilot-sdk-runtime-${version}`].map((directory) => pathApi.join(cacheBase, "github-copilot-sdk", "cli", directory, executable)),
     inspectFile
   );
 }
@@ -4888,6 +4990,7 @@ var CopilotSdkBridge = class {
           context.expectedToolCallIds.clear();
           context.requiredToolName = requiredToolName;
           await this.updateAvailableTools(context, availableToolNames);
+          const hadPendingToolCalls = context.pending.size > 0;
           if (context.pending.size) {
             const exposedPending = new Map(
               [...context.exposedToolCallIds].map((toolCallId) => [toolCallId, context.pending.get(toolCallId)])
@@ -4929,7 +5032,7 @@ var CopilotSdkBridge = class {
             }
             await context.session.send({ prompt: transcriptPrompt(messages, instruction) });
           }
-          const boundary = await waitForBoundary(context.boundary, {
+          let boundary = await waitForBoundary(context.boundary, {
             timeoutMs: this.requestTimeoutMs,
             signal,
             onCancel: () => {
@@ -4937,6 +5040,24 @@ var CopilotSdkBridge = class {
               });
             }
           });
+          if (hadPendingToolCalls && boundary.type !== "tool_calls" && requiresToolCall && instruction) {
+            context.boundary = deferred();
+            context.lastAssistant = null;
+            context.expectedToolCallIds.clear();
+            context.requiredToolName = requiredToolName;
+            await context.session.send({
+              prompt: `TURN REQUIREMENT: ${instruction}
+After receiving the tool result, produce the complete final response incorporating all tool results gathered in this conversation.`
+            });
+            boundary = await waitForBoundary(context.boundary, {
+              timeoutMs: this.requestTimeoutMs,
+              signal,
+              onCancel: () => {
+                void context.session.abort().catch(() => {
+                });
+              }
+            });
+          }
           if (boundary.type === "tool_calls") {
             const toolCalls = this.exposePendingToolCalls(context);
             return chatCompletion(selectedModelId, {
@@ -5856,7 +5977,7 @@ function hydrateAzureSubscriptionInventory(azure, { force = false, loadApps = tr
   return request.promise;
 }
 
-// canvases/azure-functions-hosted-skills/src/python-environment.mjs
+// packages/function-app-core/src/python-environment.mjs
 import path5 from "node:path";
 function pythonVirtualEnvironment(agentDir, platform = process.platform) {
   const pathApi = platform === "win32" ? path5.win32 : path5.posix;
@@ -5886,6 +6007,7 @@ function classifyPythonVirtualEnvironment({ directoryExists, interpreterExists, 
 }
 
 // packages/function-app-core/src/http-request.mjs
+var HTTP_REQUEST_METHODS = Object.freeze(["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]);
 var HEADER_NAME = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
 var PROTECTED_HEADERS = /* @__PURE__ */ new Set([
   "__proto__",
@@ -7663,32 +7785,7 @@ function applyDefaultTimerSchedule(source, offsetMinutes = (/* @__PURE__ */ new 
   );
 }
 
-// canvases/azure-functions-hosted-skills/src/deployment-ui-state.mjs
-function createLocalPortReservationPool({ isListening }) {
-  const reserved = /* @__PURE__ */ new Set();
-  return {
-    async reserve(start, span = 40) {
-      for (let port = start; port < start + span; port += 1) {
-        if (reserved.has(port)) continue;
-        reserved.add(port);
-        if (await isListening(port)) {
-          reserved.delete(port);
-          continue;
-        }
-        let released = false;
-        return {
-          port,
-          release() {
-            if (released) return;
-            released = true;
-            reserved.delete(port);
-          }
-        };
-      }
-      throw new Error(`No free TCP port found starting at ${start}`);
-    }
-  };
-}
+// packages/function-app-core/src/local-readiness.mjs
 async function waitForLocalHostReady({
   port,
   isListening,
@@ -7722,9 +7819,34 @@ async function waitForLocalHostReady({
     const remaining = deadline - now();
     if (remaining > 0) await sleep(Math.min(pollMs, remaining));
   }
-  throw new Error(
-    `Functions host on 127.0.0.1:${port} did not report Running within ${Math.round(timeoutMs / 1e3)} seconds: ${detail}`
-  );
+  throw new Error(`Functions host on 127.0.0.1:${port} did not report Running within ${Math.round(timeoutMs / 1e3)} seconds: ${detail}`);
+}
+
+// canvases/azure-functions-hosted-skills/src/deployment-ui-state.mjs
+function createLocalPortReservationPool({ isListening }) {
+  const reserved = /* @__PURE__ */ new Set();
+  return {
+    async reserve(start, span = 40) {
+      for (let port = start; port < start + span; port += 1) {
+        if (reserved.has(port)) continue;
+        reserved.add(port);
+        if (await isListening(port)) {
+          reserved.delete(port);
+          continue;
+        }
+        let released = false;
+        return {
+          port,
+          release() {
+            if (released) return;
+            released = true;
+            reserved.delete(port);
+          }
+        };
+      }
+      throw new Error(`No free TCP port found starting at ${start}`);
+    }
+  };
 }
 async function waitForFunctionDiscovery({
   hasRequiredFunction,
@@ -9403,6 +9525,9 @@ async function writeAgentBodyIfRevision(filePath, bodyText, expectedRevision) {
 // packages/canvas-toolkit/src/telemetry.mjs
 import { randomUUID as randomUUID6 } from "node:crypto";
 import { execFile as execFile2 } from "node:child_process";
+import { closeSync, constants as constants2, fstatSync, openSync, readSync } from "node:fs";
+import { homedir as homedir5 } from "node:os";
+import path12 from "node:path";
 var ID = /^[a-z][a-z0-9_.-]{0,79}$/;
 var VERSION = /^[a-zA-Z0-9][a-zA-Z0-9.+_-]{0,39}$/;
 var SOURCES = /* @__PURE__ */ new Set(["model", "panel", "system", "unknown"]);
@@ -9425,6 +9550,29 @@ var PUBLIC_CANVAS_USAGE_SERVICE = Object.freeze({
 });
 var PUBLIC_CANVAS_USAGE_ENDPOINT = PUBLIC_CANVAS_USAGE_SERVICE.endpoint;
 var GITHUB_USER_ID = /^[1-9][0-9]{0,19}$/;
+function telemetryPreference() {
+  let fd;
+  try {
+    try {
+      const home = process.env.COPILOT_HOME || path12.join(homedir5(), ".copilot");
+      if (!path12.isAbsolute(home)) return { disabled: true, invalid: true };
+      fd = openSync(path12.join(home, "canvases", "telemetry.json"), constants2.O_RDONLY | constants2.O_NONBLOCK);
+      const stat4 = fstatSync(fd);
+      if (!stat4.isFile() || stat4.size > 4096) return { disabled: true, invalid: true };
+      const bytes = Buffer.alloc(4097);
+      let size = 0, count;
+      while (size < bytes.length && (count = readSync(fd, bytes, size, bytes.length - size, null)) > 0) size += count;
+      if (size > 4096) return { disabled: true, invalid: true };
+      const value = JSON.parse(bytes.toString("utf8", 0, size));
+      if (!value || Array.isArray(value) || typeof value.enabled !== "boolean") return { disabled: true, invalid: true };
+      return { disabled: !value.enabled, invalid: false };
+    } finally {
+      if (fd !== void 0) closeSync(fd);
+    }
+  } catch (error) {
+    return error.code === "ENOENT" ? { disabled: false, invalid: false } : { disabled: true, invalid: true };
+  }
+}
 function githubCliEnvironment(source) {
   const env = { ...source };
   for (const key of Object.keys(env)) {
@@ -9489,11 +9637,14 @@ function endpoint(value) {
   throw new TypeError("Telemetry endpoint must be credential-free HTTPS without a query or fragment.");
 }
 function createCanvasUsageMetrics(options = {}) {
+  return createUsageMetrics(options);
+}
+function createUsageMetrics(options, skillContract) {
   const {
     contract: contract2,
     canvasVersion,
     releaseChannel = "development",
-    enabled = false,
+    enabled: requestedEnabled = false,
     endpoint: destination,
     audience,
     getAccessToken,
@@ -9533,7 +9684,9 @@ function createCanvasUsageMetrics(options = {}) {
   if (!["development", "internal", "preview", "stable"].includes(releaseChannel)) {
     throw new TypeError("Unsupported telemetry release channel.");
   }
-  if (typeof enabled !== "boolean") throw new TypeError("enabled must be a boolean.");
+  if (typeof requestedEnabled !== "boolean") throw new TypeError("enabled must be a boolean.");
+  const preference = requestedEnabled ? telemetryPreference() : void 0;
+  const enabled = requestedEnabled && !preference.disabled;
   const url = destination === void 0 && (!enabled || transport !== void 0) ? void 0 : endpoint(destination);
   for (const [name, fn] of Object.entries({ now, randomId })) {
     if (typeof fn !== "function") throw new TypeError(`${name} must be a function.`);
@@ -9603,6 +9756,7 @@ function createCanvasUsageMetrics(options = {}) {
     diagnose("invalid_event");
     return false;
   }
+  if (preference?.invalid) diagnose("preference_unavailable");
   async function githubIdentity(signal) {
     if (resolvedGitHubUserId) return resolvedGitHubUserId;
     try {
@@ -9632,9 +9786,7 @@ function createCanvasUsageMetrics(options = {}) {
         return invalid2();
       }
       const event = Object.freeze({
-        schemaVersion: 1,
-        canvasId,
-        canvasVersion,
+        ...skillContract ? { schemaVersion: 2, pluginName: skillContract.pluginName, pluginVersion: canvasVersion } : { schemaVersion: 1, canvasId, canvasVersion },
         host,
         releaseChannel,
         timestamp: new Date(now()).toISOString(),
@@ -9746,6 +9898,10 @@ function createCanvasUsageMetrics(options = {}) {
     activeController?.abort("delivery_cancelled");
   }
   function close({ flush: drain = true } = {}) {
+    if (!enabled) {
+      closing = true;
+      return closePromise ??= Promise.resolve({ delivered: 0, dropped: 0 });
+    }
     if (!drain) {
       closing = true;
       stats.dropped += queue.length;
@@ -9772,15 +9928,51 @@ function createCanvasUsageMetrics(options = {}) {
     })();
     return closePromise;
   }
+  const lifecycle = {
+    get enabled() {
+      return enabled && !closing;
+    },
+    getStats: () => Object.freeze({ ...stats, queued: queue.length, inFlight, closed: closing }),
+    flush,
+    close,
+    cancelPending
+  };
+  if (skillContract) {
+    const skills = new Set(skillContract.skills);
+    const workflowId = (value) => value === "" || typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+    return Object.freeze({
+      ...lifecycle,
+      get enabled() {
+        return enabled && !closing;
+      },
+      trackSkillInvoked({ skillName, skillTrigger, workflowId: id = "" } = {}) {
+        if (!enabled || closing) return false;
+        if (!skills.has(skillName) || !["user-invoked", "agent-invoked", "context-load", "file-read", "unknown"].includes(skillTrigger) || !workflowId(id)) return invalid2();
+        return enqueue("skill_invoked", { skillName, skillTrigger, workflowId: id, invocationSource: "system" });
+      },
+      trackWorkflowCompleted(actionName, { workflowId: id, skillNames, outcome, durationMs } = {}) {
+        if (!enabled || closing) return false;
+        const fields = feature(actionName, "system");
+        if (!fields) return false;
+        if (!workflowId(id) || !id || !Array.isArray(skillNames) || skillNames.length > skills.size || skillNames.some((name) => !skills.has(name)) || new Set(skillNames).size !== skillNames.length || typeof outcome !== "string" || !Object.hasOwn(FAILURE_CODES, outcome) || !Number.isFinite(durationMs)) return invalid2();
+        return enqueue("skill_workflow_completed", {
+          ...fields,
+          canvasId: skillContract.workflows[actionName].canvasId,
+          workflowId: id,
+          skillNames: Object.freeze([...skillNames].sort()),
+          outcome,
+          durationMs: Math.max(0, Math.min(Math.round(durationMs), 36e5)),
+          failureCode: FAILURE_CODES[outcome]
+        });
+      }
+    });
+  }
   return Object.freeze({
+    ...lifecycle,
     get enabled() {
       return enabled && !closing;
     },
     hasAction: (name) => actions.has(name),
-    getStats: () => Object.freeze({ ...stats, queued: queue.length, inFlight, closed: closing }),
-    flush,
-    close,
-    cancelPending,
     trackCanvasOpened(invocationSource = "unknown") {
       if (!enabled || closing) return false;
       if (!SOURCES.has(invocationSource)) return invalid2();
@@ -9847,7 +10039,13 @@ function dataProperty(value, key, inherited = false) {
   }
 }
 function completionFromResult(result) {
-  if (dataProperty(result, "cancelled") === true || dataProperty(result, "canceled") === true) return "cancelled";
+  const deployment = dataProperty(result, "deployment");
+  const local = dataProperty(result, "local");
+  const invoke = dataProperty(result, "invoke");
+  const invocation = dataProperty(result, "invocation");
+  const create = dataProperty(result, "create");
+  if (dataProperty(result, "cancelled") === true || dataProperty(result, "canceled") === true || dataProperty(result, "status") === "cancelled" || dataProperty(result, "status") === "canceled" || dataProperty(result, "deploy") === "cancelled" || dataProperty(result, "deploy") === "canceled" || dataProperty(deployment, "status") === "cancelled" || dataProperty(deployment, "status") === "canceled") return "cancelled";
+  if (dataProperty(result, "status") === "failed" || dataProperty(result, "phase") === "failed" || dataProperty(result, "deploy") === "failed" || dataProperty(result, "deploy") === "unknown" || dataProperty(result, "local") === "failed" || dataProperty(result, "invoked") === false || dataProperty(result, "ready") === false || dataProperty(result, "appsStatus") === "failed" || dataProperty(local, "status") === "failed" || dataProperty(deployment, "status") === "failed" || dataProperty(invoke, "ok") === false || dataProperty(invoke, "state") === "failed" || dataProperty(invocation, "ok") === false || dataProperty(invocation, "phase") === "failed" || dataProperty(create, "status") === "failed") return "failed";
   if (dataProperty(result, "ok") === false || dataProperty(result, "isError") === true) return "rejected";
   return "succeeded";
 }
@@ -10013,7 +10211,7 @@ var CANONICAL_RENDERER_PROFILE = createHostedSkillsRendererProfile({
   features: FULL_HOSTED_SKILLS_FEATURE_PROFILE
 });
 var renderHtml = (options) => renderHostedSkillsHtml(CANONICAL_RENDERER_PROFILE, options);
-var RUNTIME_VERSION = "0.1.0b11";
+var RUNTIME_VERSION = "0.1.0b17";
 var UV_DOCS_URL = "https://docs.astral.sh/uv/getting-started/installation/";
 var PYTHON_DOCS_URL = "https://www.python.org/downloads/";
 var PYTHON_OVERRIDE_ENV = "INTELLIGENT_FUNCTION_APP_STUDIO_PYTHON";
@@ -10119,6 +10317,7 @@ function githubFunctionEnvironment(values = {}, authorization = "") {
   const env = {};
   if (authorization) env.GITHUB_MCP_AUTHORIZATION = authorization;
   if (values.GITHUB_REPOSITORY) env.GITHUB_REPOSITORY = values.GITHUB_REPOSITORY;
+  if (values.GITHUB_REPORTING_WINDOW) env.GITHUB_REPORTING_WINDOW = values.GITHUB_REPORTING_WINDOW;
   return env;
 }
 async function resolveGithubFunctionEnvironment(entry, values = {}) {
@@ -10392,10 +10591,24 @@ function githubRepositoryFromParameters(entry, parameters) {
   const property = githubRequirement(entry)?.repositoryParameter;
   return property ? String(parameters[property] || "") : "";
 }
+function githubReportingWindowFromParameters(_entry, parameters) {
+  return String(parameters?.reportingWindow || "").trim();
+}
+function declaredGithubReportingWindow(entry) {
+  const value = String(entry?.githubContext?.reportingWindow || "").trim();
+  const declared = Boolean(
+    entry?.parameterContract?.fields?.some((field) => field.name === "reportingWindow")
+  );
+  if (value && value !== "previous 24 hours") return value;
+  if (declared) return value || "previous 24 hours";
+  return "";
+}
 async function initializeDeclaredIntegrations(entry, { force = false, draft } = {}) {
   const github = githubRequirement(entry);
   if (!github) return;
   const parameters = parametersFromHttpRequest(entry, draft || currentHttpRequestDraft(entry));
+  const reportingWindow = githubReportingWindowFromParameters(entry, parameters);
+  if (reportingWindow) entry.githubContext.reportingWindow = reportingWindow;
   await initializeGithubContext(entry, {
     force,
     repository: githubRepositoryFromParameters(entry, parameters)
@@ -10700,13 +10913,13 @@ function skillNameOf(text) {
   return unquoted || "Untitled skill";
 }
 function hostedSkillSelectionPath(entry) {
-  return path12.join(requireTemplateDir(entry), `.${STATE_PRODUCT}`, "hosted-skill-selection.json");
+  return path13.join(requireTemplateDir(entry), `.${STATE_PRODUCT}`, "hosted-skill-selection.json");
 }
 function legacyHostedSkillSelectionPaths(entry) {
-  return LEGACY_PREVIEW_STATE_COMPONENTS.map((identity) => path12.join(requireTemplateDir(entry), `.${identity}`, "hosted-skill-selection.json"));
+  return LEGACY_PREVIEW_STATE_COMPONENTS.map((identity) => path13.join(requireTemplateDir(entry), `.${identity}`, "hosted-skill-selection.json"));
 }
 function hostedSkillWorkspaceIdentity(entry) {
-  return entry.sourceWorkspace.manifest?.generationId || createHash8("sha256").update(path12.resolve(requireTemplateDir(entry))).digest("hex").slice(0, 24);
+  return entry.sourceWorkspace.manifest?.generationId || createHash8("sha256").update(path13.resolve(requireTemplateDir(entry))).digest("hex").slice(0, 24);
 }
 function validatedHostedSkillSelections(value, entry) {
   if (value?.version !== 1 || value.workspaceIdentity !== hostedSkillWorkspaceIdentity(entry) || !value.selections || typeof value.selections !== "object" || Array.isArray(value.selections)) {
@@ -10746,7 +10959,7 @@ async function loadHostedSkillSelections(entry) {
 async function persistHostedSkillSelections(entry) {
   if (entry.sourceWorkspace.sourceMode === "attached") return;
   const file = hostedSkillSelectionPath(entry);
-  await mkdir6(path12.dirname(file), { recursive: true, mode: 448 });
+  await mkdir6(path13.dirname(file), { recursive: true, mode: 448 });
   const temporary = `${file}.${process.pid}.${randomUUID7()}.tmp`;
   const value = {
     version: 1,
@@ -10833,7 +11046,7 @@ async function refreshHostedSkillsFromDiskUnlocked(entry, { persist = true, foll
   let recoveryNotice = "";
   if (selectedOnDisk && nestedImport && entry.sourceWorkspace.sourceMode === "managed") {
     await writeAgentDocumentIfRevision(
-      path12.join(requireTemplateDir(entry), selectedOnDisk.relativePath),
+      path13.join(requireTemplateDir(entry), selectedOnDisk.relativePath),
       selectedOnDisk.body,
       selectedOnDisk.revision
     );
@@ -10843,7 +11056,7 @@ async function refreshHostedSkillsFromDiskUnlocked(entry, { persist = true, foll
         const importedContract = parameterContractOf(`${nestedImport.frontmatter}
 ${nestedImport.body}`);
         await writeAgentDocumentIfRevision(
-          path12.join(requireTemplateDir(entry), twin.relativePath),
+          path13.join(requireTemplateDir(entry), twin.relativePath),
           httpTwinContent(nestedImport.body, nestedImport.name, importedContract.schema),
           twin.revision
         );
@@ -10877,7 +11090,7 @@ ${nestedImport.body}`);
     const httpSkill = skills.find((skill) => skill.relativePath === HERO_TEMPLATE.httpAgentRelPath);
     if (entry.sourceWorkspace.sourceMode === "managed" && httpSkill && httpSkill.body.trim() !== choice.selected.body.trim()) {
       await writeAgentBodyIfRevision(
-        path12.join(requireTemplateDir(entry), httpSkill.relativePath),
+        path13.join(requireTemplateDir(entry), httpSkill.relativePath),
         choice.selected.body,
         httpSkill.revision
       );
@@ -10917,7 +11130,7 @@ async function refreshWorkspaceFromDisk(entry, { restartIfRunning = true, persis
 async function listTemplateFiles(dir) {
   try {
     const entries = await readdir6(dir, { recursive: true, withFileTypes: true });
-    return entries.filter((e) => e.isFile()).map((e) => path12.relative(dir, path12.join(e.parentPath ?? e.path ?? dir, e.name))).filter((rel) => rel && !rel.startsWith(".git" + path12.sep) && !rel.startsWith(".venv" + path12.sep)).sort().slice(0, 60);
+    return entries.filter((e) => e.isFile()).map((e) => path13.relative(dir, path13.join(e.parentPath ?? e.path ?? dir, e.name))).filter((rel) => rel && !rel.startsWith(".git" + path13.sep) && !rel.startsWith(".venv" + path13.sep)).sort().slice(0, 60);
   } catch {
     return [];
   }
@@ -10929,7 +11142,7 @@ function copilotBridgeForEntry(entry) {
   if (entry.copilotBridge) return entry.copilotBridge;
   const root = runtimeStatePaths(entry).root;
   entry.copilotBridge = new CopilotSdkBridge({
-    baseDirectory: path12.join(root, "copilot-sdk-runtime"),
+    baseDirectory: path13.join(root, "copilot-sdk-runtime"),
     workingDirectory: entry.agentDir || entry.sourceWorkspace.workingDirectory || root,
     ...copilotClientFactory ? { createClient: copilotClientFactory } : {},
     requestTimeoutMs: COPILOT_PROXY_TIMEOUT_MS
@@ -11021,7 +11234,7 @@ function runtimeStatePaths(entry) {
   return entry.runtimeState?.paths || studioStatePaths({ ...studioStateEnvironment(), instanceId: entry.instanceId });
 }
 function deploymentWorkspaceDir(entry) {
-  return entry.runtimeDirectories?.deployment || path12.join(runtimeStatePaths(entry).root, "deployment");
+  return entry.runtimeDirectories?.deployment || path13.join(runtimeStatePaths(entry).root, "deployment");
 }
 function deploymentSummary(deployment) {
   if (!deployment || deployment.status === "idle") return "";
@@ -11110,7 +11323,7 @@ async function initializeEntryRuntimeState(entry) {
       ...studioStateEnvironment(),
       instanceId: entry.instanceId
     }).initialize();
-    const release = await acquireStateLock(path12.join(state.paths.root, "runtime-owner"), { timeoutMs: 250, pollMs: 25 });
+    const release = await acquireStateLock(path13.join(state.paths.root, "runtime-owner"), { timeoutMs: 250, pollMs: 25 });
     try {
       entry.runtimeState = state;
       await loadInvocationHistory(entry);
@@ -11212,6 +11425,8 @@ async function saveHttpRequestDraft(entry, draft) {
   const contract2 = entry.target === "local" ? entry.parameterContract : { schema: null, defaults: {}, github: null };
   const parameters = validateParameters(contract2, parsed.body);
   if (entry.target === "local" && githubRequirement(entry)) {
+    const reportingWindow = githubReportingWindowFromParameters(entry, parameters);
+    if (reportingWindow) entry.githubContext.reportingWindow = reportingWindow;
     await initializeGithubContext(entry, {
       force: true,
       repository: githubRepositoryFromParameters(entry, parameters)
@@ -11339,12 +11554,53 @@ function hasRequiredGithubDigestEvidence(invocation, requiredTools = [...REQUIRE
 function invocationTrigger(entry, functionName2) {
   return entry.local.functions.find((fn) => fn.name === functionName2)?.kind || (functionName2.endsWith("_http") ? "http" : functionName2.endsWith("_queue") ? "queue" : functionName2.endsWith("_m365_inbox") ? "connector" : "timer");
 }
+function describeDigestToolCoverage(event, toolName) {
+  const normalizedTarget = sourceMcpToolName(toolName);
+  const tool = (event.tools || []).find(
+    (candidate) => sourceMcpToolName(candidate.name).replace(/^github_/, "") === normalizedTarget
+  );
+  const payloads = (event.payloads || []).filter(
+    (candidate) => candidate.validated === true && sourceMcpToolName(candidate.tool).replace(/^github_/, "") === normalizedTarget
+  );
+  const latestPayload = payloads.at(-1) || null;
+  if (!tool && !latestPayload) return "not checked";
+  if (!latestPayload && !tool?.ok) {
+    return event.phase === "running" ? "checking" : "not checked";
+  }
+  let returnedCount = Number.isFinite(tool?.returnedCount) ? tool.returnedCount : null;
+  if (returnedCount === null && latestPayload) {
+    if (normalizedTarget === "list_issues" && latestPayload.outputBytes <= 52) returnedCount = 0;
+    else if (normalizedTarget === "list_pull_requests" && latestPayload.outputBytes <= 44) returnedCount = 0;
+  }
+  if (returnedCount === null) return "checked (count unavailable)";
+  const last24hSuffix = Number.isFinite(tool?.last24hCount) && tool.last24hCount >= 0 ? normalizedTarget === "actions_list" ? `, ${tool.last24hCount} in last 24h` : ` (${tool.last24hCount} in last 24h)` : "";
+  if (normalizedTarget === "actions_list") {
+    const details = [];
+    if (Number.isFinite(tool?.failedCount) && tool.failedCount >= 0) {
+      details.push(`${tool.failedCount} failed`);
+    }
+    if (Number.isFinite(tool?.actionRequiredCount) && tool.actionRequiredCount > 0) {
+      details.push(`${tool.actionRequiredCount} action_required`);
+    }
+    if (tool?.coverageComplete === false) {
+      details.push("sample only, window coverage incomplete");
+    }
+    const detailSuffix = details.length ? ` (${details.join(", ")})` : "";
+    const scopeLabel = tool?.coverageComplete === false ? Number.isFinite(tool?.inspectedCount) && tool.inspectedCount > 0 && tool.inspectedCount !== returnedCount ? `${returnedCount} in sampled runs (${tool.inspectedCount} inspected)` : `${returnedCount} in sampled runs` : `${returnedCount} in window`;
+    return `${scopeLabel}${detailSuffix}${last24hSuffix}`;
+  }
+  return `${returnedCount} returned${last24hSuffix}`;
+}
 function refreshInvocationNote(event) {
   const toolNote = event.tools?.length ? `${event.tools.filter((tool) => tool.ok).length}/${event.tools.length} MCP calls completed.` : "";
+  const hasGithubDigestActivity = Boolean(
+    event.requiresGithubEvidence || event.payloads?.length || event.tools?.some((tool) => isRequiredGithubDigestTool(tool.name))
+  );
+  const coverageNote = hasGithubDigestActivity ? `Issues: ${describeDigestToolCoverage(event, "list_issues")}. Pull requests: ${describeDigestToolCoverage(event, "list_pull_requests")}. Workflow runs: ${describeDigestToolCoverage(event, "actions_list")}.` : "";
   const inputBytes = event.payloads?.reduce((total, payload) => total + payload.inputBytes, 0) || 0;
   const outputBytes = event.payloads?.reduce((total, payload) => total + payload.outputBytes, 0) || 0;
-  const payloadNote = event.payloads?.length ? `MCP results: ${inputBytes.toLocaleString()} -> ${outputBytes.toLocaleString()} bytes across ${event.payloads.length} calls.` : "";
-  const activity = [toolNote, payloadNote].filter(Boolean).join(" ");
+  const payloadNote = event.payloads?.length ? `Tool response size: ${inputBytes.toLocaleString()} bytes received; ${outputBytes.toLocaleString()} bytes passed to the agent after compaction (${event.payloads.length} ${event.payloads.length === 1 ? "call" : "calls"}).` : "";
+  const activity = [toolNote, coverageNote, payloadNote].filter(Boolean).join(" ");
   if (event.phase === "running") {
     event.note = activity || `${event.origin === "scheduled" ? "Scheduled" : "Manual"} ${event.trigger} is running.`;
   } else if (event.ok) {
@@ -11429,6 +11685,30 @@ function processLocalInvocationLog(entry, line, sequence) {
       });
       refreshInvocationNote(event);
     }
+    const summaryMatch = line.match(
+      /GitHub MCP middleware summary ([^\s:]+): returned=(-?\d+) failed=(-?\d+) last24h=(-?\d+)(?: complete=(-?\d+))?(?: inspected=(-?\d+))?(?: action_required=(-?\d+))?/
+    );
+    if (summaryMatch) {
+      const toolName = sourceMcpToolName(summaryMatch[1]);
+      const returnedCount = Number(summaryMatch[2]);
+      const failedCount = Number(summaryMatch[3]);
+      const last24hCount = Number(summaryMatch[4]);
+      const completeFlag = summaryMatch[5] !== void 0 ? Number(summaryMatch[5]) : -1;
+      const inspectedCount = summaryMatch[6] !== void 0 ? Number(summaryMatch[6]) : -1;
+      const actionRequiredCount = summaryMatch[7] !== void 0 ? Number(summaryMatch[7]) : -1;
+      let tool = event.tools.find((item) => item.name === toolName);
+      if (!tool) {
+        tool = { name: toolName, ok: true, completed: true };
+        event.tools.push(tool);
+      }
+      if (returnedCount >= 0) tool.returnedCount = returnedCount;
+      if (failedCount >= 0) tool.failedCount = failedCount;
+      if (last24hCount >= 0) tool.last24hCount = last24hCount;
+      if (completeFlag === 0 || completeFlag === 1) tool.coverageComplete = completeFlag === 1;
+      if (inspectedCount >= 0) tool.inspectedCount = inspectedCount;
+      if (actionRequiredCount >= 0) tool.actionRequiredCount = actionRequiredCount;
+      refreshInvocationNote(event);
+    }
     if (globalRetry) {
       event.retryAfterSeconds = globalRetry;
       event.note = `The gateway is retrying after ${globalRetry} seconds.`;
@@ -11468,7 +11748,7 @@ function processLocalInvocationLog(entry, line, sequence) {
   scheduleInvocationHistoryWrite(entry);
 }
 async function ensureAgentResponseLogging(entry) {
-  const functionAppPath = path12.join(requireTemplateDir(entry), "src", "function_app.py");
+  const functionAppPath = path13.join(requireTemplateDir(entry), "src", "function_app.py");
   const source = await readFile10(functionAppPath, "utf8");
   const updated = canonicalizeModelProviderRouting(installAgentResponseLogging(source));
   if (updated !== source) await writeFile4(functionAppPath, updated);
@@ -12067,12 +12347,12 @@ function httpTwinContent(bodyText, skillName = "Hosted skill", inputSchema = nul
   return frontmatter + "\n" + bodyText.trim() + "\n";
 }
 async function ensureConnectorHostConfig(sourceDir) {
-  const hostPath = path12.join(sourceDir, "host.json");
+  const hostPath = path13.join(sourceDir, "host.json");
   const current = JSON.parse(await readFile10(hostPath, "utf8"));
   const next = withConnectorExtensionBundle(current);
   await writeTextIfChanged(hostPath, `${JSON.stringify(next, null, 2)}
 `);
-  const connectorMcpPath = path12.join(sourceDir, "m365-inbox.mcp.json");
+  const connectorMcpPath = path13.join(sourceDir, "m365-inbox.mcp.json");
   await writeTextIfChanged(
     connectorMcpPath,
     `${JSON.stringify(withM365InboxMcpServer({ servers: {} }), null, 2)}
@@ -12080,12 +12360,12 @@ async function ensureConnectorHostConfig(sourceDir) {
   );
 }
 async function removeConnectorDeploymentConfig(sourceDir) {
-  const hostPath = path12.join(sourceDir, "host.json");
+  const hostPath = path13.join(sourceDir, "host.json");
   const current = JSON.parse(await readFile10(hostPath, "utf8"));
   const next = withoutConnectorExtensionBundle(current);
   await writeTextIfChanged(hostPath, `${JSON.stringify(next, null, 2)}
 `);
-  await rm8(path12.join(sourceDir, "m365-inbox.mcp.json"), { force: true });
+  await rm8(path13.join(sourceDir, "m365-inbox.mcp.json"), { force: true });
 }
 async function syncGeneratedTriggerFiles(entry, bodyText, skillName, options = {}) {
   return withSourceWorkspaceMutation(
@@ -12109,15 +12389,15 @@ async function syncGeneratedTriggerFilesUnlocked(entry, bodyText, skillName, exp
   checkSelection();
   if (expectedSelection?.expectedCanonical) {
     const { relativePath, revision } = expectedSelection.expectedCanonical;
-    const current = await readFile10(path12.join(requireTemplateDir(entry), relativePath), "utf8");
+    const current = await readFile10(path13.join(requireTemplateDir(entry), relativePath), "utf8");
     checkSelection();
     if (createHash8("sha256").update(current).digest("hex") !== revision) {
       throw new Error("Canonical skill instructions changed on disk. Refresh before preparing this trigger.");
     }
   }
-  const sourceDir = entry.agentDir || path12.join(requireTemplateDir(entry), "src");
-  const queuePath = path12.join(requireTemplateDir(entry), HERO_TEMPLATE.queueAgentRelPath);
-  const connectorPath = path12.join(requireTemplateDir(entry), HERO_TEMPLATE.connectorAgentRelPath);
+  const sourceDir = entry.agentDir || path13.join(requireTemplateDir(entry), "src");
+  const queuePath = path13.join(requireTemplateDir(entry), HERO_TEMPLATE.queueAgentRelPath);
+  const connectorPath = path13.join(requireTemplateDir(entry), HERO_TEMPLATE.connectorAgentRelPath);
   const queueExists = await exists(queuePath);
   const connectorExists = await exists(connectorPath);
   if (entry.trigger === "queue" || queueExists) {
@@ -12133,7 +12413,7 @@ async function syncGeneratedTriggerFilesUnlocked(entry, bodyText, skillName, exp
   }
 }
 async function protectLocalSettings(dir) {
-  const ignorePath = path12.join(dir, ".gitignore");
+  const ignorePath = path13.join(dir, ".gitignore");
   const requiredRules = ["src/local.settings.json", "src/.foundry-token.json", ".intelligent-function-app-studio/", ".azure-functions-hosted-skills/"];
   const current = await exists(ignorePath) ? await readFile10(ignorePath, "utf8") : "";
   const rules = current.split(/\r?\n/).map((line) => line.trim());
@@ -12143,11 +12423,11 @@ async function protectLocalSettings(dir) {
     await writeFile4(ignorePath, `${current}${separator}${missingRules.join("\n")}
 `);
   }
-  if (await exists(path12.join(dir, ".git"))) {
+  if (await exists(path13.join(dir, ".git"))) {
     await execFileText("git", ["rm", "--cached", "--ignore-unmatch", ...requiredRules], { cwd: dir });
   }
 }
-var BUNDLED_TEMPLATE_DIRECTORY = path12.join(EXTENSION_ROOT, "templates", "hosted-skill");
+var BUNDLED_TEMPLATE_DIRECTORY = path13.join(EXTENSION_ROOT, "templates", "hosted-skill");
 var SOURCE_WORKSPACE_TEMPLATE_ID = HERO_TEMPLATE.repo;
 var LEGACY_DAILY_DIGEST_AGENT_SIGNATURES = /* @__PURE__ */ new Map([
   [HERO_TEMPLATE.timerAgentRelPath, "a17e3135d4d9f3fea17ba88b8bf8a634fc35da9ca78462e66f0c08b4cb68eb10"],
@@ -12176,10 +12456,10 @@ function normalizedTextDigest(text) {
 }
 async function migrateOwnedLegacyDailyDigestAgents(root, manifest) {
   const currentFiles = [];
-  const baseline = new Map((manifest?.baseline || []).map((item) => [path12.normalize(item.path), item]));
+  const baseline = new Map((manifest?.baseline || []).map((item) => [path13.normalize(item.path), item]));
   for (const [relativePath, legacySignature] of LEGACY_DAILY_DIGEST_AGENT_SIGNATURES) {
-    const normalizedPath = path12.normalize(relativePath);
-    const file = path12.join(root, normalizedPath);
+    const normalizedPath = path13.normalize(relativePath);
+    const file = path13.join(root, normalizedPath);
     const current = await readFile10(file, "utf8");
     const owned = baseline.get(normalizedPath);
     const currentBytes = Buffer.from(current);
@@ -12190,7 +12470,7 @@ async function migrateOwnedLegacyDailyDigestAgents(root, manifest) {
   }
   const replacements = /* @__PURE__ */ new Map();
   for (const item of currentFiles) {
-    const content = await readFile10(path12.join(BUNDLED_TEMPLATE_DIRECTORY, item.normalizedPath), "utf8");
+    const content = await readFile10(path13.join(BUNDLED_TEMPLATE_DIRECTORY, item.normalizedPath), "utf8");
     await writeFile4(item.file, content);
     const bytes = Buffer.from(content);
     replacements.set(item.normalizedPath, {
@@ -12204,7 +12484,7 @@ async function migrateOwnedLegacyDailyDigestAgents(root, manifest) {
     migrated: true,
     manifest: {
       ...manifest,
-      baseline: manifest.baseline.map((item) => replacements.get(path12.normalize(item.path)) || item)
+      baseline: manifest.baseline.map((item) => replacements.get(path13.normalize(item.path)) || item)
     }
   };
 }
@@ -12213,6 +12493,7 @@ function gatewayClientManagerSource() {
 
 import json
 import os
+import re
 import secrets
 import time
 
@@ -12226,9 +12507,77 @@ from github_mcp_middleware import compact_github_results
 
 
 GITHUB_DIGEST_TOOLS = {"actions_list", "list_issues", "list_pull_requests"}
+GITHUB_DIGEST_TOOL_ORDER = ("list_issues", "list_pull_requests", "actions_list")
+
+
+def _extract_reporting_window_from_text(text):
+    raw = str(text or "").strip()
+    if not raw:
+        return None
+    if raw.startswith("{"):
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, dict):
+                candidate = parsed.get("reportingWindow") or parsed.get("reporting_window")
+                if isinstance(candidate, str) and candidate.strip():
+                    return candidate.strip()
+        except Exception:
+            pass
+    match = re.search(r'"reportingWindow"\\s*:\\s*"([^"]+)"', raw)
+    if match and match.group(1).strip():
+        return match.group(1).strip()
+    return None
+
+
+def _extract_reporting_window_from_messages(messages):
+    for message in reversed(list(messages or [])):
+        role = getattr(message, "role", "")
+        if role not in {"user", "system"}:
+            continue
+        for content in getattr(message, "contents", []) or []:
+            found = _extract_reporting_window_from_text(getattr(content, "text", ""))
+            if found:
+                return found
+        found = _extract_reporting_window_from_text(getattr(message, "text", ""))
+        if found:
+            return found
+    return None
+
+
+def _reporting_window_is_multi_day(value):
+    text = str(value or "").strip().lower()
+    if not text or text in {"previous 24 hours", "last 24 hours", "past 24 hours", "24h", "1d", "daily"}:
+        return False
+    if "week" in text:
+        return True
+    match = re.search(r"(\\d+)\\s*(day|days|d|hour|hours|h|week|weeks|w)\\b", text)
+    if not match:
+        return False
+    amount = int(match.group(1))
+    unit = match.group(2)
+    if unit.startswith("w"):
+        return True
+    if unit.startswith("d"):
+        return amount > 1
+    if unit.startswith("h"):
+        return amount > 24
+    return False
+
+
+def _multi_day_window_guidance(window_label):
+    return (
+        f"Reporting window note: Gather repository evidence using list_issues, list_pull_requests, and actions_list, "
+        f"summarize activity across the full {window_label} window, and explicitly distinguish changes from the last 24 hours "
+        f"(items with updated_in_last_24h=true / last_24h_count) versus earlier in the {window_label} window."
+    )
 
 
 def _normalize_timer_messages(messages):
+    reported_window = _extract_reporting_window_from_messages(messages)
+    if reported_window:
+        os.environ["GITHUB_REPORTING_WINDOW"] = reported_window
+    active_window = (reported_window or os.environ.get("GITHUB_REPORTING_WINDOW") or "previous 24 hours").strip()
+    multi_day = _reporting_window_is_multi_day(active_window)
     normalized = []
     for message in messages:
         is_timer = (
@@ -12238,14 +12587,23 @@ def _normalize_timer_messages(messages):
                 for content in getattr(message, "contents", [])
             )
         )
-        normalized.append(
-            Message(
-                "user",
-                ["Run the scheduled daily task now. Follow the agent instructions and use available tools."],
-            )
-            if is_timer
-            else message
-        )
+        if is_timer:
+            prompt = "Run the scheduled daily task now. Follow the agent instructions and use available tools."
+            if multi_day:
+                prompt = f"{prompt} {_multi_day_window_guidance(active_window)}"
+            normalized.append(Message("user", [prompt]))
+            continue
+        if multi_day and getattr(message, "role", "") == "user":
+            texts = [
+                str(getattr(content, "text", ""))
+                for content in getattr(message, "contents", [])
+                if getattr(content, "text", None) is not None
+            ]
+            combined = "\\n".join(texts).strip()
+            if combined and "Reporting window note:" not in combined:
+                normalized.append(Message("user", [f"{combined}\\n\\n{_multi_day_window_guidance(active_window)}"]))
+                continue
+        normalized.append(message)
     return normalized
 
 
@@ -12270,12 +12628,37 @@ def _declared_tool_name(tool):
     return str(getattr(tool, "name", "") or "")
 
 
+def _called_github_digest_tools(messages):
+    called = set()
+    for message in messages or []:
+        for content in getattr(message, "contents", []) or []:
+            content_type = getattr(content, "type", "")
+            raw_name = getattr(content, "name", None)
+            if content_type in {"function_call", "function_result"} or raw_name:
+                normalized = _tool_name({"name": raw_name})
+                if normalized in GITHUB_DIGEST_TOOLS:
+                    called.add(normalized)
+        for tool_call in getattr(message, "tool_calls", []) or []:
+            if isinstance(tool_call, dict):
+                raw_name = (tool_call.get("function") or {}).get("name") or tool_call.get("name")
+            else:
+                fn = getattr(tool_call, "function", None)
+                raw_name = getattr(fn, "name", None) or getattr(tool_call, "name", None)
+            normalized = _tool_name({"name": raw_name})
+            if normalized in GITHUB_DIGEST_TOOLS:
+                called.add(normalized)
+    return called
+
+
 def _require_initial_github_digest_tool(messages, options):
     if not os.environ.get("GITHUB_REPOSITORY", "").strip():
         return
+    reported_window = _extract_reporting_window_from_messages(messages)
+    if reported_window:
+        os.environ["GITHUB_REPORTING_WINDOW"] = reported_window
     tool_choice = options.get("tool_choice")
     tool_mode = tool_choice.get("mode") if isinstance(tool_choice, dict) else tool_choice
-    if tool_mode == "none" or (messages and getattr(messages[-1], "role", "") == "tool"):
+    if tool_mode == "none":
         return
     available = {
         _tool_name(tool): _declared_tool_name(tool)
@@ -12288,10 +12671,17 @@ def _require_initial_github_digest_tool(messages, options):
             "GitHub repository digest requires declared GitHub MCP tools before Copilot inference. "
             f"Missing: {', '.join(missing)}."
         )
+    called = _called_github_digest_tools(messages)
+    has_tool_messages = any(getattr(message, "role", "") == "tool" for message in (messages or []))
+    if has_tool_messages and not called:
+        return
+    remaining = [name for name in GITHUB_DIGEST_TOOL_ORDER if name not in called]
+    if not remaining:
+        return
     if tool_mode in {None, "auto"}:
         options["tool_choice"] = {
             "mode": "required",
-            "required_function_name": available["list_issues"],
+            "required_function_name": available[remaining[0]],
         }
 
 
@@ -12310,12 +12700,25 @@ class CopilotSessionChatClient(OpenAIChatCompletionClient):
         self._bridge_session_id = secrets.token_urlsafe(24)
         super().__init__(*args, **kwargs)
 
-    def get_response(self, messages, **kwargs):
-        options = dict(kwargs.get("options") or {})
+    def _prepare_digest_options(self, messages, options):
+        options = dict(options or {})
         options["user"] = self._bridge_session_id
         options["allow_multiple_tool_calls"] = False
+        options.setdefault("max_tokens", 4096)
         _require_initial_github_digest_tool(messages, options)
-        kwargs["options"] = options
+        return options
+
+    def _inner_get_response(self, *, messages, options, stream=False, **kwargs):
+        prepared_options = self._prepare_digest_options(messages, options)
+        return super()._inner_get_response(
+            messages=_normalize_timer_messages(messages),
+            options=prepared_options,
+            stream=stream,
+            **kwargs,
+        )
+
+    def get_response(self, messages, **kwargs):
+        kwargs["options"] = self._prepare_digest_options(messages, kwargs.get("options"))
         return super().get_response(_normalize_timer_messages(messages), **_bound_completion(kwargs))
 
 
@@ -12407,6 +12810,7 @@ function githubMcpMiddlewareSource() {
 import json
 import logging
 import os
+import re
 from collections.abc import Mapping
 from datetime import datetime, timedelta, timezone
 
@@ -12424,11 +12828,34 @@ GITHUB_MCP_TOOLS = {
     "github_list_pull_requests",
 }
 MAX_ITEMS = 50
+MAX_ACTION_PAGES = 10
+MAX_ACTION_INSPECT_ITEMS = MAX_ACTION_PAGES * 100
 MAX_TEXT_BYTES = 65536
 
 
 def _source_tool_name(tool_name):
     return tool_name.rsplit("___", maxsplit=1)[-1]
+
+
+def _parse_reporting_window_delta(value=None):
+    raw = str(value if value is not None else os.environ.get("GITHUB_REPORTING_WINDOW", "")).strip()
+    if not raw:
+        return ("previous 24 hours", timedelta(days=1))
+    lowered = raw.lower()
+    if lowered in {"previous 24 hours", "last 24 hours", "past 24 hours", "24 hours", "24h", "1 day", "1d", "daily"}:
+        return (raw, timedelta(days=1))
+    if lowered in {"previous 7 days", "last 7 days", "past 7 days", "7 days", "7d", "weekly", "previous week", "last week", "past week"}:
+        return (raw, timedelta(days=7))
+    match = re.search(r"(\\d+)\\s*(hour|hours|hr|hrs|h|day|days|d|week|weeks|w)\\b", lowered)
+    if match:
+        amount = max(1, min(int(match.group(1)), 90))
+        unit = match.group(2)
+        if unit.startswith("h"):
+            return (raw, timedelta(hours=amount))
+        if unit.startswith("w"):
+            return (raw, timedelta(days=min(amount * 7, 90)))
+        return (raw, timedelta(days=amount))
+    return (raw, timedelta(days=1))
 
 
 def _is_recent(value, cutoff):
@@ -12513,52 +12940,107 @@ def _normalize_arguments(tool_name, arguments, cutoff):
         )
 
 
-def _compact(tool_name, payload, cutoff):
+def _item_timestamp(item, snake_key, camel_key):
+    if not isinstance(item, Mapping):
+        return None
+    return item.get(snake_key) or item.get(camel_key)
+
+
+def _compact(
+    tool_name,
+    payload,
+    cutoff,
+    *,
+    window_label=None,
+    last_24h_cutoff=None,
+    max_action_items=MAX_ITEMS,
+):
     if tool_name in {"github_list_pull_requests", "list_pull_requests"}:
         if not isinstance(payload, list):
             raise RuntimeError("GitHub MCP list_pull_requests returned an invalid result shape.")
         source = payload[:MAX_ITEMS]
         items = []
+        last_24h_count = 0
         for item in source:
-            if not isinstance(item, Mapping) or not _is_recent(item.get("updated_at"), cutoff):
+            updated_value = _item_timestamp(item, "updated_at", "updatedAt")
+            if not isinstance(item, Mapping) or not _is_recent(updated_value, cutoff):
                 continue
             compact = _select(
                 item,
                 ("number", "title", "state", "draft", "merged", "created_at", "updated_at", "html_url"),
             )
-            compact["author"] = _login(item.get("user"))
+            if "updated_at" not in compact and updated_value is not None:
+                compact["updated_at"] = updated_value
+            created_value = _item_timestamp(item, "created_at", "createdAt")
+            if "created_at" not in compact and created_value is not None:
+                compact["created_at"] = created_value
+            compact["author"] = _login(item.get("user") or item.get("author"))
             compact["labels"] = _labels(item.get("labels"))
+            if last_24h_cutoff is not None:
+                in_last_24h = _is_recent(updated_value, last_24h_cutoff)
+                compact["updated_in_last_24h"] = in_last_24h
+                if in_last_24h:
+                    last_24h_count += 1
             items.append(compact)
-        return {"returned_count": len(items), "pull_requests": items}
+        result = {"returned_count": len(items), "pull_requests": items}
+        if window_label is not None:
+            result["reporting_window"] = window_label
+        if last_24h_cutoff is not None:
+            result["last_24h_count"] = last_24h_count
+        return result
 
     if tool_name in {"github_list_issues", "list_issues"}:
         if not isinstance(payload, Mapping) or not isinstance(payload.get("issues"), list):
             raise RuntimeError("GitHub MCP list_issues returned an invalid result shape.")
         source = payload["issues"][:MAX_ITEMS]
         items = []
+        last_24h_count = 0
         for item in source:
-            if not isinstance(item, Mapping) or not _is_recent(item.get("updated_at"), cutoff):
+            updated_value = _item_timestamp(item, "updated_at", "updatedAt")
+            if not isinstance(item, Mapping) or not _is_recent(updated_value, cutoff):
                 continue
             compact = _select(
                 item,
                 ("number", "title", "state", "state_reason", "comments", "created_at", "updated_at", "closed_at", "html_url"),
             )
-            compact["author"] = _login(item.get("user"))
+            if "updated_at" not in compact and updated_value is not None:
+                compact["updated_at"] = updated_value
+            created_value = _item_timestamp(item, "created_at", "createdAt")
+            if "created_at" not in compact and created_value is not None:
+                compact["created_at"] = created_value
+            compact["author"] = _login(item.get("user") or item.get("author"))
             compact["labels"] = _labels(item.get("labels"))
+            if last_24h_cutoff is not None:
+                in_last_24h = _is_recent(updated_value, last_24h_cutoff)
+                compact["updated_in_last_24h"] = in_last_24h
+                if in_last_24h:
+                    last_24h_count += 1
             items.append(compact)
-        return {
+        result = {
             "total_count": payload.get("totalCount") if isinstance(payload, Mapping) else None,
             "returned_count": len(items),
             "issues": items,
         }
+        if window_label is not None:
+            result["reporting_window"] = window_label
+        if last_24h_cutoff is not None:
+            result["last_24h_count"] = last_24h_count
+        return result
 
     if tool_name in {"github_actions_list", "actions_list"}:
         if not isinstance(payload, Mapping) or not isinstance(payload.get("workflow_runs"), list):
             raise RuntimeError("GitHub MCP actions_list returned an invalid result shape.")
         returned = payload["workflow_runs"]
-        source = returned[:MAX_ITEMS]
+        inspect_limit = (
+            max_action_items
+            if isinstance(max_action_items, int) and max_action_items > 0
+            else MAX_ITEMS
+        )
+        source = returned[:inspect_limit]
         recent = []
         failures = []
+        last_24h_runs = 0
+        last_24h_failures = 0
         conclusion_counts = {}
         latest_observed_at = None
         oldest_observed_at = None
@@ -12577,10 +13059,17 @@ def _compact(tool_name, payload, cutoff):
             if not _is_recent(observed_at, cutoff):
                 continue
             recent.append(item)
+            in_last_24h = last_24h_cutoff is not None and _is_recent(observed_at, last_24h_cutoff)
+            if in_last_24h:
+                last_24h_runs += 1
             conclusion = item.get("conclusion")
             conclusion = conclusion if isinstance(conclusion, str) and conclusion else "unknown"
             conclusion_counts[conclusion] = conclusion_counts.get(conclusion, 0) + 1
-            if conclusion != "failure":
+            if conclusion not in {"failure", "action_required", "timed_out", "startup_failure"}:
+                continue
+            if conclusion == "failure" and last_24h_cutoff is not None and in_last_24h:
+                last_24h_failures += 1
+            if len(failures) >= MAX_ITEMS:
                 continue
             compact = _select(
                 item,
@@ -12591,6 +13080,8 @@ def _compact(tool_name, payload, cutoff):
                 ),
             )
             compact["actor"] = _login(item.get("actor"))
+            if last_24h_cutoff is not None:
+                compact["updated_in_last_24h"] = in_last_24h
             failures.append(compact)
         total_count = payload.get("total_count")
         has_uninspected_runs = (
@@ -12601,32 +13092,163 @@ def _compact(tool_name, payload, cutoff):
             not has_uninspected_runs
             or isinstance(oldest_observed_at, str) and not _is_recent(oldest_observed_at, cutoff)
         )
-        return {
+        failure_count = conclusion_counts.get("failure", 0)
+        action_required_count = conclusion_counts.get("action_required", 0)
+        result = {
             "verified": True,
             "returned_run_count": len(returned),
             "inspected_run_count": len(source),
             "inspection_truncated": has_uninspected_runs,
             "window_coverage_complete": window_coverage_complete,
-            "verified_no_recent_failures": window_coverage_complete and not failures,
+            "verified_no_recent_failures": window_coverage_complete and failure_count == 0 and action_required_count == 0,
             "recent_completed_run_count": len(recent),
             "recent_success_count": conclusion_counts.get("success", 0),
             "recent_skipped_count": conclusion_counts.get("skipped", 0),
-            "recent_failure_count": len(failures),
+            "recent_failure_count": failure_count,
             "recent_conclusion_counts": conclusion_counts,
             "latest_observed_at": latest_observed_at,
             "oldest_observed_at": oldest_observed_at,
             "workflow_failures": failures,
         }
+        if window_label is not None:
+            result["reporting_window"] = window_label
+        if last_24h_cutoff is not None:
+            result["last_24h_completed_run_count"] = last_24h_runs
+            result["last_24h_failure_count"] = last_24h_failures
+        return result
 
     return payload
 
 
-def _compact_text(tool_name, text, cutoff):
+def _extract_result_text(result):
+    if isinstance(result, str):
+        return result
+    if isinstance(result, list):
+        for item in result:
+            if isinstance(item, Content) and item.type == "text" and item.text is not None:
+                return item.text
+    return None
+
+
+async def _paginate_actions_if_needed(context, call_next, first_text, cutoff):
+    if not isinstance(context.arguments, dict):
+        return first_text, len(first_text.encode("utf-8"))
+    try:
+        first_payload = json.loads(first_text)
+    except json.JSONDecodeError:
+        return first_text, len(first_text.encode("utf-8"))
+    if not isinstance(first_payload, Mapping) or not isinstance(first_payload.get("workflow_runs"), list):
+        return first_text, len(first_text.encode("utf-8"))
+
+    per_page = int(context.arguments.get("perPage") or 100)
+    page_runs = first_payload["workflow_runs"]
+    all_runs = list(page_runs)
+    seen_ids = {
+        item.get("id")
+        for item in all_runs
+        if isinstance(item, Mapping) and item.get("id") is not None
+    }
+    total_count = first_payload.get("total_count")
+    raw_input_bytes = len(first_text.encode("utf-8"))
+    page = 1
+
+    while page < MAX_ACTION_PAGES and len(all_runs) < MAX_ACTION_INSPECT_ITEMS:
+        if len(page_runs) < per_page:
+            break
+        if isinstance(total_count, int) and len(all_runs) >= total_count:
+            break
+        tail_runs = [item for item in page_runs[-5:] if isinstance(item, Mapping)]
+        if tail_runs and not any(
+            _is_recent(item.get("updated_at") or item.get("created_at"), cutoff)
+            for item in tail_runs
+        ):
+            break
+
+        page += 1
+        context.arguments["page"] = page
+        await call_next()
+        next_text = _extract_result_text(context.result)
+        if not next_text:
+            break
+        raw_input_bytes += len(next_text.encode("utf-8"))
+        try:
+            next_payload = json.loads(next_text)
+        except json.JSONDecodeError:
+            break
+        if not isinstance(next_payload, Mapping) or not isinstance(next_payload.get("workflow_runs"), list):
+            break
+        page_runs = next_payload["workflow_runs"]
+        if not page_runs:
+            break
+        if not isinstance(total_count, int) and isinstance(next_payload.get("total_count"), int):
+            total_count = next_payload.get("total_count")
+        for item in page_runs:
+            if not isinstance(item, Mapping):
+                continue
+            item_id = item.get("id")
+            if item_id is not None:
+                if item_id in seen_ids:
+                    continue
+                seen_ids.add(item_id)
+            all_runs.append(item)
+
+    if page == 1:
+        return first_text, raw_input_bytes
+
+    merged_payload = dict(first_payload)
+    merged_payload["workflow_runs"] = all_runs
+    if isinstance(total_count, int):
+        merged_payload["total_count"] = total_count
+    merged_text = json.dumps(merged_payload, separators=(",", ":"))
+    return merged_text, raw_input_bytes
+
+
+def _compact_text_with_summary(
+    tool_name,
+    text,
+    cutoff,
+    *,
+    window_label=None,
+    last_24h_cutoff=None,
+    max_action_items=MAX_ITEMS,
+    input_bytes=None,
+):
     try:
         payload = json.loads(text)
     except json.JSONDecodeError as error:
         raise RuntimeError(f"GitHub MCP {tool_name} returned non-JSON text.") from error
-    compact_payload = _compact(tool_name, payload, cutoff)
+    compact_payload = _compact(
+        tool_name,
+        payload,
+        cutoff,
+        window_label=window_label,
+        last_24h_cutoff=last_24h_cutoff,
+        max_action_items=max_action_items,
+    )
+    returned_count = -1
+    failed_count = -1
+    last_24h_count = -1
+    complete_flag = 1
+    inspected_count = -1
+    action_required_count = -1
+    if isinstance(compact_payload, Mapping):
+        if "returned_count" in compact_payload and isinstance(compact_payload["returned_count"], int):
+            returned_count = compact_payload["returned_count"]
+        elif "recent_completed_run_count" in compact_payload and isinstance(compact_payload["recent_completed_run_count"], int):
+            returned_count = compact_payload["recent_completed_run_count"]
+        if "recent_failure_count" in compact_payload and isinstance(compact_payload["recent_failure_count"], int):
+            failed_count = compact_payload["recent_failure_count"]
+        if "last_24h_count" in compact_payload and isinstance(compact_payload["last_24h_count"], int):
+            last_24h_count = compact_payload["last_24h_count"]
+        elif "last_24h_completed_run_count" in compact_payload and isinstance(compact_payload["last_24h_completed_run_count"], int):
+            last_24h_count = compact_payload["last_24h_completed_run_count"]
+        if "window_coverage_complete" in compact_payload and isinstance(compact_payload["window_coverage_complete"], bool):
+            complete_flag = 1 if compact_payload["window_coverage_complete"] else 0
+        if "inspected_run_count" in compact_payload and isinstance(compact_payload["inspected_run_count"], int):
+            inspected_count = compact_payload["inspected_run_count"]
+        conclusions = compact_payload.get("recent_conclusion_counts")
+        if isinstance(conclusions, Mapping) and isinstance(conclusions.get("action_required"), int):
+            action_required_count = conclusions["action_required"]
     compact = json.dumps(compact_payload, separators=(",", ":"), sort_keys=True)
     if len(compact.encode("utf-8")) > MAX_TEXT_BYTES:
         compact = json.dumps(
@@ -12637,11 +13259,40 @@ def _compact_text(tool_name, text, cutoff):
             separators=(",", ":"),
             sort_keys=True,
         )
+    raw_bytes = input_bytes if isinstance(input_bytes, int) and input_bytes >= 0 else len(text.encode("utf-8"))
     logger.warning(
         "GitHub MCP middleware validated %s payload and compacted from %d to %d bytes.",
         tool_name,
-        len(text.encode("utf-8")),
+        raw_bytes,
         len(compact.encode("utf-8")),
+    )
+    return (
+        compact,
+        returned_count,
+        failed_count,
+        last_24h_count,
+        complete_flag,
+        inspected_count,
+        action_required_count,
+    )
+
+
+def _compact_text(
+    tool_name,
+    text,
+    cutoff,
+    *,
+    window_label=None,
+    last_24h_cutoff=None,
+    max_action_items=MAX_ITEMS,
+):
+    compact, _, _, _, _, _, _ = _compact_text_with_summary(
+        tool_name,
+        text,
+        cutoff,
+        window_label=window_label,
+        last_24h_cutoff=last_24h_cutoff,
+        max_action_items=max_action_items,
     )
     return compact
 
@@ -12653,21 +13304,63 @@ async def compact_github_results(context: FunctionInvocationContext, call_next):
         await call_next()
         return
 
-    cutoff = datetime.now(timezone.utc) - timedelta(days=1)
+    window_label, window_delta = _parse_reporting_window_delta()
+    now = datetime.now(timezone.utc)
+    cutoff = now - window_delta
+    last_24h_cutoff = (now - timedelta(days=1)) if window_delta > timedelta(days=1) else None
     if isinstance(context.arguments, dict):
         _normalize_arguments(tool_name, context.arguments, cutoff)
 
     await call_next()
+    raw_text = _extract_result_text(context.result)
+    if raw_text is None:
+        return
+    raw_input_bytes = len(raw_text.encode("utf-8"))
+    if tool_name in {"github_actions_list", "actions_list"}:
+        raw_text, raw_input_bytes = await _paginate_actions_if_needed(
+            context,
+            call_next,
+            raw_text,
+            cutoff,
+        )
+    (
+        compact,
+        returned_count,
+        failed_count,
+        last_24h_count,
+        complete_flag,
+        inspected_count,
+        action_required_count,
+    ) = _compact_text_with_summary(
+        tool_name,
+        raw_text,
+        cutoff,
+        window_label=window_label if last_24h_cutoff is not None else None,
+        last_24h_cutoff=last_24h_cutoff,
+        max_action_items=MAX_ACTION_INSPECT_ITEMS,
+        input_bytes=raw_input_bytes,
+    )
     if isinstance(context.result, str):
-        context.result = _compact_text(tool_name, context.result, cutoff)
+        context.result = compact
     elif isinstance(context.result, list):
         for item in context.result:
             if isinstance(item, Content) and item.type == "text" and item.text is not None:
-                item.text = _compact_text(tool_name, item.text, cutoff)
+                item.text = compact
+                break
+    logger.warning(
+        "GitHub MCP middleware summary %s: returned=%d failed=%d last24h=%d complete=%d inspected=%d action_required=%d",
+        tool_name,
+        returned_count,
+        failed_count,
+        last_24h_count,
+        complete_flag,
+        inspected_count,
+        action_required_count,
+    )
 `;
 }
 async function writeGithubMcpConfig(sourceDir, mode) {
-  const mcpPath = path12.join(sourceDir, "mcp.json");
+  const mcpPath = path13.join(sourceDir, "mcp.json");
   let mcpConfig = { servers: {} };
   try {
     const existing = JSON.parse(await readFile10(mcpPath, "utf8"));
@@ -12711,7 +13404,7 @@ async function writeGithubMcpConfig(sourceDir, mode) {
 }
 async function migrateGithubToolInstructions(sourceDir, mode) {
   for (const file of ["daily-repo-digest.agent.md", "daily-repo-digest-http.agent.md"]) {
-    const agentPath = path12.join(sourceDir, file);
+    const agentPath = path13.join(sourceDir, file);
     if (!await exists(agentPath)) continue;
     const current = await readFile10(agentPath, "utf8");
     const next = mode === "gateway" ? current.replaceAll("github___list_pull_requests", "aigw-github___github_list_pull_requests").replaceAll("github___list_issues", "aigw-github___github_list_issues").replaceAll("github___actions_list", "aigw-github___github_actions_list") : current.replaceAll("aigw-github___github_list_pull_requests", "github___list_pull_requests").replaceAll("aigw-github___github_list_issues", "github___list_issues").replaceAll("aigw-github___github_actions_list", "github___actions_list");
@@ -12727,13 +13420,13 @@ async function ensureGatewayProviderFiles(entry, mcpMode = "public", options = {
   );
 }
 async function ensureGatewayProviderFilesUnlocked(entry, mcpMode) {
-  const sourceDir = entry.agentDir || path12.join(requireTemplateDir(entry), "src");
-  const helperPath = path12.join(sourceDir, "ai_gateway_client_manager.py");
-  const middlewarePath = path12.join(sourceDir, "github_mcp_middleware.py");
-  const functionAppPath = path12.join(sourceDir, "function_app.py");
-  const agentsConfigPath = path12.join(sourceDir, "agents.config.yaml");
-  await writeTextIfChanged(helperPath, gatewayClientManagerSource());
-  await writeTextIfChanged(middlewarePath, githubMcpMiddlewareSource());
+  const sourceDir = entry.agentDir || path13.join(requireTemplateDir(entry), "src");
+  const helperPath = path13.join(sourceDir, "ai_gateway_client_manager.py");
+  const middlewarePath = path13.join(sourceDir, "github_mcp_middleware.py");
+  const functionAppPath = path13.join(sourceDir, "function_app.py");
+  const agentsConfigPath = path13.join(sourceDir, "agents.config.yaml");
+  const helperChanged = await writeTextIfChanged(helperPath, gatewayClientManagerSource());
+  const middlewareChanged = await writeTextIfChanged(middlewarePath, githubMcpMiddlewareSource());
   const githubMode = githubRequirement(entry) ? mcpMode : "none";
   const mcpChanged = await writeGithubMcpConfig(sourceDir, githubMode);
   await migrateGithubToolInstructions(sourceDir, mcpMode);
@@ -12744,10 +13437,10 @@ async function ensureGatewayProviderFilesUnlocked(entry, mcpMode) {
   const current = await readFile10(functionAppPath, "utf8");
   const next = canonicalizeModelProviderRouting(current, { addIfMissing: true });
   await writeFile4(functionAppPath, next);
-  return { githubMode, mcpChanged };
+  return { githubMode, mcpChanged: mcpChanged || helperChanged || middlewareChanged };
 }
 async function readLocalSettings(entry) {
-  const settingsPath = path12.join(entry.agentDir || path12.join(requireTemplateDir(entry), "src"), "local.settings.json");
+  const settingsPath = path13.join(entry.agentDir || path13.join(requireTemplateDir(entry), "src"), "local.settings.json");
   if (!await exists(settingsPath)) {
     return {
       path: settingsPath,
@@ -12759,7 +13452,7 @@ async function readLocalSettings(entry) {
   return { path: settingsPath, json };
 }
 async function assertLocalQueueStorageSafe(entry) {
-  const queuePath = path12.join(requireTemplateDir(entry), entry.selectedHostedSkill?.relativePath || HERO_TEMPLATE.queueAgentRelPath);
+  const queuePath = path13.join(requireTemplateDir(entry), entry.selectedHostedSkill?.relativePath || HERO_TEMPLATE.queueAgentRelPath);
   if (entry.trigger !== "queue" && !await exists(queuePath)) return;
   const { json } = await readLocalSettings(entry);
   assertLocalQueueConnection(json.Values.AzureWebJobsStorage);
@@ -12836,6 +13529,7 @@ async function writeModelBindingSettingsUnlocked(entry, valuesToSet) {
     "GITHUB_MCP_AUTHORIZATION",
     "GITHUB_MCP_SERVER_URL",
     "GITHUB_REPOSITORY",
+    "GITHUB_REPORTING_WINDOW",
     "AZURE_SUBSCRIPTION_ID",
     "COPILOT_SESSION_OPENAI_BASE_URL",
     "COPILOT_SESSION_API_KEY"
@@ -12856,7 +13550,7 @@ async function writeModelBindingSettingsUnlocked(entry, valuesToSet) {
   await protectLocalSettings(requireTemplateDir(entry));
   if (valuesToSet.AZURE_FUNCTIONS_AGENTS_PROVIDER !== "foundry") {
     await rm8(
-      path12.join(requireTemplateDir(entry), ".azure-functions-hosted-skills", "foundry-token.json"),
+      path13.join(requireTemplateDir(entry), ".azure-functions-hosted-skills", "foundry-token.json"),
       { force: true }
     );
   }
@@ -12877,10 +13571,10 @@ async function fetchLocalFoundryToken(entry) {
   return { accessToken: token.accessToken, expiresOn };
 }
 async function writeLocalFoundryToken(entry, token) {
-  const tokenDir = path12.join(requireTemplateDir(entry), ".azure-functions-hosted-skills");
+  const tokenDir = path13.join(requireTemplateDir(entry), ".azure-functions-hosted-skills");
   await mkdir6(tokenDir, { recursive: true, mode: 448 });
   await chmod(tokenDir, 448);
-  const tokenPath = path12.join(tokenDir, "foundry-token.json");
+  const tokenPath = path13.join(tokenDir, "foundry-token.json");
   await writeFile4(tokenPath, `${JSON.stringify(token)}
 `, { mode: 384 });
   await chmod(tokenPath, 384);
@@ -12910,8 +13604,12 @@ async function ensureLocalFoundryRuntimeSettings(entry, options = {}) {
       else delete json.Values.GITHUB_MCP_AUTHORIZATION;
       if (githubRequirement(entry) && entry.githubContext.repository) {
         json.Values.GITHUB_REPOSITORY = entry.githubContext.repository;
+        const reportingWindow = declaredGithubReportingWindow(entry);
+        if (reportingWindow) json.Values.GITHUB_REPORTING_WINDOW = reportingWindow;
+        else delete json.Values.GITHUB_REPORTING_WINDOW;
       } else {
         delete json.Values.GITHUB_REPOSITORY;
+        delete json.Values.GITHUB_REPORTING_WINDOW;
       }
       await writeTextIfChanged(settingsPath, `${JSON.stringify(json, null, 2)}
 `, { mode: 384 });
@@ -12931,8 +13629,12 @@ async function ensureDeclaredParameterRuntimeSettings(entry, options = {}) {
       delete json.Values.GITHUB_MCP_AUTHORIZATION;
       if (githubRequirement(entry) && entry.githubContext.repository) {
         json.Values.GITHUB_REPOSITORY = entry.githubContext.repository;
+        const reportingWindow = declaredGithubReportingWindow(entry);
+        if (reportingWindow) json.Values.GITHUB_REPORTING_WINDOW = reportingWindow;
+        else delete json.Values.GITHUB_REPORTING_WINDOW;
       } else {
         delete json.Values.GITHUB_REPOSITORY;
+        delete json.Values.GITHUB_REPORTING_WINDOW;
       }
       await writeTextIfChanged(settingsPath, `${JSON.stringify(json, null, 2)}
 `, { mode: 384 });
@@ -12963,12 +13665,16 @@ function modelResources(entry, source = entry.modelBinding.source) {
 async function writeCopilotModelBinding(entry, model) {
   if (!entry.url) throw new Error("The local Copilot session bridge is not available.");
   await ensureGatewayProviderFiles(entry, "public");
+  const reportingWindow = declaredGithubReportingWindow(entry);
   return writeModelBindingSettings(entry, {
     AZURE_FUNCTIONS_AGENTS_PROVIDER: "copilot",
     AZURE_FUNCTIONS_AGENTS_MODEL: model.id,
     COPILOT_SESSION_OPENAI_BASE_URL: new URL("copilot/v1", entry.url).toString(),
     COPILOT_SESSION_API_KEY: entry.copilotBridgeToken,
-    ...githubRequirement(entry) && entry.githubContext.repository ? { GITHUB_REPOSITORY: entry.githubContext.repository } : {}
+    ...githubRequirement(entry) && entry.githubContext.repository ? {
+      GITHUB_REPOSITORY: entry.githubContext.repository,
+      ...reportingWindow ? { GITHUB_REPORTING_WINDOW: reportingWindow } : {}
+    } : {}
   });
 }
 async function applyCopilotModelSelection(entry, modelId, { persist = true, restart = true } = {}) {
@@ -13152,6 +13858,7 @@ async function applyModelBinding(entry, { source, resourceId, modelId }, restart
       await ensureGatewayProviderFiles(entry, "public");
       const githubAuthorization = githubRequirement(entry) ? await githubAuthHeader(entry) : "";
       const tokenPath = await ensureLocalFoundryToken(entry);
+      const reportingWindow = declaredGithubReportingWindow(entry);
       await writeModelBindingSettings(entry, {
         AZURE_FUNCTIONS_AGENTS_PROVIDER: "foundry",
         FOUNDRY_PROJECT_ENDPOINT: resource.endpoint,
@@ -13159,19 +13866,26 @@ async function applyModelBinding(entry, { source, resourceId, modelId }, restart
         AZURE_FUNCTIONS_AGENTS_MODEL: model.id,
         FOUNDRY_TOKEN_FILE: tokenPath,
         ...githubAuthorization ? { GITHUB_MCP_AUTHORIZATION: githubAuthorization } : {},
-        ...githubRequirement(entry) && entry.githubContext.repository ? { GITHUB_REPOSITORY: entry.githubContext.repository } : {}
+        ...githubRequirement(entry) && entry.githubContext.repository ? {
+          GITHUB_REPOSITORY: entry.githubContext.repository,
+          ...reportingWindow ? { GITHUB_REPORTING_WINDOW: reportingWindow } : {}
+        } : {}
       });
     } else {
       await ensureGatewayProviderFiles(entry, "gateway");
       const key = await fetchGatewayKey(entry, resource);
       const runtimeUrls = gatewayRuntimeUrls(resource.endpoint, AIGW_WORKSPACE);
+      const reportingWindow = declaredGithubReportingWindow(entry);
       await writeModelBindingSettings(entry, {
         AZURE_FUNCTIONS_AGENTS_PROVIDER: "ai_gateway",
         AZURE_AI_GATEWAY_OPENAI_BASE_URL: runtimeUrls.openAiBaseUrl,
         AZURE_AI_GATEWAY_MCP_URL: runtimeUrls.githubMcpUrl,
         AZURE_AI_GATEWAY_API_KEY: key,
         AZURE_FUNCTIONS_AGENTS_MODEL: model.id,
-        ...githubRequirement(entry) && entry.githubContext.repository ? { GITHUB_REPOSITORY: entry.githubContext.repository } : {}
+        ...githubRequirement(entry) && entry.githubContext.repository ? {
+          GITHUB_REPOSITORY: entry.githubContext.repository,
+          ...reportingWindow ? { GITHUB_REPORTING_WINDOW: reportingWindow } : {}
+        } : {}
       });
     }
     entry.modelBinding.resourceId = resource.id;
@@ -13217,7 +13931,8 @@ var FOUNDRY_CREATE_RESOURCES = [
   }
 ];
 var STOCK_FOUNDRY_BICEP_SHA256 = /* @__PURE__ */ new Set([
-  "02dec44c156825269624d135d569cd2102b4dd1dd08c0ee6ea2a49a3b14d75f8"
+  "02dec44c156825269624d135d569cd2102b4dd1dd08c0ee6ea2a49a3b14d75f8",
+  "b6d5f29a50d4b7108ddaa00b47d6f741a2cc3b45711ca7ee6dffbc39e12ed876"
 ]);
 async function ensureCreateModelsBicep(entry, options = {}) {
   return withSourceWorkspaceMutation(
@@ -13228,8 +13943,8 @@ async function ensureCreateModelsBicep(entry, options = {}) {
   );
 }
 async function ensureCreateModelsBicepUnlocked(entry) {
-  const infraDir = path12.join(requireTemplateDir(entry), "infra");
-  const bicepPath = path12.join(infraDir, "app", "foundry.bicep");
+  const infraDir = path13.join(requireTemplateDir(entry), "infra");
+  const bicepPath = path13.join(infraDir, "app", "foundry.bicep");
   const current = await readFile10(bicepPath, "utf8");
   const isManaged = current.startsWith(CREATE_MODELS_BICEP_MARKER) || current.startsWith(LEGACY_CREATE_MODELS_BICEP_MARKER);
   const normalized = `${current.replace(/\r\n/g, "\n").trimEnd()}
@@ -13241,7 +13956,7 @@ async function ensureCreateModelsBicepUnlocked(entry) {
       "Create Models found a customized infra/app/foundry.bicep and will not overwrite it. Restore the stock template file or manage its model deployments directly."
     );
   }
-  const entrypointPath = path12.join(infraDir, "create-models.bicep");
+  const entrypointPath = path13.join(infraDir, "create-models.bicep");
   if (await exists(entrypointPath)) {
     const entrypointCurrent = await readFile10(entrypointPath, "utf8");
     if (!entrypointCurrent.startsWith(CREATE_MODELS_ENTRYPOINT_MARKER) && !entrypointCurrent.startsWith(LEGACY_CREATE_MODELS_ENTRYPOINT_MARKER)) {
@@ -13260,7 +13975,7 @@ async function buildModelCreationPlan(entry, { lockHeld = false } = {}) {
   const subscription = entry.modelBinding.subscription || "";
   const environmentName = (safeSegment(entry.instanceId) || "ifas").slice(0, 40);
   const deploymentName = `ifas-models-${createHash8("sha256").update(entry.instanceId).digest("hex").slice(0, 8)}`;
-  const abbreviations = JSON.parse(await readFile10(path12.join(dir, "infra", "abbreviations.json"), "utf8"));
+  const abbreviations = JSON.parse(await readFile10(path13.join(dir, "infra", "abbreviations.json"), "utf8"));
   const resourceGroupName = `${abbreviations.resourcesResourceGroups || "rg-"}${environmentName}`;
   const args = [
     "deployment",
@@ -13271,7 +13986,7 @@ async function buildModelCreationPlan(entry, { lockHeld = false } = {}) {
     "--location",
     FOUNDRY_DEPLOYMENT_LOCATION,
     "--template-file",
-    path12.join(dir, "infra", "create-models.bicep"),
+    path13.join(dir, "infra", "create-models.bicep"),
     "--parameters",
     `environmentName=${environmentName}`,
     `location=${FOUNDRY_DEPLOYMENT_LOCATION}`,
@@ -13332,7 +14047,7 @@ async function runModelCreation(entry) {
     if (templateIndex < 0 || !args[templateIndex + 1]) {
       throw new Error("Create Models could not locate its template-file argument.");
     }
-    args[templateIndex + 1] = path12.join(snapshotDir, "infra", "create-models.bicep");
+    args[templateIndex + 1] = path13.join(snapshotDir, "infra", "create-models.bicep");
     plan = {
       ...plan,
       workingDir: snapshotDir,
@@ -13642,7 +14357,7 @@ async function setTimerSchedule(entry, input) {
   const schedule = normalizeTimerSchedule({ ...entry.timerSchedule, ...input });
   const expression = timerExpressionFromSchedule(schedule);
   await withSourceWorkspaceMutation(entry, "Changing timer schedule", async () => {
-    const timerPath = path12.join(requireTemplateDir(entry), HERO_TEMPLATE.timerAgentRelPath);
+    const timerPath = path13.join(requireTemplateDir(entry), HERO_TEMPLATE.timerAgentRelPath);
     const source = await readFile10(timerPath, "utf8");
     const next = replaceTimerScheduleExpression(source, expression);
     await writeTextIfChanged(timerPath, next);
@@ -13657,10 +14372,10 @@ async function setTimerSchedule(entry, input) {
   await refreshWorkspaceFromDisk(entry, { restartIfRunning: entry.target === "local", followSelectedFileTrigger: false });
 }
 function isolatedTemplateDirectory(entry) {
-  return entry.runtimeDirectories?.template || path12.join(runtimeStatePaths(entry).root, "template");
+  return entry.runtimeDirectories?.template || path13.join(runtimeStatePaths(entry).root, "template");
 }
 function modelCreationWorkspaceDirectory(entry, runId) {
-  return path12.join(
+  return path13.join(
     runtimeStatePaths(entry).root,
     `model-creation-${safeSegment(runId)}`
   );
@@ -13668,7 +14383,7 @@ function modelCreationWorkspaceDirectory(entry, runId) {
 function sourceOwnershipManifestPath(entry) {
   const { copilotHome } = runtimeStatePaths(entry);
   if (entry.sourceWorkspace.workingDirectory) {
-    return sourceManifestPath(copilotHome, "workspace", path12.resolve(entry.sourceWorkspace.workingDirectory));
+    return sourceManifestPath(copilotHome, "workspace", path13.resolve(entry.sourceWorkspace.workingDirectory));
   }
   return sourceManifestPath(copilotHome, entry.sessionId, entry.instanceId);
 }
@@ -13681,8 +14396,8 @@ function legacySourceOwnershipManifestPaths(entry) {
   ];
   if (entry.sourceWorkspace.workingDirectory) {
     files.unshift(
-      sourceManifestPath(copilotHome, "workspace", path12.resolve(entry.sourceWorkspace.workingDirectory), { legacy: true }),
-      ...LEGACY_PREVIEW_STATE_COMPONENTS.map((identity) => sourceManifestPath(copilotHome, "workspace", path12.resolve(entry.sourceWorkspace.workingDirectory), { identity }))
+      sourceManifestPath(copilotHome, "workspace", path13.resolve(entry.sourceWorkspace.workingDirectory), { legacy: true }),
+      ...LEGACY_PREVIEW_STATE_COMPONENTS.map((identity) => sourceManifestPath(copilotHome, "workspace", path13.resolve(entry.sourceWorkspace.workingDirectory), { identity }))
     );
   }
   return [...new Set(files)].filter((file) => file !== entry.sourceWorkspace.manifestPath);
@@ -13693,18 +14408,18 @@ function sourceRemovalMarkerPath(entry) {
 async function reconcileSourceWorkspaceMove(entry, manifest, manifestPath) {
   if (manifest?.state !== "moving") return { manifest, isolatedDestination: "" };
   const move = manifest.move;
-  if (path12.resolve(move.sourceRoot) !== path12.resolve(manifest.root)) {
+  if (path13.resolve(move.sourceRoot) !== path13.resolve(manifest.root)) {
     throw new Error("The unfinished generated app move has an invalid source path.");
   }
-  if (path12.resolve(manifest.workspaceRoot) !== path12.resolve(entry.sourceWorkspace.workingDirectory)) {
+  if (path13.resolve(manifest.workspaceRoot) !== path13.resolve(entry.sourceWorkspace.workingDirectory)) {
     throw new Error("The unfinished generated app move belongs to a different worktree.");
   }
   if (move.mode === "current") {
     const selected = await assertCurrentWorkspaceDestinationSafe(manifest.workspaceRoot, move.relativePath);
-    if (selected.destination !== path12.resolve(move.destinationRoot)) {
+    if (selected.destination !== path13.resolve(move.destinationRoot)) {
       throw new Error("The unfinished generated app move has an invalid destination path.");
     }
-  } else if (path12.resolve(move.destinationRoot) !== path12.resolve(isolatedTemplateDirectory(entry))) {
+  } else if (path13.resolve(move.destinationRoot) !== path13.resolve(isolatedTemplateDirectory(entry))) {
     throw new Error("The unfinished generated app move has an invalid isolated destination.");
   }
   const sourceExists = await exists(move.sourceRoot);
@@ -13724,12 +14439,12 @@ async function reconcileSourceWorkspaceMove(entry, manifest, manifestPath) {
   await assertWorkspaceIdentity(move.destinationRoot, manifest);
   if (move.mode === "isolated") {
     await deleteOwnershipManifest(manifestPath);
-    return { manifest: null, isolatedDestination: path12.resolve(move.destinationRoot) };
+    return { manifest: null, isolatedDestination: path13.resolve(move.destinationRoot) };
   }
   const completed = {
     ...manifest,
-    root: path12.resolve(move.destinationRoot),
-    relativePath: path12.normalize(move.relativePath),
+    root: path13.resolve(move.destinationRoot),
+    relativePath: path13.normalize(move.relativePath),
     state: "ready"
   };
   delete completed.move;
@@ -13737,10 +14452,10 @@ async function reconcileSourceWorkspaceMove(entry, manifest, manifestPath) {
   return { manifest: completed, isolatedDestination: "" };
 }
 async function configureTemplateDirectory(entry, dir, options = {}) {
-  const timerPath = path12.join(dir, HERO_TEMPLATE.timerAgentRelPath);
-  const httpPath = path12.join(dir, HERO_TEMPLATE.httpAgentRelPath);
+  const timerPath = path13.join(dir, HERO_TEMPLATE.timerAgentRelPath);
+  const httpPath = path13.join(dir, HERO_TEMPLATE.httpAgentRelPath);
   entry.templateDir = dir;
-  entry.agentDir = path12.join(dir, "src");
+  entry.agentDir = path13.join(dir, "src");
   entry.queueName = queueNameForWorkspace(dir);
   await protectLocalSettings(dir);
   await ensureAgentResponseLogging(entry);
@@ -13770,7 +14485,7 @@ async function configureTemplateDirectory(entry, dir, options = {}) {
 }
 async function loadTemplateDirectory(entry, dir) {
   entry.templateDir = dir;
-  entry.agentDir = await exists(path12.join(dir, "src", "host.json")) ? path12.join(dir, "src") : dir;
+  entry.agentDir = await exists(path13.join(dir, "src", "host.json")) ? path13.join(dir, "src") : dir;
   entry.queueName = queueNameForWorkspace(dir);
   const skills = await discoverHostedSkills(dir);
   if (!skills.length) throw new Error(`No valid .agent.md files were found in ${entry.agentDir}.`);
@@ -13797,11 +14512,11 @@ ${initial.body}`);
   return entry.hero;
 }
 async function cloneTemplateDirectory(entry, dir) {
-  const timerPath = path12.join(dir, HERO_TEMPLATE.timerAgentRelPath);
+  const timerPath = path13.join(dir, HERO_TEMPLATE.timerAgentRelPath);
   if (await exists(timerPath)) return;
   if (await exists(dir)) throw new Error(`The selected generated app folder already exists: ${dir}`);
   try {
-    await mkdir6(path12.dirname(dir), { recursive: true });
+    await mkdir6(path13.dirname(dir), { recursive: true });
     await cp3(BUNDLED_TEMPLATE_DIRECTORY, dir, { recursive: true, errorOnExist: true, force: false });
     await materializeBundledFuncignore(BUNDLED_TEMPLATE_DIRECTORY, dir);
     const timerSource = await readFile10(timerPath, "utf8");
@@ -13815,7 +14530,7 @@ async function hydrateSourceWorkspace(entry, { sessionId, workingDirectory } = {
   entry.sourceWorkspace.error = "";
   entry.sourceWorkspace.migrationBlocked = true;
   entry.sessionId = String(sessionId || entry.sessionId || "");
-  entry.sourceWorkspace.workingDirectory = workingDirectory && path12.isAbsolute(workingDirectory) ? path12.resolve(workingDirectory) : "";
+  entry.sourceWorkspace.workingDirectory = workingDirectory && path13.isAbsolute(workingDirectory) ? path13.resolve(workingDirectory) : "";
   entry.sourceWorkspace.manifestPath = sourceOwnershipManifestPath(entry);
   let releaseOwnershipLock = null;
   try {
@@ -13890,7 +14605,7 @@ async function hydrateSourceWorkspace(entry, { sessionId, workingDirectory } = {
       stopLocal(entry);
       resetGeneratedWorkspaceState(entry);
       const isolated = isolatedMoveDestination || isolatedTemplateDirectory(entry);
-      if (await exists(path12.join(isolated, HERO_TEMPLATE.timerAgentRelPath))) {
+      if (await exists(path13.join(isolated, HERO_TEMPLATE.timerAgentRelPath))) {
         entry.sourceWorkspace.mode = "isolated";
         entry.sourceWorkspace.destination = isolated;
         entry.sourceWorkspace.materialized = true;
@@ -13948,7 +14663,7 @@ async function attachExistingSource(entry, inputPath, { persist = true } = {}) {
     const attached = await resolveAttachedAppRoot(inputPath, {
       workingDirectory: entry.sourceWorkspace.workingDirectory
     });
-    if (entry.sourceWorkspace.managedMaterialized && entry.sourceWorkspace.destination && path12.resolve(attached.root) === path12.resolve(entry.sourceWorkspace.destination)) {
+    if (entry.sourceWorkspace.managedMaterialized && entry.sourceWorkspace.destination && path13.resolve(attached.root) === path13.resolve(entry.sourceWorkspace.destination)) {
       throw new Error("That folder is already the managed generated app.");
     }
     entry.sourceWorkspace.managedMaterialized = entry.sourceWorkspace.materialized;
@@ -14093,7 +14808,7 @@ async function materializeSourceWorkspace(entry, { mode, relativePath } = {}) {
           );
         }
       }
-      if (existingManifest && path12.resolve(existingManifest.root) !== destination) {
+      if (existingManifest && path13.resolve(existingManifest.root) !== destination) {
         if (await exists(existingManifest.root)) {
           throw new Error(
             `Azure Functions Hosted Skills already owns a generated app at ${existingManifest.relativePath}. Reopen or move that app instead of creating another one in this worktree.`
@@ -14137,7 +14852,7 @@ async function materializeSourceWorkspace(entry, { mode, relativePath } = {}) {
           throw new Error(`The recorded Azure Functions Hosted Skills workspace is missing: ${existingManifest.root}`);
         }
       }
-      cloneDestination = path12.join(
+      cloneDestination = path13.join(
         runtimeStatePaths(entry).root,
         `staging-${Date.now()}`
       );
@@ -14276,7 +14991,7 @@ async function validateLockedCurrentWorkspace(entry) {
   if (manifest.state !== "ready") {
     throw new Error("The generated app ownership record is incomplete. Reopen the canvas before changing it.");
   }
-  if (path12.resolve(manifest.root) !== path12.resolve(requireTemplateDir(entry)) || path12.resolve(manifest.root) !== path12.resolve(expected.root) || path12.resolve(manifest.workspaceRoot) !== path12.resolve(expected.workspaceRoot)) {
+  if (path13.resolve(manifest.root) !== path13.resolve(requireTemplateDir(entry)) || path13.resolve(manifest.root) !== path13.resolve(expected.root) || path13.resolve(manifest.workspaceRoot) !== path13.resolve(expected.workspaceRoot)) {
     throw new Error("The generated app location changed in another canvas instance. Reopen the canvas before changing it.");
   }
   const reentry = await reenterOwnedWorkspace({
@@ -14289,7 +15004,7 @@ async function validateLockedCurrentWorkspace(entry) {
     recoverySignatures: SOURCE_WORKSPACE_RECOVERY_SIGNATURES
   });
   if (!reentry) throw new Error(`The recorded Azure Functions Hosted Skills workspace is missing: ${manifest.root}`);
-  if (path12.resolve(requireTemplateDir(entry)) !== reentry.destination) {
+  if (path13.resolve(requireTemplateDir(entry)) !== reentry.destination) {
     throw new Error("The generated app location changed in another canvas instance. Reopen the canvas before changing it.");
   }
   if (reentry.manifestChanged) {
@@ -14550,7 +15265,7 @@ async function saveInstructions(entry, bodyText, expectedRevision) {
     const dir = requireTemplateDir(entry);
     const selected = entry.selectedHostedSkill;
     if (!selected) throw new Error(`No ${entry.trigger} hosted skill is selected.`);
-    const selectedPath = path12.join(dir, selected.relativePath);
+    const selectedPath = path13.join(dir, selected.relativePath);
     const imported = completeAgentDocument(bodyText, selected.relativePath);
     if (imported) {
       await writeAgentDocumentIfRevision(selectedPath, String(bodyText), expectedRevision);
@@ -14558,7 +15273,7 @@ async function saveInstructions(entry, bodyText, expectedRevision) {
       await writeAgentBodyIfRevision(selectedPath, clean, expectedRevision);
     }
     if (selected.relativePath === HERO_TEMPLATE.timerAgentRelPath && (!imported || imported.trigger === "timer")) {
-      const twinPath = path12.join(dir, HERO_TEMPLATE.httpAgentRelPath);
+      const twinPath = path13.join(dir, HERO_TEMPLATE.httpAgentRelPath);
       const twin = entry.hostedSkills.find((skill) => skill.relativePath === HERO_TEMPLATE.httpAgentRelPath);
       if (await exists(twinPath)) {
         if (imported) {
@@ -14598,13 +15313,23 @@ async function resolvePythonProvisioning(entry) {
   return { provider: "system", bin: system.bin, detail: `${system.text} (${system.source})` };
 }
 async function checkExtensionRegistration2() {
-  const pluginRoot = path12.dirname(fileURLToPath3(import.meta.url));
-  const relativeManifest = path12.basename(path12.dirname(path12.dirname(pluginRoot))) === "com.github.copilot" ? "../../../.github/plugin/plugin.json" : "../../.github/plugin/plugin.json";
-  if (path12.basename(pluginRoot) === PLUGIN_ID && path12.basename(path12.dirname(pluginRoot)) === "extensions") {
-    const manifestPath = path12.resolve(pluginRoot, relativeManifest);
-    if (await exists(manifestPath)) {
+  const pluginRoot = path13.dirname(fileURLToPath3(import.meta.url));
+  if (path13.basename(pluginRoot) === PLUGIN_ID && path13.basename(path13.dirname(pluginRoot)) === "extensions") {
+    const extensionContainer = path13.dirname(path13.dirname(pluginRoot));
+    const packageRoot = path13.basename(extensionContainer) === "com.github.copilot" ? path13.dirname(extensionContainer) : extensionContainer;
+    let manifestPath = null;
+    for (const candidate of [
+      path13.join(packageRoot, "plugin.json"),
+      path13.join(packageRoot, ".github/plugin/plugin.json")
+    ]) {
+      if (await exists(candidate)) {
+        manifestPath = candidate;
+        break;
+      }
+    }
+    if (manifestPath) {
       const manifest = JSON.parse(await readFile10(manifestPath, "utf8"));
-      if (pluginExtensionPath(manifest, PLUGIN_ID) === path12.relative(path12.resolve(manifestPath, "../../.."), pluginRoot)) {
+      if (pluginExtensionPath(manifest, PLUGIN_ID) === path13.relative(packageRoot, pluginRoot)) {
         return { registered: true, detail: `native plugin at ${pluginRoot}` };
       }
     }
@@ -14614,7 +15339,9 @@ async function checkExtensionRegistration2() {
 async function runDoctor(entry, {
   workflow = "current",
   runAzureCliTextImpl = runAzureCliText,
-  checkAzureLoginImpl = checkAzureLogin
+  checkAzureLoginImpl = checkAzureLogin,
+  checkCopilotRuntimeImpl = null,
+  copilotBridgeFactory = null
 } = {}) {
   const checks = [];
   const azureRequired = doctorRequiresAzure({
@@ -14740,6 +15467,40 @@ async function runDoctor(entry, {
     error: ""
   };
   if (!azureRequired) {
+    if (typeof checkCopilotRuntimeImpl === "function" || typeof copilotBridgeFactory === "function" || copilotClientFactory || entry.copilotBridge || process.env.COPILOT_SDK_PATH || process.env.COPILOT_CLI_PATH || !process.env.FUNCTION_STUDIO_TEST_MODE) {
+      const hadCopilotBridge = Boolean(entry.copilotBridge);
+      const customBridge = typeof copilotBridgeFactory === "function" ? copilotBridgeFactory(entry) : null;
+      const copilotCheck = await Promise.resolve().then(
+        () => typeof checkCopilotRuntimeImpl === "function" ? checkCopilotRuntimeImpl(entry) : (customBridge || copilotBridgeForEntry(entry)).listModels()
+      ).then((models) => ({
+        ok: true,
+        count: Array.isArray(models) ? models.length : Array.isArray(models?.models) ? models.models.length : 0
+      })).catch((error) => ({ ok: false, error }));
+      if (customBridge && typeof customBridge.close === "function") {
+        await Promise.resolve(customBridge.close()).catch(() => {
+        });
+      } else if (!hadCopilotBridge && typeof checkCopilotRuntimeImpl !== "function" && entry.local.status !== "running") {
+        await closeCopilotBridge(entry).catch(() => {
+        });
+      }
+      checks.push(
+        copilotCheck.ok ? {
+          id: "copilot-runtime",
+          label: "GitHub Copilot runtime",
+          status: "ready",
+          detail: copilotCheck.count > 0 ? `Connected (${copilotCheck.count} model${copilotCheck.count === 1 ? "" : "s"} available).` : "Connected to the host GitHub Copilot runtime.",
+          fix: "",
+          required: true
+        } : {
+          id: "copilot-runtime",
+          label: "GitHub Copilot runtime",
+          status: "error",
+          detail: shortError(copilotCheck.error),
+          fix: "Verify the GitHub Copilot app runtime is installed and signed in, or set COPILOT_CLI_PATH to a valid copilot executable.",
+          required: true
+        }
+      );
+    }
     checks.push(
       {
         id: "az-cli",
@@ -15003,14 +15764,14 @@ async function probeAzuriteServices(ports = [1e4, 10001, 10002]) {
   return (await probeAzuriteServiceDetails(ports)).map((probe) => probe.ready);
 }
 async function ensureAzuriteCommand(args, entry) {
-  const artifactBin = path12.join(EXTENSION_ROOT, "node_modules", ".bin");
+  const artifactBin = path13.join(EXTENSION_ROOT, "node_modules", ".bin");
   try {
     return await externalCommandSpawnSpec("azurite", args, { extraDirectories: [artifactBin] });
   } catch (error) {
     if (error?.code !== "EXTERNAL_COMMAND_NOT_FOUND") throw error;
   }
-  const installRoot = path12.join(studioStateEnvironment().home, ".azure-functions-hosted-skills", "tools", `azurite-${AZURITE_VERSION}`);
-  const installBin = path12.join(installRoot, "node_modules", ".bin");
+  const installRoot = path13.join(studioStateEnvironment().home, ".azure-functions-hosted-skills", "tools", `azurite-${AZURITE_VERSION}`);
+  const installBin = path13.join(installRoot, "node_modules", ".bin");
   try {
     return await externalCommandSpawnSpec("azurite", args, { extraDirectories: [installBin] });
   } catch (error) {
@@ -15079,7 +15840,7 @@ async function ensureAzuriteUnlocked(entry, ensureCurrent) {
     purpose: "Detect the Azurite storage emulator used by Timer state and Queue messages"
   });
   let azuriteCommand;
-  const dataDir = entry.sourceWorkspace.sourceMode === "attached" ? path12.join(entry.runtimeState.paths.root, "azurite", createHash8("sha256").update(path12.resolve(requireTemplateDir(entry))).digest("hex").slice(0, 24)) : path12.join(entry.templateDir, ".azurite");
+  const dataDir = entry.sourceWorkspace.sourceMode === "attached" ? path13.join(entry.runtimeState.paths.root, "azurite", createHash8("sha256").update(path13.resolve(requireTemplateDir(entry))).digest("hex").slice(0, 24)) : path13.join(entry.templateDir, ".azurite");
   try {
     azuriteCommand = await ensureAzuriteCommand(
       ["--silent", "--location", dataDir, "--skipApiVersionCheck"],
@@ -15191,7 +15952,7 @@ async function ensureRuntimeRequirement(entry, options = {}) {
   );
 }
 async function ensureRuntimeRequirementAtDirectory(agentDir) {
-  const reqPath = path12.join(agentDir, "requirements.txt");
+  const reqPath = path13.join(agentDir, "requirements.txt");
   const current = await readFile10(reqPath, "utf8");
   const next = current.replace(
     /^azurefunctions-agents-runtime(?:\s*[<>=!~].*)?\s*$/m,
@@ -15209,7 +15970,7 @@ async function ensureVenv(entry, options = {}) {
 }
 async function ensureVenvUnlocked(entry, { agentDir = entry.agentDir, updateRuntimeState = true, packageIndex: selectedPackageIndex } = {}) {
   const venv = pythonVirtualEnvironment(agentDir);
-  const reqPath = path12.join(agentDir, "requirements.txt");
+  const reqPath = path13.join(agentDir, "requirements.txt");
   await ensureRuntimeRequirementAtDirectory(agentDir);
   const reqText = await readFile10(reqPath, "utf8").catch(() => "");
   const reqHash = createHash8("sha256").update(reqText).digest("hex").slice(0, 16);
@@ -15367,7 +16128,7 @@ async function ensureVenvUnlocked(entry, { agentDir = entry.agentDir, updateRunt
   }
 }
 async function prepareVsCodeCopy(entry, openDir, packageIndex) {
-  const copyAgentDir = path12.join(openDir, "src");
+  const copyAgentDir = path13.join(openDir, "src");
   const copyEntry = {
     ...entry,
     agentDir: copyAgentDir,
@@ -15621,6 +16382,7 @@ ${stderrText}`);
   entry.local.error = "";
   entry.local.githubCredentialFingerprint = entry.githubCredential.fingerprint;
   entry.local.githubRepository = entry.githubContext.repository;
+  entry.local.githubReportingWindow = entry.githubContext.reportingWindow || "previous 24 hours";
   entry.local.sourceFingerprint = await runtimeSourceFingerprint(entry);
   markStartupCommandsRecovered(entry);
   broadcast(entry, "state", snapshot(entry));
@@ -15797,9 +16559,9 @@ async function acquireLocalAppRuntimeOwnership(entry) {
     await entry.local.runtimeReleasePromise;
     entry.local.runtimeReleasePromise = null;
   }
-  const root = path12.resolve(requireTemplateDir(entry));
+  const root = path13.resolve(requireTemplateDir(entry));
   const digest = createHash8("sha256").update(root).digest("hex").slice(0, 32);
-  const lockPath = path12.join(studioStateEnvironment().home, `.${STATE_PRODUCT}`, "runtime-apps", digest);
+  const lockPath = path13.join(studioStateEnvironment().home, `.${STATE_PRODUCT}`, "runtime-apps", digest);
   try {
     entry.local.releaseAppRuntimeOwner = await acquireStateLock(lockPath, { timeoutMs: 250, pollMs: 25 });
   } catch (error) {
@@ -16057,11 +16819,13 @@ async function prepareInvocation(entry, httpRequestDraft) {
       entry,
       entry.modelBinding.activeSource === "gateway" ? "gateway" : "public"
     );
-    mcpConfigChanged = Boolean(providerFiles?.mcpChanged);
+    mcpConfigChanged = Boolean(
+      providerFiles?.mcpChanged || providerFiles?.helperChanged || providerFiles?.middlewareChanged
+    );
     if (entry.modelBinding.activeSource === "foundry") await ensureLocalFoundryRuntimeSettings(entry);
     else await ensureDeclaredParameterRuntimeSettings(entry);
   }
-  if (entry.local.status === "running" && (mcpConfigChanged || entry.local.githubCredentialFingerprint !== entry.githubCredential.fingerprint || entry.local.githubRepository !== entry.githubContext.repository)) {
+  if (entry.local.status === "running" && (mcpConfigChanged || entry.local.githubCredentialFingerprint !== entry.githubCredential.fingerprint || entry.local.githubRepository !== entry.githubContext.repository || (entry.local.githubReportingWindow || "previous 24 hours") !== (entry.githubContext.reportingWindow || "previous 24 hours"))) {
     await restartLocalEnvironment(entry);
   } else {
     await startLocalEnvironment(entry);
@@ -16812,8 +17576,8 @@ function stopLoadTest(entry) {
 }
 async function commitAppHandoff(dir, instanceId) {
   const branch = `azure-functions-hosted-skills/${safeSegment(instanceId).slice(0, 48)}`;
-  const instructionsPath = path12.join(dir, ".github", "copilot-instructions.md");
-  await mkdir6(path12.dirname(instructionsPath), { recursive: true });
+  const instructionsPath = path13.join(dir, ".github", "copilot-instructions.md");
+  await mkdir6(path13.dirname(instructionsPath), { recursive: true });
   await writeFile4(
     instructionsPath,
     [
@@ -16827,7 +17591,7 @@ async function commitAppHandoff(dir, instanceId) {
     ].join("\n")
   );
   await protectLocalSettings(dir);
-  if (!await exists(path12.join(dir, ".git"))) {
+  if (!await exists(path13.join(dir, ".git"))) {
     await execFileText("git", ["init", "-b", "main"], { cwd: dir });
   }
   let branchExists = true;
@@ -17026,6 +17790,11 @@ async function startServer(entry, {
       return;
     }
     if (req.method === "GET" && req.url === "/events") {
+      if (entry.server !== server) {
+        res.writeHead(204, { Connection: "close" });
+        res.end();
+        return;
+      }
       res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" });
       res.write(`event: state
 data: ${JSON.stringify(snapshot(entry))}
@@ -17644,7 +18413,7 @@ data: ${JSON.stringify(snapshot(entry))}
         await materializePendingTrigger(entry);
         await refreshTemplateFromDisk(entry);
         const dir = requireTemplateDir(entry);
-        const filePath = path12.join(dir, entry.selectedHostedSkill?.relativePath || HERO_TEMPLATE.timerAgentRelPath);
+        const filePath = path13.join(dir, entry.selectedHostedSkill?.relativePath || HERO_TEMPLATE.timerAgentRelPath);
         const c = cmdStart(entry, {
           kind: "shell",
           title: "code (agent instructions)",
@@ -17768,13 +18537,13 @@ data: ${JSON.stringify(snapshot(entry))}
             "Queue deployment is not automated by Azure Functions Hosted Skills because the generated Azure infrastructure does not create its source queue. Provision the exact generated queue and required data-plane access before deploying this Queue-triggered app."
           );
         }
-        await rm8(path12.join(dir, HERO_TEMPLATE.queueAgentRelPath), { force: true });
-        await rm8(path12.join(dir, HERO_TEMPLATE.connectorAgentRelPath), { force: true });
-        await removeConnectorDeploymentConfig(path12.join(dir, "src"));
+        await rm8(path13.join(dir, HERO_TEMPLATE.queueAgentRelPath), { force: true });
+        await rm8(path13.join(dir, HERO_TEMPLATE.connectorAgentRelPath), { force: true });
+        await removeConnectorDeploymentConfig(path13.join(dir, "src"));
         const deploymentEntry = {
           ...entry,
           templateDir: dir,
-          agentDir: path12.join(dir, "src"),
+          agentDir: path13.join(dir, "src"),
           sourceWorkspace: { ...entry.sourceWorkspace, mode: "isolated" }
         };
         await ensureGatewayProviderFiles(
@@ -17867,11 +18636,55 @@ data: ${JSON.stringify(snapshot(entry))}
     res.writeHead(404);
     res.end("Not found");
   });
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const preferred = await preferredCanvasServerConfig(entry);
+  if (preferred.token) entry.copilotBridgeToken = preferred.token;
+  const listenOnPort = (candidatePort) => new Promise((resolve, reject) => {
+    const onError = (error) => {
+      server.off("listening", onListening);
+      reject(error);
+    };
+    const onListening = () => {
+      server.off("error", onError);
+      resolve();
+    };
+    server.once("error", onError);
+    server.once("listening", onListening);
+    server.listen(candidatePort, "127.0.0.1");
+  });
+  if (preferred.port > 0) {
+    try {
+      await listenOnPort(preferred.port);
+    } catch {
+      await listenOnPort(0);
+    }
+  } else {
+    await listenOnPort(0);
+  }
   const { port } = server.address();
   entry.server = server;
   entry.url = `http://127.0.0.1:${port}/`;
   return entry;
+}
+async function preferredCanvasServerConfig(entry) {
+  const envPort = Number.parseInt(String(process.env.HOSTED_SKILLS_CANVAS_PORT || ""), 10);
+  const fallbackPort = Number.isInteger(envPort) && envPort > 0 && envPort <= 65535 ? envPort : 0;
+  try {
+    const { json } = await readLocalSettings(entry);
+    const values = json?.Values && typeof json.Values === "object" ? json.Values : {};
+    const rawUrl = typeof values.COPILOT_SESSION_OPENAI_BASE_URL === "string" ? values.COPILOT_SESSION_OPENAI_BASE_URL.trim() : "";
+    const token = typeof values.COPILOT_SESSION_API_KEY === "string" ? values.COPILOT_SESSION_API_KEY.trim() : "";
+    let port = fallbackPort;
+    if (!port && rawUrl) {
+      const parsed = new URL(rawUrl);
+      const candidate = Number.parseInt(parsed.port, 10);
+      if ((parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost") && Number.isInteger(candidate) && candidate > 0 && candidate <= 65535) {
+        port = candidate;
+      }
+    }
+    return { port, token };
+  } catch {
+    return { port: fallbackPort, token: "" };
+  }
 }
 var canvasOptions = {
   id: CANVAS_ID,
@@ -18356,20 +19169,21 @@ var canvasOptions = {
     if (!entry) return;
     if (entry.closePromise) return entry.closePromise;
     entry.closePromise = (async () => {
+      const server = entry.server;
+      entry.server = null;
+      entry.url = "";
+      const serverClosed = server ? new Promise((resolve) => server.close(() => resolve())) : null;
       for (const res of entry.clients) {
         try {
+          const socket = res.socket;
           res.end();
+          socket?.end();
         } catch {
         }
       }
       entry.clients = /* @__PURE__ */ new Set();
       await entry.usageMetrics?.close({ flush: false });
-      if (entry.server) {
-        const server = entry.server;
-        entry.server = null;
-        entry.url = "";
-        await new Promise((resolve) => server.close(() => resolve()));
-      }
+      await serverClosed;
       stopLiveTelemetry(entry);
       stopLoadTest(entry);
       await stopLocalAndRelease(entry);
