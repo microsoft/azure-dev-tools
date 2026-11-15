@@ -19,7 +19,7 @@ Use this file when investigating Durable Functions issues that cross language bo
 
 ## Language support gaps
 
-- **Go is not supported.** There is no shipped Durable Functions SDK for the Go worker, so `orchestrationTrigger`, `activityTrigger`, `entityTrigger`, and the `durableClient` binding are unavailable in Go apps. Do not propose a Durable design for a Go project. Recommend a supported language for the Durable portion, or a non-Durable pattern such as queue or Event Hubs chaining. If a Go app already declares Durable bindings, treat it as an unsupported configuration rather than a runtime bug.
+- **Go:** orchestrations, activities, and the `durableClient` input are supported through the Go worker's `middleware/durabletask` package. They need Go 1.25 or later and an extension bundle with Durable Task extension 3.15.0 or later. Durable entities (`entityTrigger`) are not supported. If a Go app needs entities, recommend a supported language for that part, or an orchestration-based pattern. See [go.md](go.md).
 
 ## Public documentation
 

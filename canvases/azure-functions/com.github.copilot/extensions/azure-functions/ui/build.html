@@ -175,15 +175,16 @@
       <section id="template-step" hidden><h2 class="page-title" data-i18n="workbench.template.question">Which starter do you want to use?</h2><div id="templates" class="tasks joined"></div></section>
       <section id="hosted-trigger-step" hidden>
         <h2 class="page-title" data-i18n="create.hosted.trigger">What should start your Hosted Skill?</h2>
-        <p class="muted" data-i18n="create.hosted.triggerNote">The starter is the same. Your choice is passed to the customization request.</p>
+        <p class="muted" data-i18n="create.hosted.triggerNote">Your choice selects a matching starter. You can change the starter later in Change configuration.</p>
         <div id="hosted-trigger-choices" class="tasks joined"></div>
-        <button class="btn ghost" type="button" data-hosted-trigger-skip data-metric-id="workbench-family" data-i18n="create.hosted.skipTrigger">Describe the trigger in my request</button>
+        <button class="btn ghost" type="button" data-hosted-trigger-skip data-metric-id="workbench-family" data-i18n="create.hosted.skipTrigger">Skip and use the default starter</button>
       </section>
       <section id="location-step" hidden>
         <h2 class="page-title" data-i18n="workbench.location.question">Where should this function app project go?</h2>
         <section id="function-setup" class="card setup-section" hidden>
           <h3 data-i18n="setup.configuration">Function app setup</h3>
           <div class="setup-section-heading configuration-summary-row"><p id="configuration-summary" class="flow-context"></p><button id="edit-configuration" class="revision-link" type="button" aria-controls="configuration-editor" aria-expanded="false" data-i18n="setup.change">Change configuration</button><button id="close-configuration" class="revision-link" type="button" aria-controls="configuration-editor" data-i18n="workbench.close" hidden>Close</button></div>
+          <p id="configuration-template-description" class="muted" hidden></p>
           <div id="configuration-editor" hidden inert>
             <label class="field-stack"><span data-i18n="setup.type">Type</span><select id="configuration-type"></select></label>
             <p id="configuration-type-error" class="configuration-validation" role="status" hidden></p>
@@ -191,6 +192,7 @@
             <p id="configuration-language-error" class="configuration-validation" role="status" hidden></p>
             <label id="configuration-iac-field" class="field-stack"><span data-i18n="create.iac">Infrastructure</span><select id="configuration-iac"></select></label>
             <p id="configuration-iac-error" class="configuration-validation" role="status" hidden></p>
+            <label id="configuration-trigger-field" class="field-stack" hidden><span data-i18n="create.trigger">Trigger</span><select id="configuration-trigger"></select></label>
             <label id="configuration-template-field" class="field-stack"><span data-i18n="setup.starter">Starter</span><select id="configuration-template"></select></label>
             <p id="configuration-template-error" class="configuration-validation" role="status" hidden></p>
           </div>
@@ -336,11 +338,23 @@
         </div>
       </section>
       <section class="flow-output">
-        <div id="run-target-bar" class="row actions-row" hidden>
-          <span class="muted">Target:</span>
-          <button id="run-target-local" class="btn small primary" type="button">Local</button>
-          <button id="run-target-azure" class="btn small ghost" type="button">Azure</button>
-          <span id="run-target-azure-host" class="muted"></span>
+        <div id="run-target-bar" class="stack" hidden style="margin-bottom: 12px">
+          <div class="row actions-row">
+            <span class="muted">Target:</span>
+            <button id="run-target-local" class="btn small primary" type="button">Local</button>
+            <button id="run-target-azure" class="btn small ghost" type="button">Azure</button>
+            <span id="run-target-azure-host" class="muted"></span>
+          </div>
+          <div id="run-azure-picker" class="row" hidden style="gap: 8px; align-items: flex-end; flex-wrap: wrap">
+            <label class="stack" style="flex: 1 1 200px; min-width: 180px">
+              <span>Subscription</span>
+              <select id="run-azure-subscription" data-metric-id="run-azure-subscription" aria-label="Azure subscription"></select>
+            </label>
+            <label class="stack" style="flex: 1 1 220px; min-width: 180px">
+              <span>Function App</span>
+              <select id="run-azure-app" data-metric-id="run-azure-app" aria-label="Azure Function App"></select>
+            </label>
+          </div>
         </div>
         <p id="local-test-context" class="muted" role="status" aria-live="polite" hidden></p>
         <label class="stack" id="local-app-field" hidden><span data-i18n="run.app">Function App</span><select id="local-app"></select></label>

@@ -53,6 +53,7 @@
     "checkedOn": "2026-10-02",
     "source": "https://learn.microsoft.com/azure/azure-functions/functions-reference-python",
     "functionsPackage": "azure-functions",
+    "functionsPackageProviders": ["azurefunctions-agents-runtime"],
     "deployExclusions": [".venv", "tests", "local.settings.json"]
   },
   "pythonWorkerPackage": {

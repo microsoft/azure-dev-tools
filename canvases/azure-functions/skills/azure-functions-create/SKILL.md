@@ -202,13 +202,13 @@ func start
 
 ---
 
-### Path C — Go (preview)
+### Path C — Go
 
-Go is not represented in the Azure MCP template set or in the templates manifest, so there is nothing to discover. Go also has its own scaffolding command, its own worker runtime value, and preview constraints that apply to no other language.
+Go is not represented in the Azure MCP template set or in the templates manifest, so there is nothing to discover. Go also has its own scaffolding command, its own worker runtime value, and platform constraints that apply to no other language.
 
 Load [references/go-project.md](references/go-project.md) and follow it. Do not improvise a Go project from Path A or Path B.
 
-Tell the user up front that **Go support on Azure Functions is in public preview** and may change before GA.
+Tell the user up front that **Go support on Azure Functions is GA only on the Linux Flex Consumption plan**. Other hosting plans are not GA for Go.
 
 ---
 

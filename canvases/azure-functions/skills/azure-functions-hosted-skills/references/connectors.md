@@ -148,8 +148,8 @@ or service outage.
 
 ## Bicep Files
 
-Use `infra/app/connector-gateway.bicep` from the retrieved `ai-serverless-agents-python` template
-as the current example. It creates:
+Use `infra/app/connector-gateway.bicep` from the retrieved `ai-hosted-skills-python` template
+as a fixed Office 365 quickstart example. It creates:
 
 - `Microsoft.Web/connectorGateways@2026-05-01-preview`
 - `Microsoft.Web/connectorGateways/connections@2026-05-01-preview`
@@ -166,7 +166,10 @@ product-owner words such as `microsoft` in resource names. Display names and des
 friendly product names like Microsoft Teams or Office 365 Outlook.
 
 The asset's connection resource works as-is for Office 365 Outlook, which does not need an
-explicit `parameterValueSet`. When adapting it to a different connector, check
+explicit `parameterValueSet`. Its MCP operation schema is a static, verified quickstart example;
+do not use that hand-authored schema as the generic pattern for another connector. When adapting
+it to a different connector, derive operations and schemas from connector metadata with
+[connector-schemas.md](./connector-schemas.md). Check
 [Connection Authentication Schemes](#connection-authentication-schemes) above first — do not
 assume every connector behaves like Office 365 Outlook.
 

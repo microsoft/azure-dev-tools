@@ -1,5 +1,18 @@
 # Azure Functions release notes
 
+## 0.1.6
+
+- **Run functions in Azure.** Select a subscription and Function App. Function
+  keys stay out of displayed URLs.
+- **Follow deployment progress.** Show the package phase and open Monitor or
+  Run in Azure after deployment.
+- **Choose Hosted Skills starters.** Select a trigger and review matching
+  templates. The catalog priority selects the default.
+- **Check Hosted Skills projects.** Recognize the Hosted Skills runtime as a
+  Python Functions package provider.
+- **Use updated skills.** Refresh Hosted Skills, deployment, diagnostics, update,
+  and language support guidance.
+
 ## 0.1.5
 
 - **Build and edit functions.** Improve the Build screen and Add function flow.

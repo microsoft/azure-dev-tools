@@ -1,6 +1,6 @@
 ---
 name: azure-functions-deploy
-description: "Proxy Azure Functions deployment requests to the Azure Skills prepare, validate, and deploy workflow while preserving Azure Functions-specific guidance"
+description: "Not for Azure Functions Hosted Skills. Proxy standard Azure Functions deployment requests to the Azure Skills prepare, validate, and deploy workflow while preserving Azure Functions-specific guidance. Do not use when the conversation is creating, running, or deploying a Hosted Skill, or the selected Functions app has agents.config.yaml, depends on azurefunctions-agents-runtime, or imports create_function_app() from that runtime. App-local *.agent.md files count only when they belong to that runtime app; ignore repository-level .github/agents/*.agent.md coding-agent configuration. This also applies to follow-up requests that only say deploy, azd up, or redeploy; use azure-functions-hosted-skills instead. azure-functions-hosted-skills can still load references/deployment-result.md for identity and links."
 ---
 
 > **Language**: Always respond in the same language the user is using.
@@ -10,6 +10,19 @@ description: "Proxy Azure Functions deployment requests to the Azure Skills prep
 Deploy your Azure Functions app to Azure by proxying to the Azure Skills deployment workflow.
 
 This skill is the Azure Functions-facing entry point. It should not run deployment commands directly. It prepares Azure Functions-specific context, then delegates execution to `azure-prepare`, `azure-validate`, and `azure-deploy` from the Azure Skills plugin.
+
+## Hosted Skills exclusion
+
+Before checking prerequisites or delegating, check the conversation and project context. If the app is an Azure Functions Hosted Skills app, invoke `azure-functions-hosted-skills` instead and stop this workflow. Treat it as a Hosted Skills app when any of these apply:
+
+- The conversation is creating, extending, running, testing, or deploying a Hosted Skill.
+- The selected Functions app contains `agents.config.yaml` (commonly `src/agents.config.yaml`).
+- Its `requirements.txt` depends on `azurefunctions-agents-runtime`, or its `function_app.py` imports `create_function_app()` from that runtime.
+- App-local `*.agent.md` files count only when they belong to that runtime app. Do not treat repository-level `.github/agents/*.agent.md` coding-agent configuration as a Hosted Skills marker.
+
+Hosted Skills deployment needs its own model, connector, and runtime guidance, even when the user only says to deploy, run `azd up`, or redeploy after a fix. Do not invoke `azure-prepare`, `azure-validate`, or `azure-deploy` from this skill for a Hosted Skills app, and do not suggest `azure-functions-diagnostics` for its deployment failures.
+
+This exclusion does not apply to the verified deployment result contract. When `azure-functions-hosted-skills` tells you to load it, read [deployment-result.md](references/deployment-result.md) for identity and links only. Keep the Hosted Skills deployment steps of that skill.
 
 ## Prerequisites
 
@@ -81,9 +94,9 @@ Before handing off, collect and pass the following Azure Functions-specific guid
 
 ## Go-specific deployment context
 
-Go is in public preview, and Core Tools 4.12 or later owns the Go build and packaging. Lead with the supported commands rather than a hand-rolled package.
+The Go worker is generally available (GA) on Linux Flex Consumption. It is not GA on other hosting plans. Core Tools 4.12 or later owns the Go build and packaging. Lead with the supported commands rather than a hand-rolled package.
 
-Two preview constraints are hard limits, so check them before planning anything else.
+Two hosting constraints are hard limits, so check them before planning anything else.
 
 - Go function apps are supported **only on the Flex Consumption plan**.
 - Go function apps run on **Linux only** in Azure. Do not select or attempt a Windows-hosted plan.
@@ -105,7 +118,7 @@ Other Go context to pass to Azure Skills:
 | Executable permission | Core Tools sets this correctly. It only becomes a problem with a hand-rolled archive, because some tools such as Windows `Compress-Archive` do not preserve Unix permissions, which leaves the platform unable to start the binary. Prefer `func pack`. |
 | Worker runtime setting | `FUNCTIONS_WORKER_RUNTIME` must be `native`. |
 | Azure CLI version | 2.87.0 or later is required to create Azure resources or deploy packages for Go. |
-| Preview status | Confirm the user accepts preview status before a production deployment. |
+| Hosting plan | Go is GA only on Linux Flex Consumption. Do not plan a production deployment on another plan. |
 
 If a Go deployment succeeds but the app never becomes healthy, check the plan and OS first, then whether the package was built by Core Tools or assembled by hand.
 

@@ -1,6 +1,6 @@
 ---
 name: azure-functions-hosted-skills
-description: "Build, scaffold, extend, deploy, and troubleshoot Azure Functions Hosted Skills: cloud-hosted, event-driven intelligent capabilities built with Markdown, natural-language instructions, declarative configuration, code, and tools. Use whenever the user asks for an Azure Functions Hosted Skill, medium-code intelligent capability, AI app on Azure Functions, intelligent app on Azure Functions, serverless agent, serverless agents, Azure Functions agent, scheduled agent, morning briefing, daily digest, timer agent, inbox summary, email or Teams briefing, background AI workflow, connector-triggered agent, HTTP/chat capability, MCP tool, webhook-style agent, or Azure Functions hosted agent."
+description: "Build, scaffold, extend, deploy, and troubleshoot Azure Functions Hosted Skills: cloud-hosted, event-driven intelligent capabilities built with Markdown, natural-language instructions, declarative configuration, code, and tools. Use whenever the user asks for an Azure Functions Hosted Skill, medium-code intelligent capability, AI app on Azure Functions, intelligent app on Azure Functions, serverless agent, serverless agents, Azure Functions agent, scheduled agent, morning briefing, daily digest, timer agent, inbox summary, email or Teams briefing, background AI workflow, connector-triggered agent, HTTP/chat capability, MCP tool, webhook-style agent, Azure Functions hosted agent, or Dynamic Workflows with Durable Functions or DTS. Use this skill, not azure-functions-deploy or azure-functions-diagnostics, to deploy or troubleshoot an app with agents.config.yaml, azurefunctions-agents-runtime, or its create_function_app(); app-local *.agent.md files count, .github/agents files do not."
 ---
 
 # Azure Functions Hosted Skills
@@ -83,11 +83,29 @@ Load only the files needed for the task:
 | Connector side-effect smoke tests for Teams, Outlook, and MCP tools | [connector-smoke-tests.md](./references/connector-smoke-tests.md) |
 | Connector-triggered agents and trigger config deployment | [connector-triggers.md](./references/connector-triggers.md) |
 | Custom Python tools and Agent Skills | [tools-and-skills.md](./references/tools-and-skills.md) |
+| Dynamic Workflows: suitability, opt-in, Durable activities, data-driven plans, Sub Agents, and backend choice | [dynamic-workflows.md](./references/dynamic-workflows.md) |
 | Writing robust agent instructions | [agent-authoring.md](./references/agent-authoring.md) |
 | Bicep, azd, deployment, local development | [infra-and-deployment.md](./references/infra-and-deployment.md) |
 | Azure resource naming abbreviations used by the Bicep assets | [abbreviations.json](./references/abbreviations.json) |
 | Diagnostics and common failures | [troubleshooting.md](./references/troubleshooting.md) |
 | Official Azure Functions Hosted Skills quickstart template and Learn article | [quickstart-reference.md](./references/quickstart-reference.md) |
+
+## Skill Scope
+
+For Hosted Skills apps, this skill owns deployment and troubleshooting. Do not hand off to
+`azure-functions-deploy` or `azure-functions-diagnostics`; those are for standard Azure Functions
+apps. Deploy with this skill's `azd` guidance, and diagnose errors with
+[troubleshooting.md](./references/troubleshooting.md) and the connector references.
+
+This rule also applies to a follow-up request that only says deploy, `azd up`, redeploy, or
+reports an error. A Functions app is a Hosted Skills app when one of these markers is present:
+
+- The selected Functions app contains `agents.config.yaml` (commonly `src/agents.config.yaml`).
+- Its `requirements.txt` depends on `azurefunctions-agents-runtime`, or its `function_app.py`
+  imports `create_function_app()` from that runtime.
+- App-local `*.agent.md` files count only when they belong to that runtime app. Do not treat
+  repository-level `.github/agents/*.agent.md` coding-agent configuration as a Hosted Skills
+  marker.
 
 ## Assess the Workspace
 
@@ -161,24 +179,49 @@ After the discovery, summarize the plan before editing. Include the agent files,
 built-in endpoints, model choice, tools/MCP/connectors, infrastructure changes, and how it will be
 tested. If the user has already provided enough detail, make reasonable choices and proceed.
 
+### Consider Dynamic Workflows
+
+For parallel analysis, several dependent tool calls, bounded dataset processing, durable waits,
+or work that must survive worker restarts, load
+[dynamic-workflows.md](./references/dynamic-workflows.md) before choosing the execution model.
+Explain briefly how Dynamic Workflows work: an agent builds a plan at runtime and
+Durable Functions executes its activities with persisted state and observable progress.
+Ask whether to use Dynamic Workflows before enabling them; do not add them to simple one-turn work.
+
+After adoption, ask a separate question about Durable Task Scheduler (DTS). Recommend DTS for
+lower orchestration latency and its execution-history/activity dashboard, explaining additional
+Azure resources and cost without promising a speed multiplier. Azure Storage remains supported
+when DTS is declined. An explicit choice already made by the user need not be asked again.
+These choices do not approve provisioning, side-effect tests, or deployment.
+
+Enable only the selected agents, author bounded `@workflow_tool` handlers, and keep backend
+configuration in `host.json` and matching app settings, not agent frontmatter. Dynamic Workflows
+do not require ACA Dynamic Sessions; retain sessions only for approved web/code workloads.
+Preserve the user's approved service and tool choices.
+Include the terminal result destination, idempotency strategy, backend and service-related Bicep
+changes, and completion checks in the plan. A started Workflow ID is not business completion.
+
 ## Scaffold a New App
 
 Use **manifest discovery + MCP primary retrieval** when Azure MCP tools are available:
 
 1. Fetch the Azure Functions template manifest from
    `https://cdn.functions.azure.com/public/templates-manifest/manifest.json` and find
-   `ai-serverless-agents-python`. Use its catalog metadata (`priority`, `categories`, `tags`,
+   `ai-hosted-skills-python`. Use its catalog metadata (`priority`, `categories`, `tags`,
    `whatsIncluded`) to explain why this is the correct Azure Functions Hosted Skills scaffold. Keep
    `repositoryUrl`, `folderPath`, and `gitRef` for fallback.
 2. Call Azure MCP `functions_template_get` with `language: python` and
-   `template: ai-serverless-agents-python`. This is the primary source for the complete project
+   `template: ai-hosted-skills-python`. This is the primary source for the complete project
    files.
 3. Write the returned `files` array into the target project. If the output is truncated or saved to
    a temporary file, read the complete JSON response before deciding retrieval failed.
 4. If MCP returns an actual tool error, cannot retrieve the template, or returns an empty/zero-file
    result after reading the complete response, fall back to the manifest `repositoryUrl`,
    `folderPath`, and `gitRef` using direct GitHub download first and `git clone --depth 1` only if
-   downloads fail. Tell the user that MCP retrieval failed and GitHub fallback was used.
+   downloads fail. An older MCP catalog can list only the former ID
+   `ai-serverless-agents-python`. In that case, use the current manifest's GitHub coordinates, not
+   the former template ID. Keep the manifest's `gitRef` so the retrieved files match the selected
+   release. Tell the user that MCP retrieval failed and GitHub fallback was used.
 
 When Azure MCP tools are not available, skip directly to the manifest/GitHub fallback above. Do not
 invent a project structure from memory.
@@ -398,6 +441,10 @@ For connector actions with visible side effects, such as Teams posts or Outlook 
 the downstream side effect after the first run. If the user reports it is missing, do not keep
 triggering the agent. Inspect the recorded tool result/session and run a focused connector smoke
 test with the same arguments before changing model settings or rerunning the full workflow.
+
+For Dynamic Workflows, also use [testing.md](./references/testing.md#dynamic-workflows) to verify
+the terminal orchestration state and final destination. The trigger Function can finish while
+the workflow continues; neither `202 Accepted` nor a successful starter proves completion.
 
 Be hands-on after scaffolding. Do not stop at a command list when the next command is safe and the
 user already approved the direction. Run `azd up`, open authorization URLs, run `azd env
