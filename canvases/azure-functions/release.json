@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "format": "plugin",
   "name": "azure-functions",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "mutableDocumentation": true,
   "legalNotices": [
     "notices/emulator-sdk-MIT-LICENSE.txt"
@@ -146,6 +146,7 @@
         "directory": "skills/azure-functions-hosted-skills",
         "files": [
           "SKILL.md",
+          "assets/infra/app/durable-task-scheduler.bicep",
           "assets/infra/app/trigger-config.bicep",
           "references/abbreviations.json",
           "references/agent-authoring.md",
@@ -157,6 +158,7 @@
           "references/connector-teams.md",
           "references/connector-triggers.md",
           "references/connectors.md",
+          "references/dynamic-workflows.md",
           "references/infra-and-deployment.md",
           "references/models.md",
           "references/project-files.md",
@@ -196,6 +198,7 @@
           "references/extensions.md",
           "references/python-blob-sdk.md",
           "references/python-http-streaming.md",
+          "references/python-language.md",
           "references/python-model-v2.md",
           "references/scenarios.json"
         ]
@@ -431,6 +434,7 @@
     "skills/azure-functions-health-status/scripts/get-functionapp-health-status.sh",
     "skills/azure-functions-help/SKILL.md",
     "skills/azure-functions-hosted-skills/SKILL.md",
+    "skills/azure-functions-hosted-skills/assets/infra/app/durable-task-scheduler.bicep",
     "skills/azure-functions-hosted-skills/assets/infra/app/trigger-config.bicep",
     "skills/azure-functions-hosted-skills/references/abbreviations.json",
     "skills/azure-functions-hosted-skills/references/agent-authoring.md",
@@ -442,6 +446,7 @@
     "skills/azure-functions-hosted-skills/references/connector-teams.md",
     "skills/azure-functions-hosted-skills/references/connector-triggers.md",
     "skills/azure-functions-hosted-skills/references/connectors.md",
+    "skills/azure-functions-hosted-skills/references/dynamic-workflows.md",
     "skills/azure-functions-hosted-skills/references/infra-and-deployment.md",
     "skills/azure-functions-hosted-skills/references/models.md",
     "skills/azure-functions-hosted-skills/references/project-files.md",
@@ -463,6 +468,7 @@
     "skills/azure-functions-update/references/extensions.md",
     "skills/azure-functions-update/references/python-blob-sdk.md",
     "skills/azure-functions-update/references/python-http-streaming.md",
+    "skills/azure-functions-update/references/python-language.md",
     "skills/azure-functions-update/references/python-model-v2.md",
     "skills/azure-functions-update/references/scenarios.json"
   ],
@@ -474,8 +480,8 @@
   },
   "build": {
     "esbuild": "0.25.12",
-    "lockSha256": "8ac53e32bb4f8c5068234ecbf4f7a266e5d4afe54a3448cd9ad54247ff6c2b43",
-    "inputSha256": "7dd78291035b0959a1824a3a6ba38e11f4769883c68d747c26baec32c652ba32"
+    "lockSha256": "44ab463e3a134bf9a6b8c32f16891474ca5e4d439e78413166da253173fdae99",
+    "inputSha256": "d079787584717d1ee16dc2f7a5244554fe80b1c8279346a865d42e287419e609"
   },
   "dependencies": [
     {
@@ -555,7 +561,7 @@
     },
     {
       "name": "@azure/identity",
-      "version": "4.13.3",
+      "version": "4.14.1",
       "license": "MIT"
     },
     {
@@ -575,12 +581,12 @@
     },
     {
       "name": "@azure/msal-common",
-      "version": "16.14.1",
+      "version": "16.16.1",
       "license": "MIT"
     },
     {
       "name": "@azure/msal-node",
-      "version": "6.0.1",
+      "version": "7.2.1",
       "license": "MIT"
     },
     {

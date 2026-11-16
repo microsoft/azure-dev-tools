@@ -2,7 +2,7 @@
 
 Use this file when investigating Azure Functions issues involving Go apps, the Go worker, worker-driven indexing in Go, or Go runtime support.
 
-> **Preview.** Go support on Azure Functions is in public preview. Behavior, APIs, and supported triggers can change between releases. State the preview status when reporting findings, and do not assume parity with GA languages.
+> **Support status.** Go support on Azure Functions is generally available (GA) on the Linux Flex Consumption plan, with Go worker v1.0.0 and later. Other hosting plans, such as Elastic Premium and Dedicated, are not GA for Go. They are on the roadmap (https://azure.github.io/azure-functions-golang-worker/roadmap/). Do not assume that Go has all the features of the other GA languages.
 
 ## Public documentation and registries
 
@@ -19,7 +19,7 @@ Use this file when investigating Azure Functions issues involving Go apps, the G
 | Supported languages | https://learn.microsoft.com/azure/azure-functions/supported-languages |
 | Diagnostics overview | https://learn.microsoft.com/azure/azure-functions/functions-diagnostics |
 
-Start with the Go developer reference. It is the authoritative source for prerequisites, the programming model, supported triggers, deployment, and preview limitations.
+Start with the Go developer reference. It is the authoritative source for prerequisites, the programming model, supported triggers, deployment, and platform limitations.
 
 ## Public repositories
 
@@ -46,21 +46,21 @@ If none of these are present, the app is more likely a custom handler. Use custo
 
 > **Worker descriptor.** Current Core Tools ships `nativeWorkerConfig.json` declaring `"language": "native"` with a `defaultExecutablePath` of `bin/app`. Older Go worker specification material still shows a `golang` descriptor. Treat that as an out-of-date spec rather than current runtime behavior, and never use it to justify a `golang` runtime value.
 
-## Preview constraints
+## Platform constraints
 
 These come from the Go developer reference and change what is even possible, so check them before diagnosing deeper.
 
-- Go function apps are supported **only on the Flex Consumption plan**.
-- Go function apps run on **Linux only** in Azure.
-- **Durable Functions is not supported** for Go.
+- Go function apps are GA **only on the Flex Consumption plan**. Elastic Premium and Dedicated are on the roadmap and are not GA.
+- Go function apps run on **Linux x64 only** in Azure. Windows is not supported.
+- **Durable Functions:** orchestrations, activities, and management clients are supported through the worker's `middleware/durabletask` package. They need Go 1.25 or later and an extension bundle with Durable Task extension 3.15.0 or later. Durable entities are not supported. Check the selected worker release before you flag Durable use.
 - **`func new` is not supported.** Functions are added by editing `main.go`.
 - Only the triggers listed below are supported.
-- Go packaging in Core Tools targets Linux x64.
+- Go packaging in Core Tools targets Linux x64 with `CGO_ENABLED=0`. Code that needs cgo does not run.
 
 ## Programming model essentials
 
 - **Worker-driven indexing.** Triggers are declared in Go code through the fluent builder and functional options. Go projects do **not** use `function.json`. A `function.json` in a Go project is a migration leftover or a mistake, not the source of truth.
-- **Triggers only, no bindings.** The Go worker does not support input or output bindings. A handler that needs to write to a queue, blob, table, or Cosmos DB container calls the Azure SDK for Go directly. Do not diagnose an output binding misconfiguration in a Go app, and do not recommend one as a fix.
+- **Triggers, with limited bindings.** The Go worker does not support general input bindings or non-HTTP output bindings. The Durable middleware's `durabletask.ClientInput()` registers a supported `durableClient` input binding, and HTTP responses use `http.ResponseWriter`. Otherwise, a handler that needs to write to a queue, blob, table, or Cosmos DB container calls the Azure SDK for Go directly. Do not diagnose an output binding misconfiguration in a Go app, and do not recommend one as a fix.
 - **Registration shape.** `app := sdk.FunctionApp()`, then `app.HTTP(...)` / `app.Timer(...)` and so on, then `worker.Start(app)`.
 - **HTTP handlers** use standard `http.ResponseWriter` and `*http.Request`. HTTP streaming is supported through `http.Flusher`.
 - **Extension bundles still apply.** Go is a non-.NET runtime, so non-HTTP triggers resolve their extensions through the bundle in `host.json`.
@@ -114,15 +114,15 @@ A package produced by `func pack` is ready to run, so a remote build should not 
 | Host starts but indexes no functions | Missing `app.*` registration, or a missing blank import for an extension trigger. |
 | Trigger indexes but never fires | Missing or incompatible extension bundle, or a connection setting that does not resolve. |
 | Deployment succeeds but the app never becomes healthy | Package built for the wrong platform, or a hand-rolled zip that lost the execute bit on the binary. Prefer `func pack` or `func azure functionapp publish`, which handle both. |
-| App will not deploy to the chosen plan | Go is supported only on Flex Consumption, Linux only, during preview. |
+| App will not deploy to the chosen plan | Go is GA only on Flex Consumption, Linux x64 only. Other plans are not GA. |
 | Behavior changes unexpectedly between builds | Project tracking `main` instead of a tagged worker release. |
 
 ## Investigation guidance
 
 - Check the Core Tools version for any local reproduction. Versions before 4.12 do not support Go at all and produce misleading "unsupported runtime" errors.
-- Confirm the worker module version. Every published version is a `vX.Y.Z-preview` tag, and `go list -m -versions github.com/azure/azure-functions-golang-worker` lists what exists. Compare it against `go.mod`.
+- Confirm the worker module version. Releases from `v1.0.0` are GA; earlier `vX.Y.Z-preview` tags are preview releases. `go list -m -versions github.com/azure/azure-functions-golang-worker` lists what exists. Compare it against `go.mod`, and recommend an update when `go.mod` still uses a preview tag.
 - For crashes, look for whole-worker termination rather than a single failed invocation. That pattern points at goroutine panics, and the fix is propagating panics as errors with `sdk.RecoverTo` rather than adding handler-level recovery.
 - For trigger problems, verify the Go registration call and the `host.json` extension bundle together. There is no `function.json` to inspect.
-- Do not diagnose an input or output binding problem in a Go app. Bindings do not exist there, and the equivalent code is a direct Azure SDK call in the handler.
+- Do not diagnose a general input or non-HTTP output binding problem in a Go app. The equivalent code is a direct Azure SDK call in the handler. The exception is the Durable `durableClient` input from `durabletask.ClientInput()`.
 - Include `azure-functions-host` when trigger indexing, host startup, scale, or cross-worker behavior is involved.
 - Prefer the worker repository's samples over hand-written registration when reproducing an issue.

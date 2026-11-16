@@ -70,7 +70,7 @@ public HttpResponseMessage run(
 }
 ```
 
-## Go (preview)
+## Go
 
 Go uses worker-driven indexing — there is no `function.json`. Register the function in code and start the worker. The module path is lowercase (`github.com/azure/...`) even though the repository is `Azure/...`.
 

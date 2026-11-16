@@ -17,11 +17,11 @@ Run each check and report results:
 az --version        # Azure CLI ≥ 2.60 (≥ 2.87.0 for Go deployments)
 azd version         # Azure Developer CLI, required for Azure Skills deployment workflows
 func --version      # Azure Functions Core Tools ≥ 4.x (≥ 4.12 for Go projects)
-node --version      # Node.js 24 or 22 for new Node.js/TypeScript projects
-python --version    # Python 3.13 preferred; 3.10-3.13 supported for Python projects
+node --version      # Node.js 24 (default) or 22 for Node.js/TypeScript projects
+python --version    # Python 3.13 (default) or 3.14 preferred; 3.11-3.14 supported for Python projects
 python3 --version   # Use this fallback when python is not on PATH
 dotnet --version    # .NET SDK ≥ 8.0 (if .NET project)
-go version          # Go 1.24 or later (if Go project; Go support is in preview)
+go version          # Go 1.24 or later (if Go project; Go is GA on Linux Flex Consumption only)
 ```
 
 Run the language checks that match the user's project or stated intent. Do not report a missing Go toolchain as a problem for a Python project, and do not report a missing Python interpreter as a problem for a Go project.
@@ -77,16 +77,16 @@ For language runtimes, prefer the latest Azure Functions **GA-supported** versio
 | Azure CLI | Latest stable, ≥ 2.60; **≥ 2.87.0 for Go** | `winget install --exact --id Microsoft.AzureCLI` | `brew update && brew install azure-cli` | Use the distro-specific Microsoft Learn command for your package manager | https://learn.microsoft.com/cli/azure/install-azure-cli |
 | Azure Developer CLI | Latest stable | `winget install --exact --id Microsoft.Azd` | `brew install azure/azd/azd` | Use the Microsoft Learn instructions for your distro or install the signed `.deb`/`.rpm` package from the Azure Developer CLI release | https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd |
 | Core Tools | v4.x; **4.12 or later for Go** | Download and run the v4.x 64-bit MSI installer from Microsoft Learn | `brew tap azure/functions && brew install azure-functions-core-tools@4` | Use the Microsoft package repository for your distro, then install `azure-functions-core-tools-4` | https://learn.microsoft.com/azure/azure-functions/functions-run-local |
-| Node.js | Node.js 24 GA for new apps; Node.js 22 also supported | `winget install --exact --id OpenJS.NodeJS.LTS` or `fnm install 24` | `brew install node@24` or `fnm install 24` | Use your distro package manager or a version manager such as `fnm install 24` | https://learn.microsoft.com/azure/azure-functions/functions-versions |
-| Python | Python 3.13 GA for new apps; 3.10-3.13 supported | `winget install --exact --id Python.Python.3.13` | `brew install python@3.13` | Use your distro package manager or a version manager such as `pyenv install 3.13` | https://learn.microsoft.com/azure/azure-functions/functions-versions |
+| Node.js | Node.js 24 GA for new apps (default); Node.js 22 also supported | `winget install --exact --id Schniz.fnm`, then `fnm install 24`. Do not use the `OpenJS.NodeJS.LTS` package: it can install Node.js 26, which is in preview for Functions | `brew install node@24` or `fnm install 24` | Use your distro package manager or a version manager such as `fnm install 24` | https://learn.microsoft.com/azure/azure-functions/functions-versions |
+| Python | Python 3.13 GA for new apps (default); 3.14 GA; 3.11-3.14 supported | `winget install --exact --id Python.Python.3.13` | `brew install python@3.13` | Use your distro package manager or a version manager such as `pyenv install 3.13` | https://learn.microsoft.com/azure/azure-functions/functions-versions |
 | .NET SDK | .NET 8 LTS minimum; use the latest GA version supported by the target Functions model | `winget install --exact --id Microsoft.DotNet.SDK.8` | `brew install --cask dotnet-sdk` | Use the Microsoft Learn instructions for your distro | https://learn.microsoft.com/dotnet/core/install/ |
-| Go | Go 1.24 or later (Go support is in preview) | `winget install --exact --id GoLang.Go` | `brew install go` | Use your distro package manager or the official tarball from the Go downloads page | https://go.dev/dl/ |
+| Go | Go 1.24 or later; Go 1.25 or later for Durable Functions (Go is GA on Linux Flex Consumption only) | `winget install --exact --id GoLang.Go` | `brew install go` | Use your distro package manager or the official tarball from the Go downloads page | https://go.dev/dl/ |
 
-Azure Functions runtime 4.x currently supports Node.js 24 and 22 for Node.js/TypeScript apps, and Python 3.10 through 3.13 for Python apps. Python 3.14 can appear in preview; keep Python 3.13 as the default recommendation until the user opts into preview support. Mention hosting caveats when relevant: newer language versions might not be available on Linux Consumption, so Flex Consumption is the safer default for new Linux-hosted apps.
+Azure Functions runtime 4.x currently supports Node.js 24 and 22 for Node.js/TypeScript apps. Support for Node.js 20 ended on 2026-04-30, and Node.js 26 is in preview. For Python apps, runtime 4.x supports Python 3.11 through 3.14. Python 3.13 is the default recommendation, and Python 3.14 is GA. Support for Python 3.10 ended on 2026-10-31, and Python 3.15 is in preview. Do not recommend a preview version unless the user asks for it. Mention hosting caveats when relevant: newer language versions might not be available on Linux Consumption, so Flex Consumption is the safer default for new Linux-hosted apps.
 
 ### Go prerequisites
 
-Go support on Azure Functions is in **public preview**. Say so before recommending it for production work.
+Go support on Azure Functions is **generally available (GA) on the Linux Flex Consumption plan**, with Go worker v1.0.0 and later. Other hosting plans, such as Elastic Premium and Dedicated, are not GA for Go. Go apps run on Linux x64 only, with `CGO_ENABLED=0`. Windows is not supported. Tell the user this before recommending Go for a plan other than Flex Consumption.
 
 Go has two version floors that no other language has.
 

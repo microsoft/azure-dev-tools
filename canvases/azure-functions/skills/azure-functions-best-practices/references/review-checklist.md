@@ -10,11 +10,11 @@ Use this checklist after collecting Function App inventory. Apply only sections 
 - JavaScript/TypeScript apps use the v4 programming model when practical.
 - Python apps use the v2 programming model when practical.
 - Python Function Apps run on Linux.
-- Go apps pin a published worker release rather than tracking `main`, and their preview status is acknowledged in production readiness decisions.
+- Go apps pin a published GA worker release (v1.0.0 or later), not `main` or a `-preview` tag.
 - Go apps propagate panics from user-started goroutines as errors, because an unrecovered goroutine panic terminates the worker and fails every concurrent invocation on it.
-- Go apps are deployed to Flex Consumption on Linux, which are the only supported options during preview.
+- Go apps are deployed to Flex Consumption on Linux x64. Go is GA only on this plan; Elastic Premium and Dedicated are on the roadmap.
 - Durable Functions workloads consider Durable Task Scheduler when appropriate.
-- Durable Functions is not available for Go; a Go app requiring orchestration needs a different language or a non-Durable pattern.
+- Go Durable orchestrations and activities use `middleware/durabletask` with Go 1.25 or later and Durable Task extension 3.15.0 or later. Durable entities are not supported for Go.
 
 ## Host and app configuration
 

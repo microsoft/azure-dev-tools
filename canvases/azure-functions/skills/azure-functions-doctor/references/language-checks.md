@@ -88,7 +88,7 @@ build or to make sure that wheels exist for the deployment OS and architecture.
 
 ## Go
 
-Go support is in preview. Report findings with that framing, and do not treat preview-only behavior as a defect.
+Go worker 1.x is generally available on Linux Flex Consumption. Report findings for other hosting plans as unsupported, not as preview defects.
 
 | ID | Check | Fail | Warning |
 |----|-------|------|---------|
@@ -100,8 +100,8 @@ Go support is in preview. Report findings with that framing, and do not treat pr
 | `GO-006` | Extension activation | Extension trigger registered without its blank import | Blank import present but unused trigger registered |
 | `GO-007` | Context propagation | - | `context.Context` ignored, or long work not cancellable |
 | `GO-008` | Startup cost | - | Blocking work in `init()` or before `worker.Start` |
-| `GO-009` | Toolchain version | `go` directive below `1.24`, the worker minimum | No `go` directive in `go.mod` |
-| `GO-010` | Unsupported feature | Durable trigger/binding, or an input/output binding, used in a Go project | Trigger not in the supported preview set |
+| `GO-009` | Toolchain version | `go` directive below `1.24`, the worker minimum, or below `1.25` when the project imports `middleware/durabletask` | No `go` directive in `go.mod` |
+| `GO-010` | Unsupported feature | General input binding (not the Durable `durableClient` input), non-HTTP output binding, or Durable entity used in a Go project | Trigger or extension support for the selected worker release is not verified |
 
 Notes:
 
@@ -109,6 +109,6 @@ Notes:
 - `GO-004`: Go apps use `FUNCTIONS_WORKER_RUNTIME=native`. `go` and `golang` are both wrong, and the fix is to set `native`.
 - `GO-005`: the Go worker indexes from code. Any `function.json` is a leftover from another language or a hand-written mistake.
 - `GO-006`: extension triggers such as Blob live in `triggers/` and must be activated with a blank import, for example `_ "github.com/azure/azure-functions-golang-worker/triggers/blob"`. Missing it is the usual cause of a trigger that never registers.
-- `GO-010`: the Go worker supports **triggers only**. There are no input or output bindings, so code that needs to write to a queue, blob, or container calls the Azure SDK for Go directly. Durable Functions is also unsupported. Treat either as an unsupported configuration rather than a runtime bug.
+- `GO-010`: HTTP responses use `http.ResponseWriter`; do not flag them as output bindings. The Durable middleware's `durabletask.ClientInput()` registers a supported `durableClient` input; do not flag it. Other input and non-HTTP output bindings need a direct Azure SDK for Go call. Durable orchestrations and activities are supported through `middleware/durabletask` with Go 1.25 or later and Durable Task extension 3.15.0 or later; entities are not supported. Check the selected worker release rather than flagging all Durable use.
 - Entry-point checks that assume an interpreted script file do not apply. Go deploys a compiled binary, so there is no `scriptFile` or `entryPoint` to resolve.
-- Deployment findings should account for the preview constraints: Flex Consumption only, Linux only.
+- Deployment findings should account for the hosting constraints: GA on Flex Consumption only, Linux x64 only.
