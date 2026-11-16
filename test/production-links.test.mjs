@@ -28,25 +28,21 @@ test("customer installation docs identify the production repository, not public 
   }
 });
 
-test("production catalog matches all installable plugins in order", () => {
+test("production catalog lists all installable plugins alphabetically without versions", () => {
   const readme = readFileSync(new URL("README.md", root), "utf8");
   const rows = readme.split("\n").filter((line) => line.startsWith("| ["));
-  const products = {
-    "azure-functions-hosted-skills": ["Azure Functions Hosted Skills", "canvases/azure-functions-hosted-skills/"],
-    "azure-resources-query": ["Azure Resources Query", "canvases/azure-resources-query/"],
-    "canvas-authoring": ["Canvas Authoring", "plugins/canvas-authoring/"],
-    "azure-cost-health-check": ["Azure Cost Health Check", "canvases/azure-cost-health-check/"],
-    "azure-sre-agent": ["Azure SRE Agent", "canvases/azure-sre-agent/"],
-    "containers": ["Containers", "canvases/containers/"],
-  };
+  const labels = rows.map((row) => row.match(/^\| \[([^\]]+)\]/)[1]);
+  assert.deepEqual(labels, [...labels].sort((a, b) => a.localeCompare(b)), "catalog is alphabetical");
   assert.equal(rows.length, manifest.plugins.length);
-  for (const [index, { name, version }] of manifest.plugins.entries()) {
-    const [label, path] = products[name];
-    assert.ok(rows[index].startsWith(`| [${label}](${path}) |`), `catalog order: ${label}`);
-    assert.ok(existsSync(new URL(path, root)), `${label}: missing package`);
-    assert.ok(rows[index].includes(version), `${label}: current catalog version`);
+  for (const { name, source } of manifest.plugins) {
+    const row = rows.find((line) => line.includes(`](${source}/) |`));
+    assert.ok(row, `${name}: missing catalog row`);
+    assert.ok(existsSync(new URL(`${source}/`, root)), `${name}: missing package`);
+    assert.doesNotMatch(row, /\b\d+\.\d+\.\d+\b/, `${name}: catalog row must not pin a version`);
+    assert.match(readme, new RegExp(`copilot plugin install ${name}@azure-dev-tools`));
   }
-  assert.match(rows[2], /Skill-only plugin, with no canvas panel/);
+  assert.match(rows.find((row) => row.startsWith("| [Canvas Authoring]")),
+    /Skill-only plugin, with no canvas panel/);
   assert.match(readme, /copilot plugin install azure-sre-agent@azure-dev-tools/);
   assert.match(readme, /\[Azure SRE Agent\]\(canvases\/azure-sre-agent\/\)/);
   assert.match(readme, /copilot plugin install containers@azure-dev-tools/);
