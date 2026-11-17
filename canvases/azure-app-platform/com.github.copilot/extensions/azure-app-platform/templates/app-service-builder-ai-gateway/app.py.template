@@ -1,0 +1,398 @@
+from __future__ import annotations
+
+import asyncio
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+import hashlib
+import json
+import re
+from pathlib import Path
+from typing import Any
+
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response, StreamingResponse
+
+from config import SampleConfig, load_config
+from gateway import AgentStreamProvider, GatewayAgentService
+
+STATIC_DIR = Path(__file__).with_name("static")
+SAMPLES_DIR = Path(__file__).with_name("samples")
+SAMPLE_DOCUMENT_PATH = SAMPLES_DIR / "sample-document.md"
+DEFAULT_SAMPLE_DOCUMENT = (
+    "# Service Architecture & Launch Checklist\n\n"
+    "- **Service**: Northwind Customer Portal (`northwind-portal-prod`)\n"
+    "- **Frontend**: Azure App Service Builder (`builder.yaml`, Python 3.12 + FastAPI)\n"
+    "- **Model Governance**: Azure AI Gateway (`gw-northwind-prod`)\n"
+    "- **Open Risk**: Regional failover alias `chat-fallback` is not yet bound in `eastus2`.\n"
+    "- **Action Item**: Verify content safety policy and complete load test before 2026-05-10.\n"
+)
+MAX_BODY_BYTES = 16 * 1024
+MAX_MESSAGES = 12
+MAX_TOTAL_CHARS = 8_000
+MAX_DOCUMENT_CHARS = 12_000
+MAX_DOCUMENT_NAME_CHARS = 120
+MAX_CONCURRENT_STREAMS = 4
+ALLOWED_ROLES = frozenset({"user", "assistant"})
+
+
+class BodyLimitError(Exception):
+    def __init__(self, status_code: int, code: str) -> None:
+        super().__init__(code)
+        self.status_code = status_code
+        self.code = code
+
+
+def create_app(
+    config: SampleConfig | None = None,
+    *,
+    agent_service: AgentStreamProvider | None = None,
+) -> FastAPI:
+    resolved_config = config or load_config()
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    css = (STATIC_DIR / "site.css").read_text(encoding="utf-8")
+    js = (STATIC_DIR / "chat.js").read_text(encoding="utf-8")
+    csp = build_csp(html)
+    service = agent_service or GatewayAgentService(resolved_config)
+    semaphore = asyncio.Semaphore(MAX_CONCURRENT_STREAMS)
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        try:
+            yield
+        finally:
+            await service.aclose()
+
+    app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+
+    @app.middleware("http")
+    async def apply_security_headers(request: Request, call_next) -> Response:
+        if resolved_config.is_expired() and request.url.path != "/health":
+            response = expired_response(request.url.path)
+        else:
+            response = await call_next(request)
+        for header, value in security_headers(csp).items():
+            response.headers.setdefault(header, value)
+        return response
+
+    @app.get("/health")
+    async def health() -> JSONResponse:
+        return JSONResponse(
+            {
+                "status": "expired" if resolved_config.is_expired() else "ok",
+                "gateway": resolved_config.gateway_host,
+                "model": resolved_config.model,
+            },
+            headers={"Cache-Control": "no-store"},
+        )
+
+    @app.get("/")
+    async def index() -> HTMLResponse:
+        return HTMLResponse(html, headers={"Cache-Control": "no-store"})
+
+    @app.get("/static/site.css")
+    async def stylesheet() -> Response:
+        return Response(
+            css,
+            media_type="text/css; charset=utf-8",
+            headers={"Cache-Control": "no-store"},
+        )
+
+    @app.get("/static/chat.js")
+    async def script() -> Response:
+        return Response(
+            js,
+            media_type="text/javascript; charset=utf-8",
+            headers={"Cache-Control": "no-store"},
+        )
+
+    @app.get("/api/sample-document")
+    async def sample_document() -> JSONResponse:
+        content = DEFAULT_SAMPLE_DOCUMENT
+        name = "sample-document.md"
+        if SAMPLE_DOCUMENT_PATH.is_file():
+            content = SAMPLE_DOCUMENT_PATH.read_text(encoding="utf-8")
+            name = SAMPLE_DOCUMENT_PATH.name
+        return JSONResponse(
+            {"name": name, "content": content},
+            headers={"Cache-Control": "no-store"},
+        )
+
+    @app.post("/invoke")
+    async def invoke(request: Request) -> JSONResponse:
+        if not media_type_is_json(request.headers.get("content-type", "")):
+            return error_response(415, "unsupported_media_type")
+        try:
+            raw_body = await read_limited_body(request, MAX_BODY_BYTES)
+        except BodyLimitError as exc:
+            return error_response(exc.status_code, exc.code)
+        try:
+            payload = json.loads(raw_body.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return error_response(400, "invalid_json")
+        if not isinstance(payload, dict):
+            return error_response(400, "invalid_payload")
+
+        prompt = str(payload.get("prompt") or payload.get("message") or "").strip()
+        raw_doc = payload.get("document")
+        if isinstance(raw_doc, str) and raw_doc.strip():
+            raw_doc = {
+                "name": str(payload.get("documentName") or "document.txt"),
+                "content": raw_doc,
+            }
+        if not prompt and raw_doc:
+            prompt = "Summarize this document, highlight key risks, and list recommended next steps."
+        if not prompt:
+            return error_response(400, "empty_message")
+
+        try:
+            messages = validate_messages(
+                {
+                    "messages": [{"role": "user", "content": prompt[:MAX_TOTAL_CHARS]}],
+                    **({"document": raw_doc} if raw_doc is not None else {}),
+                }
+            )
+        except ValueError as exc:
+            return error_response(400, str(exc))
+
+        try:
+            await asyncio.wait_for(semaphore.acquire(), timeout=0.05)
+        except TimeoutError:
+            return error_response(429, "sample_busy")
+
+        try:
+            chunks: list[str] = []
+            async for delta in service.stream_text(messages):
+                chunks.append(delta)
+            reply_text = "".join(chunks).strip()
+            return JSONResponse(
+                {
+                    "status": "ok",
+                    "response": reply_text,
+                    "gateway": resolved_config.gateway_host,
+                    "model": resolved_config.model,
+                    "document": (
+                        {"name": raw_doc.get("name", "document.txt"), "chars": len(raw_doc.get("content", ""))}
+                        if isinstance(raw_doc, dict)
+                        else None
+                    ),
+                },
+                headers={"Cache-Control": "no-store"},
+            )
+        except Exception as exc:
+            err_msg = str(exc).strip() or "The gateway request did not complete."
+            return JSONResponse(
+                {"status": "error", "error": "upstream_unavailable", "message": err_msg},
+                status_code=502,
+                headers={"Cache-Control": "no-store"},
+            )
+        finally:
+            semaphore.release()
+
+    @app.post("/api/chat/stream")
+    async def chat_stream(request: Request) -> Response:
+        origin_headers = request.headers.getlist("origin")
+        request_host = request.headers.get("host", "")
+        if len(origin_headers) != 1 or not resolved_config.allowed_origin(origin_headers[0], request_host):
+            return error_response(403, "same_origin_required")
+        if not media_type_is_json(request.headers.get("content-type", "")):
+            return error_response(415, "unsupported_media_type")
+
+        try:
+            raw_body = await read_limited_body(request, MAX_BODY_BYTES)
+        except BodyLimitError as exc:
+            return error_response(exc.status_code, exc.code)
+
+        try:
+            payload = json.loads(raw_body.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return error_response(400, "invalid_json")
+
+        try:
+            messages = validate_messages(payload)
+        except ValueError as exc:
+            return error_response(400, str(exc))
+
+        try:
+            await asyncio.wait_for(semaphore.acquire(), timeout=0.01)
+        except TimeoutError:
+            return error_response(429, "sample_busy")
+
+        async def event_stream() -> AsyncIterator[bytes]:
+            try:
+                async for delta in service.stream_text(messages):
+                    yield sse_frame("delta", {"text": delta})
+                yield sse_frame("done", {})
+            except Exception as exc:
+                err_msg = str(exc).strip() or "The gateway request did not complete."
+                yield sse_frame(
+                    "error",
+                    {
+                        "code": "upstream_unavailable",
+                        "message": err_msg,
+                    },
+                )
+            finally:
+                semaphore.release()
+
+        return StreamingResponse(
+            event_stream(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-store",
+                "X-Accel-Buffering": "no",
+            },
+        )
+
+    return app
+
+
+def build_csp(html: str) -> str:
+    style_hash = inline_hash(html, "style")
+    script_hash = inline_hash(html, "script")
+    script_sources = ["'self'"]
+    style_sources = ["'self'"]
+    if script_hash is not None:
+        script_sources.append(f"'{script_hash}'")
+    if style_hash is not None:
+        style_sources.append(f"'{style_hash}'")
+    return "; ".join(
+        [
+            "default-src 'none'",
+            f"script-src {' '.join(script_sources)}",
+            f"style-src {' '.join(style_sources)}",
+            "connect-src 'self'",
+            "img-src 'self' data:",
+            "font-src 'self'",
+            "base-uri 'none'",
+            "form-action 'none'",
+            "frame-ancestors 'none'",
+        ]
+    )
+
+
+def inline_hash(html: str, tag: str) -> str | None:
+    match = re.search(rf"<{tag}>(.*?)</{tag}>", html, flags=re.DOTALL)
+    if not match:
+        return None
+    digest = hashlib.sha256(match.group(1).encode("utf-8")).digest()
+    import base64
+
+    return f"sha256-{base64.b64encode(digest).decode('ascii')}"
+
+
+def security_headers(csp: str) -> dict[str, str]:
+    return {
+        "Content-Security-Policy": csp,
+        "Referrer-Policy": "no-referrer",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+    }
+
+
+def expired_response(path: str) -> Response:
+    if path.startswith("/api/"):
+        return error_response(410, "sample_expired")
+    return PlainTextResponse(
+        "This temporary sample deployment has expired.",
+        status_code=410,
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+def error_response(status_code: int, code: str) -> JSONResponse:
+    return JSONResponse(
+        {"error": code},
+        status_code=status_code,
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+def media_type_is_json(content_type: str) -> bool:
+    media_type = content_type.split(";", 1)[0].strip().lower()
+    return media_type == "application/json"
+
+
+async def read_limited_body(request: Request, limit: int) -> bytes:
+    header_value = request.headers.get("content-length")
+    if header_value is not None:
+        try:
+            declared = int(header_value)
+        except ValueError as exc:
+            raise BodyLimitError(400, "invalid_content_length") from exc
+        if declared < 0:
+            raise BodyLimitError(400, "invalid_content_length")
+        if declared > limit:
+            raise BodyLimitError(413, "payload_too_large")
+
+    chunks = bytearray()
+    async for chunk in request.stream():
+        chunks.extend(chunk)
+        if len(chunks) > limit:
+            raise BodyLimitError(413, "payload_too_large")
+    return bytes(chunks)
+
+
+def validate_document(raw_doc: Any) -> dict[str, str] | None:
+    if raw_doc is None:
+        return None
+    if not isinstance(raw_doc, dict) or not (set(raw_doc.keys()) <= {"name", "content"}):
+        raise ValueError("invalid_document")
+    content = raw_doc.get("content")
+    if not isinstance(content, str):
+        raise ValueError("invalid_document")
+    stripped_content = content.strip()
+    if not stripped_content:
+        raise ValueError("empty_document")
+    if len(stripped_content) > MAX_DOCUMENT_CHARS:
+        raise ValueError("document_too_long")
+    raw_name = raw_doc.get("name")
+    name = str(raw_name).strip() if isinstance(raw_name, str) and raw_name.strip() else "document.txt"
+    if len(name) > MAX_DOCUMENT_NAME_CHARS:
+        name = name[:MAX_DOCUMENT_NAME_CHARS]
+    return {"name": name, "content": stripped_content}
+
+
+def validate_messages(payload: Any) -> list[dict[str, str]]:
+    if not isinstance(payload, dict) or "messages" not in payload or not (set(payload.keys()) <= {"messages", "document"}):
+        raise ValueError("invalid_payload")
+    raw_messages = payload["messages"]
+    if not isinstance(raw_messages, list) or not (1 <= len(raw_messages) <= MAX_MESSAGES):
+        raise ValueError("invalid_messages")
+
+    document = validate_document(payload.get("document"))
+
+    normalized: list[dict[str, str]] = []
+    total_chars = 0
+    for item in raw_messages:
+        if not isinstance(item, dict) or set(item.keys()) != {"role", "content"}:
+            raise ValueError("invalid_message")
+        role = item["role"]
+        content = item["content"]
+        if role not in ALLOWED_ROLES or not isinstance(content, str):
+            raise ValueError("invalid_message")
+        stripped = content.strip()
+        if not stripped:
+            raise ValueError("empty_message")
+        total_chars += len(stripped)
+        if total_chars > MAX_TOTAL_CHARS:
+            raise ValueError("messages_too_long")
+        normalized.append({"role": role, "content": stripped})
+
+    if document is not None:
+        doc_block = (
+            f"Attached document ({document['name']}):\n"
+            f"---\n{document['content']}\n---\n\n"
+        )
+        for index in range(len(normalized) - 1, -1, -1):
+            if normalized[index]["role"] == "user":
+                normalized[index] = {
+                    "role": "user",
+                    "content": f"{doc_block}User request: {normalized[index]['content']}",
+                }
+                break
+    return normalized
+
+
+def sse_frame(event: str, data: dict[str, Any]) -> bytes:
+    encoded = json.dumps(data, separators=(",", ":"))
+    return f"event: {event}\ndata: {encoded}\n\n".encode("utf-8")

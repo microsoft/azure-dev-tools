@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "azure-app-platform",
+  "version": "0.5.6",
+  "description": "Azure App Platform inventories, traces, and operates multi-tier agentic applications centered on ACA Sandboxes.",
+  "extensions": {
+    "com.github.copilot": {
+      "logo": "assets/preview.png"
+    }
+  }
+}

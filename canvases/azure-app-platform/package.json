@@ -1,0 +1,11 @@
+{
+  "name": "azure-app-platform",
+  "version": "0.5.6",
+  "private": true,
+  "type": "module",
+  "main": "com.github.copilot/extensions/azure-app-platform/extension.mjs",
+  "engines": {
+    "node": ">=22"
+  },
+  "description": "Azure App Platform inventories, traces, and operates multi-tier agentic applications centered on ACA Sandboxes."
+}

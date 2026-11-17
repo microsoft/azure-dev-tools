@@ -55,6 +55,12 @@
       "version": "0.1.6",
       "description": "Azure Functions: create, edit, modernize, review, run, deploy, and monitor function apps, with optional AI help.",
       "source": "canvases/azure-functions"
+    },
+    {
+      "name": "azure-app-platform",
+      "version": "0.5.6",
+      "description": "Azure App Platform inventories, traces, and operates multi-tier agentic applications centered on ACA Sandboxes.",
+      "source": "canvases/azure-app-platform"
     }
   ]
 }
