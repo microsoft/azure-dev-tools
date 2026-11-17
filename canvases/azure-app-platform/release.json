@@ -1,0 +1,313 @@
+{
+  "schemaVersion": 2,
+  "format": "plugin",
+  "name": "azure-app-platform",
+  "version": "0.5.6",
+  "mutableDocumentation": true,
+  "legalNotices": [
+    "notices/primer-octicons-LICENSE.txt",
+    "notices/prism-LICENSE.txt"
+  ],
+  "plugin": {
+    "manifest": "plugin.json",
+    "extension": {
+      "name": "azure-app-platform",
+      "canvasId": "azure-app-platform",
+      "directory": "com.github.copilot/extensions/azure-app-platform",
+      "entry": "com.github.copilot/extensions/azure-app-platform/extension.mjs"
+    },
+    "preview": {
+      "file": "assets/preview.png"
+    },
+    "skills": [
+      {
+        "name": "azure-app-platform-canvas",
+        "directory": "skills/azure-app-platform-canvas",
+        "files": [
+          "SKILL.md"
+        ]
+      },
+      {
+        "name": "azure-app-platform-hosted-skill",
+        "directory": "skills/azure-app-platform-hosted-skill",
+        "files": [
+          "SKILL.md"
+        ]
+      },
+      {
+        "name": "azure-app-platform-agent-instructions",
+        "directory": "skills/azure-app-platform-agent-instructions",
+        "files": [
+          "SKILL.md"
+        ]
+      },
+      {
+        "name": "azure-app-platform-block-authoring",
+        "directory": "skills/azure-app-platform-block-authoring",
+        "files": [
+          "SKILL.md"
+        ]
+      },
+      {
+        "name": "azure-app-platform-fluent-theme",
+        "directory": "skills/azure-app-platform-fluent-theme",
+        "files": [
+          "SKILL.md"
+        ]
+      },
+      {
+        "name": "azure-app-platform-spot-illustration",
+        "directory": "skills/azure-app-platform-spot-illustration",
+        "files": [
+          "SKILL.md"
+        ]
+      }
+    ]
+  },
+  "files": [
+    "THIRD_PARTY_NOTICES.txt",
+    "assets/preview.png",
+    "com.github.copilot/extensions/azure-app-platform/app-recency.mjs",
+    "com.github.copilot/extensions/azure-app-platform/assets/.gitattributes",
+    "com.github.copilot/extensions/azure-app-platform/assets/app-platform-intro.mp4",
+    "com.github.copilot/extensions/azure-app-platform/assets/app-platform-symbol.png",
+    "com.github.copilot/extensions/azure-app-platform/assets/homepage-assemble-dark.svg",
+    "com.github.copilot/extensions/azure-app-platform/assets/homepage-assemble.svg",
+    "com.github.copilot/extensions/azure-app-platform/assets/homepage-create-dark.svg",
+    "com.github.copilot/extensions/azure-app-platform/assets/homepage-create.svg",
+    "com.github.copilot/extensions/azure-app-platform/assets/homepage-open-dark.svg",
+    "com.github.copilot/extensions/azure-app-platform/assets/homepage-open.svg",
+    "com.github.copilot/extensions/azure-app-platform/assets/open-app-empty-dark.svg",
+    "com.github.copilot/extensions/azure-app-platform/assets/open-app-empty-light.svg",
+    "com.github.copilot/extensions/azure-app-platform/assets/run-ready-spot.svg",
+    "com.github.copilot/extensions/azure-app-platform/assets/run-working-spot.svg",
+    "com.github.copilot/extensions/azure-app-platform/extension.mjs",
+    "com.github.copilot/extensions/azure-app-platform/interactive-app-map.mjs",
+    "com.github.copilot/extensions/azure-app-platform/local-ports.mjs",
+    "com.github.copilot/extensions/azure-app-platform/source-catalog.mjs",
+    "com.github.copilot/extensions/azure-app-platform/studio-ui.mjs",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/README.md.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/app.py.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/azure-app.yaml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/builder.yaml",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/config.py",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/config/domain.json.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/config/runtime.json",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/gateway.py",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/infra-ai-gateway/README.md",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/infra-ai-gateway/scripts/configure-ai-gateway.ps1",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/infra-ai-gateway/scripts/configure-ai-gateway.sh",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/pyproject.toml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/requirements.txt",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/samples/sample-document.md",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/scripts/dev-start.ps1.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/scripts/dev-start.sh.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/scripts/dev-stop.ps1.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/scripts/dev-stop.sh",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/scripts/load-ports.ps1",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/scripts/load-ports.sh",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/static/chat.js",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/static/index.html.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/static/site.css",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/tests/test_http.py",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-ai-gateway/tests/test_model.py",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-vite/.gitignore.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-vite/README.md.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-vite/azure-app.yaml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-vite/builder.yaml",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-vite/config/domain.json.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-vite/index.html.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-vite/package.json.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-vite/public/health",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-vite/scripts/dev-start.ps1.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-vite/scripts/dev-start.sh.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-vite/scripts/dev-stop.ps1.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-vite/scripts/dev-stop.sh",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-vite/src/main.ts.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-vite/static.test.mjs",
+    "com.github.copilot/extensions/azure-app-platform/templates/app-service-builder-vite/tsconfig.json",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/agent-instructions/agent.yaml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/agent-instructions/prompts/system.md.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/agent-instructions/runtime.json.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/connector/README.md",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/connector/connector.json.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/event-trigger/function_app.py.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/functions-base/.gitignore",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/functions-base/README.md",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/functions-base/host.json",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/functions-base/local.settings.json.example",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/functions-base/pyproject.toml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/functions-base/requirements.txt",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/http-trigger/function_app.py.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/operations/README.md",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/operations/sre-agent.yaml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/orchestration/.gitignore",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/orchestration/README.md",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/orchestration/function_app.py.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/orchestration/host.json",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/orchestration/pyproject.toml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/orchestration/requirements.txt",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/queue-trigger/function_app.py.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/sandbox/.dockerignore",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/sandbox/.gitignore",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/sandbox/Dockerfile",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/sandbox/README.md",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/sandbox/contract.json.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/sandbox/egress-policy.md.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/sandbox/egress-policy.yaml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/sandbox/main.py.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/sandbox/pyproject.toml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/timer-trigger/function_app.py.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/web/.gitignore",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/web/builder.yaml",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/web/index.html.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/build-blocks/web/package.json.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/.gitignore.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/README.md.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/azure-app.yaml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/config/domain.json.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/infra-ai-gateway/README.md",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/scripts/dev-start.ps1.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/scripts/dev-start.sh",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/scripts/dev-stop.ps1.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/scripts/dev-stop.sh",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/src/agent/agent.yaml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/src/agent/main.py.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/src/agent/prompts/system.md.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/src/agent/pyproject.toml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/src/skills/__SKILL__/agents.config.yaml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/src/skills/__SKILL__/function_app.py.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/src/skills/__SKILL__/host.json",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/src/skills/__SKILL__/local.settings.json.example",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/src/skills/__SKILL__/pyproject.toml",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/src/skills/__SKILL__/requirements.txt",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/src/skills/__SKILL__/tests/test_contract.py",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/src/web/package.json",
+    "com.github.copilot/extensions/azure-app-platform/templates/empty-starter-app/src/web/server.mjs.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/.gitignore.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/README.md.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/azure-app.yaml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/config/document-policy.json",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/config/domain.json.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/config/egress-allowlist.json.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/config/egress-policy.yaml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/config/runtime.json.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/docs/demos/loan-application/HOW-IT-WORKS.md",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/docs/demos/loan-application/README.md",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/examples/loan-application.txt",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/infra-ai-gateway/README.md",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/infra-ai-gateway/scripts/configure-ai-gateway.ps1",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/infra-ai-gateway/scripts/configure-ai-gateway.sh",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/scripts/dev-start.ps1.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/scripts/dev-start.sh",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/scripts/dev-stop.ps1.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/scripts/dev-stop.sh",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/src/agent/Dockerfile",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/src/agent/agent.yaml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/src/agent/main.py.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/src/agent/prompts/system.md.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/src/agent/pyproject.toml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/src/agent/tests/test_runtime.py",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/src/policy/enforcement.py",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/src/tools/document-validation/Dockerfile",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/src/tools/document-validation/contract.json",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/src/tools/document-validation/egress-policy.md.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/src/tools/document-validation/main.py.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/src/tools/document-validation/pyproject.toml.template",
+    "com.github.copilot/extensions/azure-app-platform/templates/sandbox-gateway-minimal/src/tools/document-validation/tests/test_main.py",
+    "com.github.copilot/extensions/azure-app-platform/templates/shared/dealer/scripts/dev-start.ps1",
+    "com.github.copilot/extensions/azure-app-platform/templates/shared/dealer/scripts/dev-start.sh",
+    "com.github.copilot/extensions/azure-app-platform/templates/shared/dealer/scripts/dev-stop.ps1",
+    "com.github.copilot/extensions/azure-app-platform/templates/shared/dealer/scripts/dev-stop.sh",
+    "com.github.copilot/extensions/azure-app-platform/templates/shared/dealer/src/agent/local_ports.py",
+    "com.github.copilot/extensions/azure-app-platform/templates/shared/load-ports.ps1",
+    "com.github.copilot/extensions/azure-app-platform/templates/shared/load-ports.sh",
+    "com.github.copilot/extensions/azure-app-platform/vendor/toolkit/LICENSE",
+    "com.github.copilot/extensions/azure-app-platform/vendor/toolkit/ui/base.css",
+    "com.github.copilot/extensions/azure-app-platform/vendor/toolkit/ui/browser/THIRD_PARTY_NOTICES.txt",
+    "com.github.copilot/extensions/azure-app-platform/vendor/toolkit/ui/browser/base.mjs",
+    "com.github.copilot/extensions/azure-app-platform/vendor/toolkit/ui/browser/react-runtime.mjs",
+    "com.github.copilot/extensions/azure-app-platform/vendor/toolkit/ui/hosts/github-app/design.md",
+    "com.github.copilot/extensions/azure-app-platform/vendor/toolkit/ui/hosts/github-app/theming.md",
+    "com.github.copilot/extensions/azure-app-platform/vendor/toolkit/ui/profiles/github-app.css",
+    "com.github.copilot/extensions/azure-app-platform/vendor/toolkit/ui/styles.css",
+    "com.github.copilot/extensions/azure-app-platform/vendor/toolkit/ui/visual-profiles.mjs",
+    "notices/primer-octicons-LICENSE.txt",
+    "notices/prism-LICENSE.txt",
+    "package.json",
+    "plugin.json",
+    "skills/azure-app-platform-agent-instructions/SKILL.md",
+    "skills/azure-app-platform-block-authoring/SKILL.md",
+    "skills/azure-app-platform-canvas/SKILL.md",
+    "skills/azure-app-platform-fluent-theme/SKILL.md",
+    "skills/azure-app-platform-hosted-skill/SKILL.md",
+    "skills/azure-app-platform-spot-illustration/SKILL.md"
+  ],
+  "status": "publication-controlled-by-external-approval",
+  "runtime": {
+    "node": ">=22",
+    "sdk": "@github/copilot-sdk/extension",
+    "azureCli": ">=2.61"
+  },
+  "build": {
+    "esbuild": "0.25.12",
+    "lockSha256": "92f88a2cc84d2c9276ae556b3b9b7fe9084a7106f1f84a612d76924c3dec6110",
+    "inputSha256": "3749687bdcda03b1191b43c13b2efb63268c7e3cbc615e2386f65435ee703227"
+  },
+  "dependencies": [],
+  "modules": [
+    {
+      "file": "com.github.copilot/extensions/azure-app-platform/app-recency.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-app-platform/extension.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-app-platform/interactive-app-map.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-app-platform/local-ports.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-app-platform/source-catalog.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-app-platform/studio-ui.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-app-platform/vendor/toolkit/ui/browser/base.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-app-platform/vendor/toolkit/ui/browser/react-runtime.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-app-platform/vendor/toolkit/ui/visual-profiles.mjs",
+      "platform": "browser"
+    }
+  ],
+  "assets": [
+    {
+      "file": "com.github.copilot/extensions/azure-app-platform/vendor/toolkit/ui/browser/base.mjs",
+      "route": "canvas-ui/base.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-app-platform/vendor/toolkit/ui/browser/react-runtime.mjs",
+      "route": "canvas-ui/react-runtime.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-app-platform/vendor/toolkit/ui/visual-profiles.mjs",
+      "route": "canvas-ui/visual-profiles.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    }
+  ]
+}
