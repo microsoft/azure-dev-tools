@@ -23,7 +23,7 @@
     {
       "name": "canvas-authoring",
       "description": "Create canvas apps with guided setup and reusable UI components from the Microsoft Canvas Toolkit. Includes a background extension used only for skill-usage telemetry.",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "source": "plugins/canvas-authoring"
     },
     {

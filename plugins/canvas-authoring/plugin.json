@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "canvas-authoring",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Create new Azure-related canvas apps with guided setup and reusable Microsoft Canvas Toolkit components, and editable SVG spot illustrations. Includes a background extension used only for skill-usage telemetry."
 }

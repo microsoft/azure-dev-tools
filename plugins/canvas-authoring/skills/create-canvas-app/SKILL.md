@@ -176,7 +176,7 @@ Do not add product telemetry by default. If the user requests it, follow
 [Product-usage telemetry](references/toolkit/README.md#product-usage-telemetry).
 
 For new SVG artwork, use
-[Create a spot illustration](../create-spot-illustration/SKILL.md).
+the `create-spot-illustration` skill.
 
 ## Final response contract
 
