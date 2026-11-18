@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Kusto Workbench</title>
+    <link rel="stylesheet" href="canvas-ui/styles.css">
+    <link rel="stylesheet" href="canvas-ui/base.css">
+    <link rel="stylesheet" href="canvas-ui/profiles/coreai-azure.css">
+    <link rel="stylesheet" href="canvas-ui/subscription-picker.css">
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="source-ui.js"></script>
+    <script type="module" src="navigation-ui.js"></script>
+    <script type="module" src="footer.js"></script>
+    <script type="module" src="chart-runtime.js"></script>
+    <script type="module" src="client.js"></script>
+</head>
+<body class="canvas-ui canvas-profile-coreai-azure primer-adapter pointer-on-hover" data-workbench-ui>
+<header class="canvas-header app-header">
+    <div id="workspace-navigation-trigger-host" class="workspace-navigation-trigger-host" hidden></div>
+    <div class="app-heading">
+        <img class="app-mark" src="assets/plugin-icon.svg" width="24" height="24" alt="" aria-hidden="true">
+        <div class="app-heading-copy"><h1>Kusto Workbench</h1></div>
+    </div>
+</header>
+<aside id="workspace-navigation" class="workbench-navigation" hidden></aside>
+<div id="source-popover" class="source-popover" popover="auto" role="dialog" aria-labelledby="source-popover-title"></div>
+<div id="schema-popover" class="source-popover schema-popover" popover="auto" role="dialog" aria-labelledby="schema-popover-title">
+    <header class="source-popover-header"><h2 id="schema-popover-title">Schema</h2><p id="schema-popover-status" class="source-popover-kind"></p></header>
+    <dl id="schema-popover-counts" class="schema-popover-counts"></dl>
+    <p class="schema-popover-hint">Suggestions appear as you type. Press Ctrl+Space to show them.</p>
+    <div class="source-popover-actions"><button id="schema-refresh" class="secondary-button" type="button"><span data-canvas-icon="refresh"></span>Refresh schema</button></div>
+</div>
+<main id="app-main">
+    <p id="fixture" class="workbench-message warning" hidden>Synthetic fixture - no Azure connection or live query.</p>
+    <section id="welcome-workspace" class="welcome-workspace" aria-labelledby="welcome-heading" hidden>
+        <header class="welcome-header">
+            <h2 id="welcome-heading">Get started</h2>
+            <p class="muted">Investigate telemetry with Copilot, or write KQL yourself.</p>
+        </header>
+        <div class="welcome-cards">
+            <section class="welcome-card welcome-ask" aria-labelledby="welcome-ask-title">
+                <span class="welcome-card-icon" data-welcome-symbol="search"></span>
+                <h3 id="welcome-ask-title" class="welcome-card-title">Ask a question</h3>
+                <p class="welcome-card-text">Ask in chat and Copilot runs the queries for you.</p>
+            </section>
+            <button id="welcome-query" class="welcome-card welcome-card-action" type="button">
+                <span class="welcome-card-icon" data-welcome-symbol="code"></span>
+                <span class="welcome-card-title">Write a query</span>
+                <span class="welcome-card-text">Open the Query Editor and run KQL yourself.</span>
+            </button>
+            <button id="welcome-sources" class="welcome-card welcome-card-action" type="button">
+                <span class="welcome-card-icon" data-welcome-symbol="database"></span>
+                <span id="welcome-sources-title" class="welcome-card-title">Data Sources</span>
+                <span id="welcome-sources-detail" class="welcome-card-text">Clusters and workspaces Copilot remembers.</span>
+            </button>
+        </div>
+    </section>
+    <section id="query-workspace" class="query-workspace" aria-labelledby="query-heading" hidden>
+        <div class="section-heading"><h2 id="query-heading">Query Editor</h2></div>
+        <p class="muted query-description">Write or paste KQL and run it. Ask the agent in chat for help writing or fixing a query.</p>
+        <div class="query-tabs-row">
+            <div id="query-tabs-scroll" class="query-tabs-scroll" aria-label="Query tabs">
+                <div class="query-tabs-strip">
+                    <div id="query-tabs" class="query-tabs" role="tablist" aria-label="Workbook queries"></div>
+                    <button id="add-query-tab" class="icon-button query-tab-add" type="button" aria-label="Add query tab" title="Add query tab">+</button>
+                </div>
+            </div>
+        </div>
+        <div id="query-panel" class="query-panel" role="tabpanel">
+        <section id="query-section" class="query-region" aria-label="Query editor" aria-busy="true">
+        <div id="query-source" class="query-source" hidden>
+            <span class="query-source-caption">Source</span>
+            <button id="query-source-chip" class="source-chip" type="button" aria-haspopup="dialog" aria-controls="source-popover" aria-expanded="false"></button>
+            <button id="schema-status" class="schema-status" type="button" aria-haspopup="dialog" aria-controls="schema-popover" aria-expanded="false" data-status="none"><span class="schema-status-dot" aria-hidden="true"></span><span id="schema-status-label">Schema</span></button>
+        </div>
+        <div class="editor-shell">
+            <div id="editor" aria-label="KQL editor"></div>
+            <button id="copy-kql" class="icon-button editor-copy" type="button" aria-label="Copy KQL" title="Copy KQL" disabled><span data-canvas-icon="copy"></span></button>
+        </div>
+        <span id="share-status" class="visually-hidden" role="status" aria-live="polite"></span>
+        <p id="draft-status" class="muted" role="status"></p>
+        <div id="draft-conflict" class="actions" hidden><button id="use-shared" class="secondary-button" type="button">Use shared query</button><button id="keep-draft" class="secondary-button" type="button">Keep my draft</button></div>
+        <div class="actions query-run-actions"><span id="operation" class="operation-message" role="status" aria-live="polite">Initializing...</span><span id="run-scope" class="run-scope" hidden></span><button id="format-kql" class="secondary-button" type="button" title="Format query (Shift+Alt+F)" aria-keyshortcuts="Shift+Alt+F">Format</button><button id="cancel" class="text-button" type="button" disabled hidden>Cancel query</button><button id="run" class="primary-button" type="button" title="Run (Ctrl+Enter or Shift+Enter)" aria-keyshortcuts="Control+Enter Meta+Enter Shift+Enter" disabled>Run query</button></div>
+        <p id="query-error" class="workbench-message error" role="alert" hidden></p>
+        <div id="query-run-error" class="query-run-error" role="alert" hidden>
+            <p id="query-run-error-message" class="query-run-error-message"></p>
+            <button id="query-run-error-location" class="text-button query-run-error-location" type="button" hidden></button>
+            <details id="query-run-error-details" class="query-run-error-details" hidden>
+                <summary>Details</summary>
+                <dl id="query-run-error-ids"></dl>
+                <button id="query-run-error-copy" class="text-button" type="button">Copy details</button>
+            </details>
+        </div>
+        </section>
+        <section id="results-section" class="results-region" aria-labelledby="results-heading" aria-busy="true" aria-describedby="result-provenance">
+        <div class="results-heading">
+            <h2 id="results-heading">Results</h2>
+            <div id="result-provenance" class="result-provenance" role="status" aria-live="polite" hidden>
+                <strong id="result-freshness" hidden></strong>
+                <span class="visually-hidden"><span id="result-shape"></span> <time id="result-time"></time></span>
+                <span id="result-truncation" hidden>Truncated</span>
+            </div>
+            <div class="results-export"><button id="save-csv" class="text-button" type="button" hidden>Save CSV</button><button id="save-json" class="text-button" type="button" hidden>Save JSON</button></div>
+            <span id="result-export-status" class="visually-hidden" role="status" aria-live="polite"></span>
+        </div>
+        <div id="empty" class="empty-state">
+            <span class="empty-mark" data-canvas-icon="resources"></span>
+            <h3>Results appear after a query</h3>
+            <p>Confirm a connection, review the KQL, then run the query to inspect rows or build a chart.</p>
+        </div>
+        <div id="result-panel" hidden>
+            <p id="result-count" class="visually-hidden"></p>
+            <div id="result-tabs" class="canvas-nav-tabs" role="tablist" aria-label="Result view">
+                <button id="table-tab" type="button" role="tab" aria-selected="true" aria-controls="table-panel" tabindex="0">Table</button>
+                <button id="chart-tab" type="button" role="tab" aria-selected="false" aria-controls="chart-panel" tabindex="-1">Chart</button>
+            </div>
+            <div id="table-panel" role="tabpanel" aria-labelledby="table-tab">
+                <div id="result-stat" class="result-stat" hidden>
+                    <p id="result-stat-label" class="result-stat-label"></p>
+                    <p id="result-stat-value" class="result-stat-value"></p>
+                </div>
+                <p id="result-truncation-notice" class="workbench-message warning result-truncation-notice" role="status" hidden></p>
+                <div id="result-grid-toolbar" class="investigation-table-toolbar" hidden></div>
+                <div id="result-table-scroll" class="table-scroll" tabindex="0" aria-label="Query result table. Use arrow keys to select cells, Shift to extend, Ctrl or Command+C to copy." aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Shift+ArrowDown Control+C Meta+C Control+A Meta+A Enter Escape"><table id="results"></table></div>
+                <p id="result-table-empty" class="table-empty" hidden>No rows match the current view.</p>
+                <details id="value-inspector" class="canvas-accordion-plain value-inspector" hidden>
+                    <summary><span data-canvas-icon="chevron-down"></span><span id="value-inspector-heading">Inspect value</span></summary>
+                    <div class="body canvas-code-block">
+                        <button id="copy-value" class="canvas-code-block-copy" type="button"><span data-canvas-icon="copy"></span>Copy value</button>
+                        <pre id="value-inspector-content"></pre>
+                    </div>
+                </details>
+                <p id="value-status" class="transient-status" role="status" aria-live="polite"></p>
+            </div>
+            <div id="chart-panel" role="tabpanel" aria-labelledby="chart-tab" hidden>
+                <form id="chart-form">
+                    <label>Type<select id="chart-type"><option value="none">No chart</option><option value="bar">Bar</option><option value="column">Column</option><option value="line">Line</option></select></label>
+                    <label>X column<select id="chart-x"></select></label>
+                    <label>Y column<select id="chart-y"></select></label>
+                    <label>Series (optional)<select id="chart-series"></select></label>
+                    <button id="apply-chart" class="secondary-button" type="submit" disabled>Apply chart</button>
+                </form>
+                <p id="chart-error" class="workbench-message error" role="status" aria-live="polite"></p>
+                <div id="chart-container" hidden><canvas id="chart" role="img" aria-label="Flint chart of query results"></canvas></div>
+            </div>
+        </div>
+        <p id="results-error" class="workbench-message error" role="alert" hidden></p>
+        </section>
+        </div>
+    </section>
+    <section id="sources-workspace" class="sources-workspace" aria-labelledby="sources-heading" hidden>
+        <div class="section-heading sources-heading">
+            <div>
+                <h2 id="sources-heading">Data Sources</h2>
+                <p id="sources-summary" class="muted sources-description">Copilot remembers the clusters and workspaces you've used and picks the best match for each new question, based on table names and past use. Saved only on this computer, shared by your Copilot sessions. No query results or credentials are stored.</p>
+                <p id="sources-file" class="sources-file muted" hidden>
+                    <span class="sources-file-text">Saved in <code id="sources-file-path"></code></span>
+                    <button id="sources-reveal" class="text-button" type="button">Show in folder</button>
+                    <button id="sources-copy-path" class="text-button" type="button">Copy path</button>
+                </p>
+            </div>
+            <button id="sources-add" class="primary-button" type="button">Add source</button>
+        </div>
+        <p id="sources-status" class="sources-status muted" role="status" aria-live="polite"></p>
+        <ul id="sources-list" class="sources-list" aria-labelledby="sources-heading"></ul>
+        <div id="sources-empty" class="empty-state compact-empty" hidden>
+            <h3>No saved sources yet</h3>
+            <p>Copilot remembers the clusters and workspaces you've used and picks the best match for each new question, based on table names and past use. Saved only on this computer, shared by your Copilot sessions. No query results or credentials are stored.</p>
+        </div>
+        <div class="sources-footer">
+            <button id="sources-clear" class="text-button sources-clear" type="button" hidden>Clear all saved sources</button>
+        </div>
+        <p id="sources-error" class="workbench-message error" role="alert" hidden></p>
+    </section>
+    <section id="investigation-workspace" class="investigation-workspace" aria-labelledby="investigations-heading" hidden>
+        <div id="investigation-shell" class="investigation-shell">
+            <h2 id="investigations-heading" class="visually-hidden">Investigations</h2>
+            <nav id="investigation-menu" class="investigation-menu" aria-label="Investigations">
+                <button id="investigation-new" class="icon-button investigation-new" type="button"
+                    aria-label="Start new investigation" aria-describedby="investigation-new-guidance">
+                    <span aria-hidden="true">+</span>
+                </button>
+                <button id="investigation-current" class="investigation-current" type="button"
+                    aria-current="page" aria-describedby="investigation-item-preview">
+                    <span id="investigation-current-status" class="investigation-menu-status" aria-hidden="true"></span>
+                    <span id="investigation-current-title" class="investigation-current-title">No investigation selected</span>
+                    <span id="investigation-current-lineage" class="investigation-lineage-mark" title="Follow-up investigation" aria-hidden="true" hidden>↳</span>
+                </button>
+                <div id="investigation-previous" class="investigation-previous" aria-label="Previous investigations"></div>
+                <button id="investigation-overflow-trigger" class="icon-button investigation-overflow-trigger" type="button"
+                    aria-label="More investigations" aria-haspopup="menu" aria-controls="investigation-overflow"
+                    aria-expanded="false">
+                    <span aria-hidden="true">•••</span>
+                </button>
+                <div id="investigation-menu-measure" class="investigation-menu-measure" aria-hidden="true"></div>
+            </nav>
+            <div id="investigation-new-guidance" class="investigation-menu-tooltip" popover="manual" role="tooltip">
+                Ask a new question in chat to start an investigation.
+            </div>
+            <div id="investigation-item-preview" class="investigation-item-preview" popover="manual" role="tooltip"></div>
+            <div id="investigation-overflow" class="investigation-overflow canvas-ui" popover="auto"
+                role="menu" aria-label="More investigations"></div>
+            <div id="investigation-empty" class="empty-state compact-empty">
+                <span class="empty-mark" data-canvas-icon="resources"></span>
+                <h3>Start with a question in chat</h3>
+                <p>Ask the agent to investigate telemetry. Labeled KQL activity and published results appear here.</p>
+            </div>
+            <article id="investigation-detail-pane" class="investigation-detail-pane" aria-live="polite">
+                <div id="investigation-detail" hidden>
+                    <header class="investigation-detail-header">
+                        <div>
+                            <div class="investigation-title-row">
+                                <div class="investigation-title-copy">
+                                    <span id="investigation-status" class="investigation-status-icon" role="img"></span>
+                                    <h2 id="investigation-title"></h2>
+                                    <p id="investigation-question" class="investigation-question"></p>
+                                </div>
+                            </div>
+                            <div class="investigation-meta-row">
+                                <div id="investigation-sources" class="investigation-sources" role="group" aria-label="Investigation sources"></div>
+                            </div>
+                            <p id="investigation-agent-step" class="investigation-agent-step" hidden></p>
+                            <p id="investigation-progress" class="investigation-progress" aria-live="polite" hidden></p>
+                            <div id="investigation-based-on" class="based-on" hidden></div>
+                        </div>
+                    </header>
+                    <div class="investigation-tabs-row">
+                        <div id="investigation-tabs" class="canvas-nav-tabs investigation-tabs" role="tablist" aria-label="Investigation views">
+                            <button id="investigation-results-tab" type="button" role="tab" data-investigation-tab="results"
+                                aria-controls="investigation-summary-section" aria-selected="false" tabindex="-1">Results</button>
+                            <button id="investigation-activity-tab" type="button" role="tab" data-investigation-tab="activity"
+                                aria-controls="investigation-activity-section" aria-selected="true" tabindex="0">Query activity</button>
+                        </div>
+                    </div>
+                    <section id="investigation-summary-section" class="investigation-section investigation-panel" role="tabpanel"
+                        aria-labelledby="investigation-results-tab" hidden>
+                        <h3 id="investigation-results-heading" class="evidence-eyebrow">Summary</h3>
+                        <div id="investigation-summary" class="investigation-summary"></div>
+                        <div id="investigation-results-empty" class="workbench-message info" hidden>
+                            No evidence published yet. The agent publishes completed queries here as it confirms them.
+                        </div>
+                        <div id="investigation-results" class="investigation-results"></div>
+                    </section>
+                    <section id="investigation-activity-section" class="investigation-section investigation-panel investigation-activity-section"
+                        role="tabpanel" aria-labelledby="investigation-activity-tab">
+                        <div id="investigation-activity-summary" class="muted"></div>
+                        <div id="investigation-activity"></div>
+                    </section>
+                    <p id="investigation-error" class="workbench-message error" role="alert" hidden></p>
+                    <p id="investigation-announcer" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
+                </div>
+            </article>
+        </div>
+    </section>
+</main>
+<div id="source-sheet" class="source-sheet" data-state="open">
+    <div class="source-sheet-scrim" data-source-sheet-dismiss aria-hidden="true"></div>
+    <section id="connection-section" class="source-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="connection-heading" aria-describedby="connection-heading-copy" aria-busy="true">
+        <header class="source-sheet-header">
+            <div class="source-sheet-title">
+                <h2 id="connection-heading" tabindex="-1">Choose a data source</h2>
+                <p id="connection-heading-copy" class="muted">Run read-only KQL against Azure Data Explorer or Log Analytics.</p>
+            </div>
+            <button id="disconnect" class="text-button source-sheet-disconnect" type="button" hidden disabled>Disconnect</button>
+            <button id="source-sheet-close" class="icon-button source-sheet-close" type="button" aria-label="Close data source picker" title="Close" hidden>×</button>
+        </header>
+        <div id="connection-wait-banner" class="primer-banner info connection-wait-banner" role="status" aria-live="polite" hidden>
+            <strong>Copilot is waiting for you to choose a data source</strong>
+            <span id="connection-wait-message"></span>
+        </div>
+        <div id="connection-resolving" class="connection-resolving" role="status" aria-live="polite" hidden>
+            <span class="connection-resolving-indicator" aria-hidden="true"></span>
+            <div>
+                <strong>Checking your signed-in Azure tenants</strong>
+                <p id="connection-resolving-target"></p>
+            </div>
+        </div>
+        <p id="profile-loading" class="source-sheet-status" role="status" aria-live="polite">Loading Azure account...</p>
+        <div id="profile-recovery" class="workbench-message error source-profile-recovery" role="alert" hidden>
+            <p id="profile-message"></p>
+            <button id="profile-retry" class="secondary-button" type="button" disabled>Retry</button>
+        </div>
+        <div id="source-browser" class="source-browser">
+            <div class="source-search">
+                <span class="source-search-icon" data-canvas-icon="search" aria-hidden="true"></span>
+                <input id="source-search" type="search" autocomplete="off" spellcheck="false" maxlength="4096"
+                    aria-label="Search or paste a cluster URL, resource ID, or workspace ID" aria-controls="source-results" aria-describedby="source-search-hint"
+                    placeholder="Search, or paste a URL or ID">
+            </div>
+            <p id="source-search-hint" class="source-search-hint" role="status" aria-live="polite"></p>
+            <div id="source-results" class="source-results"></div>
+        </div>
+        <p id="connection-error" class="workbench-message error" role="alert" hidden></p>
+        <div class="source-sheet-footer">
+            <label class="source-account" title="Account and tenant">
+                <span class="visually-hidden">Account and tenant</span>
+                <select id="tenant" disabled><option value="">Loading Azure account...</option></select>
+            </label>
+            <p id="source-consent" class="source-consent">Using a source lets this session read it.</p>
+        </div>
+    </section>
+</div>
+<div id="workbench-footer"></div>
+<dialog id="tab-dialog" class="tab-dialog" aria-labelledby="tab-dialog-title" aria-describedby="tab-dialog-message">
+    <form method="dialog">
+        <header class="tab-dialog-header">
+            <h2 id="tab-dialog-title">Query tab</h2>
+            <button id="tab-dialog-close" class="icon-button" type="button" aria-label="Close dialog">×</button>
+        </header>
+        <div class="tab-dialog-body">
+            <p id="tab-dialog-message" class="muted"></p>
+            <label id="tab-name-label">Name<input id="tab-name" type="text" maxlength="80" autocomplete="off"></label>
+            <p id="tab-dialog-error" class="workbench-message error" role="alert" hidden></p>
+        </div>
+        <div class="tab-dialog-footer">
+            <button id="tab-dialog-cancel" class="secondary-button" type="button">Cancel</button>
+            <button id="tab-dialog-confirm" class="primary-button" type="submit">Continue</button>
+        </div>
+    </form>
+</dialog>
+</body>
+</html>

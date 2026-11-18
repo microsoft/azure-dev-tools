@@ -1,0 +1,669 @@
+{
+  "schemaVersion": 2,
+  "format": "plugin",
+  "name": "kusto-workbench",
+  "version": "0.1.0",
+  "mutableDocumentation": true,
+  "publicationRepository": "microsoft/azure-dev-tools",
+  "plugin": {
+    "manifest": "plugin.json",
+    "extension": {
+      "name": "kusto-workbench",
+      "canvasId": "kusto-workbench",
+      "directory": "com.github.copilot/extensions/kusto-workbench",
+      "entry": "com.github.copilot/extensions/kusto-workbench/extension.mjs"
+    },
+    "preview": {
+      "file": "assets/preview.png"
+    },
+    "skills": [
+      {
+        "name": "kusto-workbench",
+        "directory": "skills/kusto-workbench",
+        "files": [
+          "SKILL.md"
+        ]
+      }
+    ]
+  },
+  "files": [
+    "THIRD_PARTY_NOTICES.txt",
+    "assets/preview.png",
+    "com.github.copilot/extensions/kusto-workbench/assets/plugin-icon.svg",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/icons/Subscription.svg",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/azure-subscription-picker.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/base.css",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/browser/THIRD_PARTY_NOTICES.txt",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/browser/base.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/browser/fluent.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/browser/react-runtime.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/commands-log.css",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/commands-log.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/component-helpers.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/components.css",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/components.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/content.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/fluent.css",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/forms.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/hosts/github-app/design.md",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/hosts/github-app/theming.md",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/hosts/index.md",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/icons.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/locations.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/navigation.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/profiles/coreai-azure.css",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/profiles/github-app.css",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/resource-picker.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/styles.css",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/subscription-picker.css",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/subscription-picker.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/telemetry.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/theme.mjs",
+    "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/visual-profiles.mjs",
+    "com.github.copilot/extensions/kusto-workbench/canvas.mjs",
+    "com.github.copilot/extensions/kusto-workbench/extension.mjs",
+    "com.github.copilot/extensions/kusto-workbench/server.mjs",
+    "com.github.copilot/extensions/kusto-workbench/storage.mjs",
+    "com.github.copilot/extensions/kusto-workbench/ui/chart-runtime.js",
+    "com.github.copilot/extensions/kusto-workbench/ui/client.js",
+    "com.github.copilot/extensions/kusto-workbench/ui/comparison-format.js",
+    "com.github.copilot/extensions/kusto-workbench/ui/footer.js",
+    "com.github.copilot/extensions/kusto-workbench/ui/index.html",
+    "com.github.copilot/extensions/kusto-workbench/ui/investigation-menu.js",
+    "com.github.copilot/extensions/kusto-workbench/ui/navigation-ui.js",
+    "com.github.copilot/extensions/kusto-workbench/ui/source-ui.js",
+    "com.github.copilot/extensions/kusto-workbench/ui/styles.css",
+    "com.github.copilot/extensions/kusto-workbench/workbench.mjs",
+    "package.json",
+    "plugin.json",
+    "skills/kusto-workbench/SKILL.md"
+  ],
+  "status": "publication-controlled-by-external-approval",
+  "runtime": {
+    "node": ">=22",
+    "sdk": "@github/copilot-sdk/extension",
+    "azureCli": ">=2.61"
+  },
+  "build": {
+    "esbuild": "0.25.12",
+    "lockSha256": "92f88a2cc84d2c9276ae556b3b9b7fe9084a7106f1f84a612d76924c3dec6110",
+    "inputSha256": "907fdb838cd39aaa26755e12031fe62dec554c2deda25ad8be06fca226e02943"
+  },
+  "dependencies": [
+    {
+      "name": "@azure/abort-controller",
+      "version": "2.2.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-client",
+      "version": "1.11.1",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-process",
+      "version": "1.0.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-rest-pipeline",
+      "version": "1.25.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-tracing",
+      "version": "1.4.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/core-util",
+      "version": "1.14.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/identity",
+      "version": "4.14.1",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/logger",
+      "version": "1.4.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/msal-common",
+      "version": "16.16.1",
+      "license": "MIT"
+    },
+    {
+      "name": "@azure/msal-node",
+      "version": "7.2.1",
+      "license": "MIT"
+    },
+    {
+      "name": "@cloud-foundation/kusto-workbench-core",
+      "version": "0.1.0",
+      "license": null
+    },
+    {
+      "name": "@cloud-foundation/studio-runtime",
+      "version": "0.1.0",
+      "license": null
+    },
+    {
+      "name": "@codemirror/autocomplete",
+      "version": "6.20.3",
+      "license": "MIT"
+    },
+    {
+      "name": "@codemirror/commands",
+      "version": "6.11.1",
+      "license": "MIT"
+    },
+    {
+      "name": "@codemirror/language",
+      "version": "6.12.4",
+      "license": "MIT"
+    },
+    {
+      "name": "@codemirror/lint",
+      "version": "6.9.7",
+      "license": "MIT"
+    },
+    {
+      "name": "@codemirror/state",
+      "version": "6.7.6",
+      "license": "MIT"
+    },
+    {
+      "name": "@codemirror/view",
+      "version": "6.43.13",
+      "license": "MIT"
+    },
+    {
+      "name": "@kurkle/color",
+      "version": "0.3.4",
+      "license": "MIT"
+    },
+    {
+      "name": "@lezer/common",
+      "version": "1.5.5",
+      "license": "MIT"
+    },
+    {
+      "name": "@lezer/highlight",
+      "version": "1.2.5",
+      "license": "MIT"
+    },
+    {
+      "name": "@marijn/find-cluster-break",
+      "version": "1.0.4",
+      "license": "MIT"
+    },
+    {
+      "name": "@microsoft/canvas-toolkit",
+      "version": "0.1.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@typespec/ts-http-runtime",
+      "version": "0.3.9",
+      "license": "MIT"
+    },
+    {
+      "name": "agent-base",
+      "version": "7.1.4",
+      "license": "MIT"
+    },
+    {
+      "name": "buffer-equal-constant-time",
+      "version": "1.0.1",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "chart.js",
+      "version": "4.5.1",
+      "license": "MIT"
+    },
+    {
+      "name": "crelt",
+      "version": "1.0.7",
+      "license": "MIT"
+    },
+    {
+      "name": "debug",
+      "version": "4.4.3",
+      "license": "MIT"
+    },
+    {
+      "name": "ecdsa-sig-formatter",
+      "version": "1.0.11",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "flint-chart",
+      "version": "0.5.1",
+      "license": "MIT"
+    },
+    {
+      "name": "has-flag",
+      "version": "4.0.0",
+      "license": "MIT"
+    },
+    {
+      "name": "http-proxy-agent",
+      "version": "7.0.2",
+      "license": "MIT"
+    },
+    {
+      "name": "https-proxy-agent",
+      "version": "7.0.6",
+      "license": "MIT"
+    },
+    {
+      "name": "jsonwebtoken",
+      "version": "9.0.3",
+      "license": "MIT"
+    },
+    {
+      "name": "jwa",
+      "version": "2.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "jws",
+      "version": "4.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.includes",
+      "version": "4.3.0",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.isboolean",
+      "version": "3.0.3",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.isinteger",
+      "version": "4.0.4",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.isnumber",
+      "version": "3.0.3",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.isplainobject",
+      "version": "4.0.6",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.isstring",
+      "version": "4.0.1",
+      "license": "MIT"
+    },
+    {
+      "name": "lodash.once",
+      "version": "4.1.1",
+      "license": "MIT"
+    },
+    {
+      "name": "ms",
+      "version": "2.1.3",
+      "license": "MIT"
+    },
+    {
+      "name": "safe-buffer",
+      "version": "5.2.1",
+      "license": "MIT"
+    },
+    {
+      "name": "semver",
+      "version": "7.8.5",
+      "license": "ISC"
+    },
+    {
+      "name": "style-mod",
+      "version": "4.1.4",
+      "license": "MIT"
+    },
+    {
+      "name": "supports-color",
+      "version": "7.2.0",
+      "license": "MIT"
+    },
+    {
+      "name": "w3c-keyname",
+      "version": "2.2.8",
+      "license": "MIT"
+    }
+  ],
+  "modules": [
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/azure-subscription-picker.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/browser/base.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/browser/fluent.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/browser/react-runtime.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/commands-log.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/component-helpers.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/components.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/content.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/forms.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/icons.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/locations.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/navigation.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/resource-picker.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/subscription-picker.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/telemetry.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/theme.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/visual-profiles.mjs",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/canvas.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/extension.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/server.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/storage.mjs",
+      "platform": "node"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/ui/chart-runtime.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/ui/client.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/ui/comparison-format.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/ui/footer.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/ui/investigation-menu.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/ui/navigation-ui.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/ui/source-ui.js",
+      "platform": "browser"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/workbench.mjs",
+      "platform": "node"
+    }
+  ],
+  "assets": [
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/plugin-icon.svg",
+      "route": "assets/plugin-icon.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/icons/Subscription.svg",
+      "route": "icons/Subscription.svg",
+      "mime": "image/svg+xml"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/azure-subscription-picker.mjs",
+      "route": "canvas-ui/azure-subscription-picker.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/base.css",
+      "route": "canvas-ui/base.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/browser/base.mjs",
+      "route": "canvas-ui/base.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/browser/fluent.mjs",
+      "route": "canvas-ui/fluent.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/browser/react-runtime.mjs",
+      "route": "canvas-ui/react-runtime.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/browser/THIRD_PARTY_NOTICES.txt",
+      "route": "canvas-ui/THIRD_PARTY_NOTICES.txt",
+      "mime": "text/plain; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/commands-log.css",
+      "route": "canvas-ui/commands-log.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/commands-log.mjs",
+      "route": "canvas-ui/commands-log.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/component-helpers.mjs",
+      "route": "canvas-ui/component-helpers.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/components.css",
+      "route": "canvas-ui/components.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/components.mjs",
+      "route": "canvas-ui/components.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/content.mjs",
+      "route": "canvas-ui/content.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/fluent.css",
+      "route": "canvas-ui/fluent.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/forms.mjs",
+      "route": "canvas-ui/forms.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/hosts/github-app/design.md",
+      "route": "canvas-ui/hosts/github-app/design.md",
+      "mime": "text/markdown; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/hosts/github-app/theming.md",
+      "route": "canvas-ui/hosts/github-app/theming.md",
+      "mime": "text/markdown; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/hosts/index.md",
+      "route": "canvas-ui/hosts/index.md",
+      "mime": "text/markdown; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/icons.mjs",
+      "route": "canvas-ui/icons.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/locations.mjs",
+      "route": "canvas-ui/locations.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/navigation.mjs",
+      "route": "canvas-ui/navigation.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/profiles/coreai-azure.css",
+      "route": "canvas-ui/profiles/coreai-azure.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/profiles/github-app.css",
+      "route": "canvas-ui/profiles/github-app.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/resource-picker.mjs",
+      "route": "canvas-ui/resource-picker.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/styles.css",
+      "route": "canvas-ui/styles.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/subscription-picker.css",
+      "route": "canvas-ui/subscription-picker.css",
+      "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/subscription-picker.mjs",
+      "route": "canvas-ui/subscription-picker.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/telemetry.mjs",
+      "route": "canvas-ui/telemetry.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/theme.mjs",
+      "route": "canvas-ui/theme.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/assets/toolkit/ui/visual-profiles.mjs",
+      "route": "canvas-ui/visual-profiles.mjs",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/ui/chart-runtime.js",
+      "route": "chart-runtime.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/ui/client.js",
+      "route": "client.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/ui/comparison-format.js",
+      "route": "comparison-format.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/ui/footer.js",
+      "route": "footer.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/ui/index.html",
+      "route": "",
+      "mime": "text/html; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/ui/investigation-menu.js",
+      "route": "investigation-menu.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/ui/navigation-ui.js",
+      "route": "navigation-ui.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/ui/source-ui.js",
+      "route": "source-ui.js",
+      "mime": "text/javascript; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/kusto-workbench/ui/styles.css",
+      "route": "styles.css",
+      "mime": "text/css; charset=utf-8"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "kusto-workbench",
+  "version": "0.1.0",
+  "description": "Investigate usage, trends, errors, counts, and other telemetry with bounded read-only Azure Data Explorer (Kusto) or Log Analytics queries.",
+  "extensions": {
+    "com.github.copilot": {
+      "logo": "assets/preview.png"
+    }
+  }
+}
