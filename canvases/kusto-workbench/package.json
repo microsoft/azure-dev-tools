@@ -1,0 +1,11 @@
+{
+  "name": "kusto-workbench",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "com.github.copilot/extensions/kusto-workbench/extension.mjs",
+  "engines": {
+    "node": ">=22"
+  },
+  "description": "Investigate usage, trends, errors, counts, and other telemetry with bounded read-only Azure Data Explorer (Kusto) or Log Analytics queries."
+}

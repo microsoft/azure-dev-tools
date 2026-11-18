@@ -61,6 +61,12 @@
       "version": "0.5.6",
       "description": "Azure App Platform inventories, traces, and operates multi-tier agentic applications centered on ACA Sandboxes.",
       "source": "canvases/azure-app-platform"
+    },
+    {
+      "name": "kusto-workbench",
+      "version": "0.1.0",
+      "description": "Investigate usage, trends, errors, counts, and other telemetry with bounded read-only Azure Data Explorer (Kusto) or Log Analytics queries.",
+      "source": "canvases/kusto-workbench"
     }
   ]
 }
