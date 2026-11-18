@@ -51,9 +51,9 @@ They do not require access to a source repository.
 
 | Entry point | Exports or content |
 | --- | --- |
-| `@microsoft/canvas-toolkit/build` | Typed `prepareCanvasUiAssets(outDir)`; copies shared UI assets and supplies bundler paths (Node.js, build time only) |
+| `@microsoft/canvas-toolkit/build` | Typed `prepareCanvasUiAssets(outDir)` and `prepareAzureIconAssets(outDir)`; copy shared UI assets and Azure icon SVGs and supply bundler paths (Node.js, build time only) |
 | `@microsoft/canvas-toolkit/server` | `startCanvasServer`; loopback HTTP transport with a secret path prefix, Host/Origin checks, CSP, bounded JSON, SSE and an asset allowlist |
-| `@microsoft/canvas-toolkit/actions` | `defineActions`, `validate`, `InputError`, and JSON-Schema builders (`str`, `int`, `bool`, `num`, `enum_`, `constant`, `arr`, `obj`, `oneOf`, `empty`, `guid`); the shared input-validation gate |
+| `@microsoft/canvas-toolkit/actions` | `defineActions`, `validate`, `InputError`, and JSON-Schema builders (`str`, `int`, `bool`, `num`, `enum_`, `constant`, `arr`, `obj`, `oneOf`, `empty`, `guid`, `armId`); the shared input-validation gate. `str` takes `flags` or `ignoreCase` for case-insensitive patterns, and `armId({ provider, type })` validates ARM resource IDs in any segment casing |
 | `@microsoft/canvas-toolkit/state` | Optional `createViewStore`; a tiny versioned, observable view-model store |
 | `@microsoft/canvas-toolkit/session` | `createSessionBridge`; the safe UI→agent bridge (named server-built prompts, no raw prompt text from the iframe) |
 | `@microsoft/canvas-toolkit/auth` | `createAzureAuthSession`, `AuthError`; session-based CLI or explicit `TokenCredential` authentication |
@@ -1222,6 +1222,41 @@ The controller exposes `trigger`, `dialog`, `status`, `setState`, `open`, `close
 options, but owns `singleGroup`, `onRefresh`, and Azure validation itself.
 It never receives credentials, signs in, or calls Azure directly.
 
+#### Profile refresh and the signed-out state
+
+Do not add a "Reload profile" or "Load profile" button. Users do not know what
+"profile" means. Instead:
+
+- Load the CLI profile automatically when the panel opens. It reads only local
+  metadata.
+- Set `refreshOnFocus: true` (or `{ debounceMs }`, default 500) so the picker
+  calls `transport()` again when the window gets focus or the page becomes
+  visible. This picks up an `az login` or `az account` change in a terminal.
+  The re-read is debounced and is skipped while the picker is loading, open,
+  refresh-disabled or already refreshing. Failures go to the picker status.
+  `destroy()` removes the listeners. Pass `window` to use a different event
+  target than `document.defaultView`.
+- The dialog's own Refresh subscriptions action stays available.
+- Show the active account as a footer item, for example `Azure CLI: <account>`.
+
+When the profile cannot load (not signed in, or the CLI is missing), replace the
+content with a `Blankslate` titled "Sign in to Azure". Give the command in a
+`CodeBlock` with a Copy action, an install hint and a primary "Check again"
+button that runs the profile load again:
+
+```js
+h(Blankslate, { title: "Sign in to Azure",
+    action: h(Button, { appearance: "primary", onClick: checkAgain }, "Check again") },
+    h("p", null, "This canvas uses your Azure CLI sign-in. Run this command in a terminal, then check again."),
+    h(CodeBlock, { label: "Sign-in command", language: "Terminal",
+        actions: h(Button, { appearance: "subtle", size: "small", onClick: () => navigator.clipboard?.writeText("az login") }, "Copy") },
+        "az login"),
+    h("p", null, "Azure CLI not installed? See aka.ms/installazurecli."));
+```
+
+Keep the profile load free of side effects: when a re-read still contains the
+bound subscription, keep the scope and results.
+
 ## Commands log
 
 A command log records the real operations a canvas runs on the user's behalf
@@ -1266,6 +1301,18 @@ to read, not for the iframe to navigate to. Render the key as a relative image:
 ```html
 <img src="./icons/FunctionApp.svg" alt="" aria-hidden="true">
 ```
+
+A bundled provider resolves these file URLs next to its own output file, as
+`./icons/<Key>.svg`. Copy the SVGs there in the build script, or the routes
+fail at runtime:
+
+```js
+import { prepareAzureIconAssets } from "@microsoft/canvas-toolkit/build";
+
+await prepareAzureIconAssets("dist"); // writes dist/icons/*.svg
+```
+
+Emit the provider that imports `azureIconAssets` at the `dist` root.
 
 `iconForType(type, kind)` is case-insensitive. It distinguishes Function Apps,
 Logic Apps, Web Apps, Cosmos DB variants, and Foundry workspaces using `kind`

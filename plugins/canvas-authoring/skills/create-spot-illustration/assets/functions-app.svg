@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="440" viewBox="0 0 480 440" fill="none">
+  <title>Functions App</title>
+  <desc>A rounded application window with code brackets, a cream lightning bolt, and a connected function node.</desc>
+  <circle cx="105" cy="85" r="20" fill="#5C8DF8"/>
+  <circle cx="371" cy="117" r="12" fill="#FFE4B4" stroke="#294482" stroke-width="1.4"/>
+  <rect x="79" y="115" width="274" height="254" rx="39" fill="#5C8DF8"/>
+  <rect x="98" y="91" width="274" height="254" rx="39" fill="#F5F5F5"/>
+  <path d="M137 91H333C354.539 91 372 108.461 372 130V143H98V130C98 108.461 115.461 91 137 91Z" fill="#CEDEFF"/>
+  <rect x="98" y="91" width="274" height="254" rx="39" stroke="#294482" stroke-width="1.4"/>
+  <path d="M98 143H372" stroke="#294482" stroke-width="1.4"/>
+  <circle cx="124" cy="117" r="5" fill="#5C8DF8"/>
+  <circle cx="141" cy="117" r="5" fill="#FFE4B4" stroke="#294482" stroke-width="1.2"/>
+  <circle cx="158" cy="117" r="5" fill="#F5F5F5" stroke="#294482" stroke-width="1.2"/>
+  <rect x="123" y="169" width="224" height="149" rx="28" fill="#CEDEFF"/>
+  <path d="M164 213L141 243L164 273M306 213L329 243L306 273" stroke="#294482" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M237 175H275L246 224H275L215 307L228 252H195L237 175Z" fill="#FFE4B4" stroke="#294482" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M304 292V317C304 325.837 311.163 333 320 333H346" stroke="#294482" stroke-width="5" stroke-linecap="round"/>
+  <rect x="321" y="307" width="58" height="58" rx="19" fill="#5C8DF8" stroke="#294482" stroke-width="1.4"/>
+  <circle cx="350" cy="336" r="11" fill="#FFE4B4"/>
+  <rect x="57" y="230" width="35" height="35" rx="12" fill="#CEDEFF"/>
+</svg>

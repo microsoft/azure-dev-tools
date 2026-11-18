@@ -2,11 +2,10 @@ import { defineActions, empty, enum_, guid, InputError, obj } from "@microsoft/c
 import { AuthError, createAzureAuthSession } from "@microsoft/canvas-toolkit/auth";
 import { createViewStore } from "@microsoft/canvas-toolkit/state";
 import { readResourceGroups } from "./resource-groups.mjs";
-import { createFixture } from "./fixture.mjs";
 
 export const contracts = {
     get_state: { input: empty(), description: "Read this panel's scope, status and bounded resource groups without Azure I/O." },
-    reload_profile: { input: empty(), description: "Explicitly load profile metadata; clear old scope and results. No resource query or login." },
+    reload_profile: { input: empty(), description: "Load or re-read Azure CLI profile metadata and return the signed-in accounts and subscriptions. The panel also runs it on open and on focus; a call during a running load returns that load's result. Keeps a still-listed subscription and its results; otherwise clears them. No resource query or login." },
     select_subscription: {
         input: obj({ subscriptionId: guid(), tenantId: guid(), cloud: enum_("AzureCloud", "AzureUSGovernment", "AzureChinaCloud") },
             { required: ["subscriptionId", "tenantId", "cloud"] }),
@@ -22,19 +21,17 @@ function publicError(error) {
     return new AuthError("operation-failed", "The operation failed unexpectedly. Inspect local diagnostics before retrying.");
 }
 
-export function createDomain({ mode = "azure", fixture, auth: suppliedAuth, httpClient: suppliedHttp } = {}) {
-    if (!["fixture", "azure"].includes(mode)) throw new InputError("Unknown source mode.");
-    const synthetic = mode === "fixture" ? fixture ?? createFixture() : null;
-    const auth = suppliedAuth ?? synthetic?.auth ?? createAzureAuthSession();
-    const httpClient = suppliedHttp ?? synthetic?.httpClient;
+export function createDomain({ auth = createAzureAuthSession(), httpClient } = {}) {
     const store = createViewStore({ initial: {
-        mode, status: "not-loaded", profile: "uninitialized", accounts: [], scope: null, rows: [], error: null,
+        status: "not-loaded", profile: "uninitialized", accounts: [], scope: null, rows: [], error: null,
     } });
     let context;
+    let selection;
     let active;
     let generation = 0;
     let disposed = false;
     let profileBusy = false;
+    let profileLoad;
 
     function invalidate() {
         generation++;
@@ -44,31 +41,55 @@ export function createDomain({ mode = "azure", fixture, auth: suppliedAuth, http
     function clearScope(state) {
         invalidate();
         context = undefined;
+        selection = undefined;
         if (!disposed) store.patch({
             profile: state.status, accounts: state.accounts, scope: null, rows: [],
             status: state.error ? "error" : "select-subscription", error: state.error,
         });
     }
-    const unsubscribe = auth.subscribe(({ state }) => clearScope(state));
+    // A profile re-read retires old credentials. Re-bind the selected subscription when it is still listed.
+    function reconcile(state) {
+        if (!selection || state.status !== "connected") return clearScope(state);
+        invalidate();
+        try {
+            context = auth.bindSubscription(selection);
+            const scope = auth.resolveScope({ ...selection, subscriptionIds: [selection.subscriptionId] });
+            const kept = store.snapshot().model;
+            const complete = kept.status === "complete";
+            if (!disposed) store.patch({ profile: state.status, accounts: state.accounts, scope, error: null,
+                rows: complete ? kept.rows : [], status: complete ? "complete" : "ready-to-read" });
+        } catch {
+            clearScope(state);
+        }
+    }
+    // reload_profile reconciles itself; this handles changes that it did not start.
+    const unsubscribe = auth.subscribe(({ state }) => { if (!profileBusy) reconcile(state); });
+    async function loadProfile() {
+        profileBusy = true;
+        invalidate();
+        if (!selection) store.patch({ status: "loading-profile", error: null });
+        try {
+            await auth.reloadProfile();
+            if (disposed) throw new AuthError("disposed", "This panel has closed.");
+            reconcile(auth.getState());
+            return store.snapshot();
+        } catch (error) {
+            const safe = publicError(error);
+            if (!disposed) {
+                clearScope(auth.getState());
+                store.patch({ status: "error", error: { code: safe.code, message: safe.message } });
+            }
+            throw safe;
+        } finally {
+            profileBusy = false;
+        }
+    }
     const handlers = {
         get_state: () => store.snapshot(),
-        async reload_profile() {
-            if (profileBusy) throw new InputError("A profile reload is already running.");
-            profileBusy = true;
-            clearScope(auth.getState());
-            store.patch({ status: "loading-profile" });
-            try {
-                await auth.reloadProfile();
-                if (disposed) throw new AuthError("disposed", "This panel has closed.");
-                clearScope(auth.getState());
-                return store.snapshot();
-            } catch (error) {
-                const safe = publicError(error);
-                if (!disposed) store.patch({ status: "error", error: { code: safe.code, message: safe.message } });
-                throw safe;
-            } finally {
-                profileBusy = false;
-            }
+        // A second caller (the panel's open-time load and an agent) joins the running load.
+        reload_profile() {
+            profileLoad ??= loadProfile().finally(() => { profileLoad = undefined; });
+            return profileLoad;
         },
         select_subscription(input) {
             if (profileBusy) throw new InputError("Wait for the profile reload before selecting a subscription.");
@@ -76,6 +97,7 @@ export function createDomain({ mode = "azure", fixture, auth: suppliedAuth, http
             const scope = auth.resolveScope({ ...input, subscriptionIds: [input.subscriptionId] });
             invalidate();
             context = selected;
+            selection = { subscriptionId: input.subscriptionId, tenantId: input.tenantId, cloud: input.cloud };
             store.patch({ scope, rows: [], status: "ready-to-read", error: null });
             return store.snapshot();
         },
