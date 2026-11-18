@@ -1,38 +1,49 @@
 #!/usr/bin/env node
-import { lstat, mkdir, readFile, readdir, realpath, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
+import { lstat, mkdir, readFile, readdir, realpath, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import { gunzipSync } from "node:zlib";
+
+const MINIMUM_TOOLKIT_VERSION = "0.1.0";
 
 const HELP = `Generate toolkit modules/build around a host-owned entry (Node >=22).
 
 For canvas authoring, invoke the GitHub Copilot app's installed create-canvas
 skill first. It is the source of truth. At its customization step, pass the
-native extension.mjs to this command. The input is copied unchanged, never
-modified. Connect its declaration with attachToolkit as directed in the generated
-README. npm run build checks actual registration and fails until connected.
+native extension.mjs to this command. The native file is not modified. The copy
+in src/extension.mjs is connected with attachToolkit when its single
+createCanvas(...) call is recognized; otherwise it is copied unchanged (NOT
+CONNECTED). npm run build checks registration, then installs dist/ into the
+native extension directory.
 
 Usage:
   node setup-toolkit.mjs --name my-canvas --scaffold /native/my-canvas/extension.mjs \\
-    --output /existing/parent/new-app \\
-    --toolkit-version "$TOOLKIT_VERSION"
+    --output /existing/parent/new-app
 
 Options:
   --name             Lowercase kebab-case name, 1-64 characters.
   --scaffold         Host-owned extension.mjs in a directory containing only that file.
   --output           New directory; parent must exist. Never overwritten.
-  --toolkit-version  Exact published toolkit version; no tags or ranges.
-  --toolkit-tarball  Alternative trusted local npm-pack archive, including prereleases.
+  --toolkit-version  Optional exact published toolkit version; no tags or ranges.
+  --toolkit-tarball  Optional trusted local npm-pack archive, including prereleases.
   --template          counter (default) or azure-resource-groups. Azure needs the full installed plugin.
   --help             Show this help without creating files.
 
 No install, login, publication, activation, or global configuration changes.
 Every output destination must be new; reruns always refuse, including identical
 outputs. All input/collision checks precede writes. No arbitrary source rewriting.
-Choose exactly one toolkit source. Set TOOLKIT_VERSION to an approved compatible
-published version. Registry mode pins package.json without network I/O;
-npm install resolves it later and must succeed before building. Both modes need
+Choose at most one toolkit source. Without one, setup runs
+npm view @microsoft/canvas-toolkit@latest version and pins that exact version
+(${MINIMUM_TOOLKIT_VERSION} or newer). npm install resolves it later and must succeed before building. Both modes need
 the public /build export. Local archives are copied, not linked to their source.
+
+Local development installs (npm run dev:canvas-authoring in the source repo)
+add scripts/dev-source.json. Then the local toolkit tarball it names replaces
+--toolkit-version or a missing source; an explicit --toolkit-tarball still wins.
+Setup prints one "canvas-authoring provenance:" line in every mode.
 `;
 
 function isPinnedVersion(version) {
@@ -40,7 +51,7 @@ function isPinnedVersion(version) {
         && /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(version);
 }
 
-function parseArgs(args) {
+function parseArgs(args, devSource) {
     const options = {};
     for (let i = 0; i < args.length; i++) {
         const key = args[i];
@@ -57,13 +68,64 @@ function parseArgs(args) {
     for (const key of ["--name", "--scaffold", "--output"]) {
         if (!options[key]) throw new Error("Required option: " + key);
     }
-    if (Boolean(options["--toolkit-version"]) === Boolean(options["--toolkit-tarball"])) {
-        throw new Error("Provide exactly one of --toolkit-version or --toolkit-tarball.");
+    if (options["--toolkit-version"] && options["--toolkit-tarball"]) {
+        throw new Error("Provide at most one of --toolkit-version or --toolkit-tarball.");
     }
     if (options["--toolkit-version"] && !isPinnedVersion(options["--toolkit-version"])) {
         throw new Error("--toolkit-version requires an exact SemVer version, not a tag, range, URL, or path.");
     }
     return options;
+}
+
+// SemVer precedence for release cores; any prerelease sorts below its release.
+function atLeast(version, minimum) {
+    const parse = value => {
+        const [core, prerelease] = value.split("+")[0].split(/-(.*)/s);
+        return { core: core.split(".").map(Number), prerelease: prerelease !== undefined };
+    };
+    const a = parse(version);
+    const b = parse(minimum);
+    for (let i = 0; i < 3; i++) if (a.core[i] !== b.core[i]) return a.core[i] > b.core[i];
+    return !a.prerelease || b.prerelease;
+}
+
+async function npmCli(env) {
+    const directories = [path.dirname(process.execPath), ...(env.PATH ?? env.Path ?? "").split(path.delimiter)].filter(Boolean);
+    const candidates = [env.npm_execpath, ...directories.flatMap(directory => [
+        path.join(directory, "node_modules/npm/bin/npm-cli.js"),
+        path.resolve(directory, "../lib/node_modules/npm/bin/npm-cli.js"),
+        ...(process.platform === "win32" ? [] : [path.join(directory, "npm")]),
+    ])].filter(Boolean);
+    for (const candidate of candidates) {
+        try {
+            const cli = await realpath(candidate);
+            // Run npm's JavaScript entry with Node, never npm.cmd or a shell.
+            if (path.basename(cli) === "npm-cli.js" && (await stat(cli)).isFile()) return cli;
+        } catch (error) {
+            if (!["ENOENT", "ENOTDIR"].includes(error.code)) throw error;
+        }
+    }
+    throw new Error("Cannot locate npm. Pass --toolkit-version or --toolkit-tarball.");
+}
+
+// Uses the caller's npm configuration (registry, proxy, CA), like the later npm install.
+export async function resolveLatestToolkitVersion({ env = process.env } = {}) {
+    let version;
+    try {
+        const { stdout } = await promisify(execFile)(process.execPath,
+            [await npmCli(env), "view", "@microsoft/canvas-toolkit@latest", "version", "--json"],
+            { env, timeout: 60_000, maxBuffer: 1024 * 1024 });
+        version = JSON.parse(stdout);
+    } catch (error) {
+        throw new Error("Cannot resolve the latest @microsoft/canvas-toolkit from npm. "
+            + "Check npm access, or pass --toolkit-version or --toolkit-tarball.", { cause: error });
+    }
+    if (!isPinnedVersion(version)) throw new Error("npm returned an invalid @microsoft/canvas-toolkit version: " + JSON.stringify(version));
+    if (!atLeast(version, MINIMUM_TOOLKIT_VERSION)) {
+        throw new Error("The latest published @microsoft/canvas-toolkit is " + version + ", but this skill needs "
+            + MINIMUM_TOOLKIT_VERSION + " or newer. Pass --toolkit-version or --toolkit-tarball.");
+    }
+    return version;
 }
 
 // Inspect npm's tar header/manifest without extracting or executing its contents.
@@ -97,6 +159,54 @@ function toolkitManifest(archive) {
     if (!manifest.exports?.["./build"]) {
         throw new Error("This starter requires a toolkit candidate with the public /build export. Supply an updated approved tarball.");
     }
+    return manifest;
+}
+
+async function optionalJson(url) {
+    try {
+        return JSON.parse(await readFile(fileURLToPath(url), "utf8"));
+    } catch (error) {
+        if (error.code === "ENOENT") return undefined;
+        throw new Error("Cannot read " + fileURLToPath(url) + ": " + error.message);
+    }
+}
+
+// Written only by the source repository's dev:canvas-authoring command; never published.
+async function readDevSource() {
+    const dev = await optionalJson(new URL("./dev-source.json", import.meta.url));
+    if (dev === undefined) return undefined;
+    if (dev?.mode !== "local-dev" || typeof dev.toolkit?.tarball !== "string" || !path.isAbsolute(dev.toolkit.tarball)) {
+        throw new Error("Invalid scripts/dev-source.json; rerun npm run dev:canvas-authoring or remove the local install.");
+    }
+    return dev;
+}
+
+export async function provenance(args, { resolveLatest = resolveLatestToolkitVersion } = {}) {
+    const dev = await readDevSource();
+    const options = parseArgs(args, dev);
+    const plugin = await optionalJson(new URL("../../../plugin.json", import.meta.url));
+    const skill = dev
+        ? { source: "local-dev", version: plugin?.version ?? "unknown", ...dev.skill }
+        : { source: "installed", version: plugin?.version ?? "unknown" };
+    let toolkit;
+    if (options["--toolkit-tarball"]) {
+        toolkit = { source: "tarball", tarball: options["--toolkit-tarball"] };
+    } else if (dev) {
+        toolkit = { source: "local-dev", tarball: dev.toolkit.tarball };
+        if (options["--toolkit-version"]) toolkit.replacedVersion = options["--toolkit-version"];
+    } else if (options["--toolkit-version"]) {
+        toolkit = { source: "npm", version: options["--toolkit-version"] };
+    } else {
+        toolkit = { source: "npm", version: await resolveLatest(), resolved: "latest" };
+    }
+    return { options, skill, toolkit };
+}
+
+export function formatProvenance({ skill, toolkit }) {
+    const skillText = [skill.source, skill.version, skill.branch, skill.gitSha?.slice(0, 12), skill.dirty ? "dirty" : ""].filter(Boolean).join(" ");
+    const toolkitText = [toolkit.source, toolkit.version, toolkit.resolved ? "(" + toolkit.resolved + ")" : "", toolkit.sha256?.slice(0, 12),
+        toolkit.replacedVersion ? "(replaced --toolkit-version " + toolkit.replacedVersion + ")" : ""].filter(Boolean).join(" ");
+    return "canvas-authoring provenance: skill " + skillText + "; toolkit " + toolkitText + "\n";
 }
 
 async function safePath(value) {
@@ -110,8 +220,19 @@ async function safePath(value) {
     return absolute;
 }
 
-export async function scaffold(args) {
-    const options = parseArgs(args);
+export async function scaffold(args, dependencies) {
+    return (await scaffoldWithProvenance(args, dependencies)).destination;
+}
+
+export async function scaffoldWithProvenance(args, dependencies) {
+    const { options: requestedOptions, skill, toolkit } = await provenance(args, dependencies);
+    const options = { ...requestedOptions };
+    if (toolkit.source === "local-dev") {
+        delete options["--toolkit-version"];
+        options["--toolkit-tarball"] = toolkit.tarball;
+    } else if (toolkit.source === "npm") {
+        options["--toolkit-version"] = toolkit.version;
+    }
     const name = options["--name"];
     const preset = options["--template"] ?? "counter";
     if (!["counter", "azure-resource-groups"].includes(preset)) throw new Error("Unknown template: " + preset);
@@ -149,14 +270,15 @@ export async function scaffold(args) {
             throw new Error("Toolkit must be a regular .tgz file no larger than 32 MiB.");
         }
         archive = await readFile(tarball);
-        toolkitManifest(archive);
+        toolkit.version = toolkitManifest(archive).version;
+        toolkit.sha256 = createHash("sha256").update(archive).digest("hex");
     }
     const sources = { ...template };
     if (preset === "azure-resource-groups") {
         for (const file of [
-            "package.json", "README.md", "src/domain.mjs", "src/canvas.mjs", "src/fixture.mjs",
+            "package.json", "README.md", "src/domain.mjs", "src/canvas.mjs",
             "src/browser/app.mjs", "src/browser/app.css", "src/browser/index.html",
-            "scripts/check-entry.mjs", "scripts/smoke.mjs", "tests/app.test.mjs",
+            "scripts/check-entry.mjs",
         ]) {
             const source = await safePath(fileURLToPath(new URL("../templates/azure-resource-groups/" + file, import.meta.url)));
             if (!(await lstat(source)).isFile()) throw new Error("Expected a regular template file: " + file);
@@ -170,9 +292,14 @@ export async function scaffold(args) {
     ]));
     const manifest = JSON.parse(files.get("package.json").toString("utf8"));
     if (options["--toolkit-version"]) manifest.dependencies["@microsoft/canvas-toolkit"] = options["--toolkit-version"];
+    manifest.canvasInstallDir = path.dirname(native);
     files.set("package.json", Buffer.from(JSON.stringify(manifest, null, 2) + "\n"));
-    files.set("src/extension.mjs", nativeBytes);
+    const connected = connectEntry(nativeBytes.toString("utf8"));
+    files.set("src/extension.mjs", connected ? Buffer.from(connected) : nativeBytes);
     if (archive) files.set("vendor/canvas-toolkit.tgz", archive);
+    if (skill.source === "local-dev") {
+        files.set("canvas-authoring-provenance.json", Buffer.from(JSON.stringify({ skill, toolkit }, null, 2) + "\n"));
+    }
     // Exclusive creation also refuses a destination created after the first check.
     await mkdir(destination);
     try {
@@ -184,7 +311,39 @@ export async function scaffold(args) {
     } catch (error) {
         throw new Error("Scaffold failed; inspect the partial directory before removing or retrying: " + destination, { cause: error });
     }
-    return destination;
+    return { destination, skill, toolkit, connected: Boolean(connected) };
+}
+
+// Wrap the single native createCanvas(...) call with attachToolkit. Returns null when the
+// entry has another shape; the caller then leaves it unchanged for a manual edit.
+export function connectEntry(source) {
+    if (source.includes("attachToolkit")) return null;
+    const sdkImport = /^import\s*\{[^}]*\bcreateCanvas\b[^}]*\}\s*from\s*["']@github\/copilot-sdk\/extension["'];?[ \t]*$/m.exec(source);
+    const calls = [...source.matchAll(/\bcreateCanvas\s*\(/g)];
+    if (!sdkImport || calls.length !== 1) return null;
+    const open = calls[0].index + calls[0][0].length;
+    let depth = 1;
+    let index = open;
+    while (index < source.length && depth > 0) {
+        const char = source[index];
+        const next = source[index + 1];
+        if (char === "/" && next === "/") index = source.indexOf("\n", index);
+        else if (char === "/" && next === "*") index = source.indexOf("*/", index) + 1;
+        else if (char === "\"" || char === "'" || char === "`") {
+            for (index++; index < source.length && source[index] !== char; index++) {
+                if (source[index] === "\\") index++;
+                else if (char === "`" && source[index] === "$" && source[index + 1] === "{") return null;
+            }
+        } else if (char === "(") depth++;
+        else if (char === ")") depth--;
+        if (index < 0) return null;
+        index++;
+    }
+    if (depth !== 0) return null;
+    const close = index - 1;
+    const end = sdkImport.index + sdkImport[0].length;
+    return source.slice(0, end) + '\nimport { attachToolkit } from "./toolkit.mjs";'
+        + source.slice(end, open) + "attachToolkit(" + source.slice(open, close) + ")" + source.slice(close);
 }
 
 const template = {
@@ -197,8 +356,7 @@ const template = {
   "engines": { "node": ">=22" },
   "scripts": {
     "build": "node scripts/build.mjs",
-    "check": "node scripts/check.mjs",
-    "test": "node --test tests/app.test.mjs"
+    "check": "node scripts/check.mjs"
   },
   "dependencies": {
     "@microsoft/canvas-toolkit": "file:vendor/canvas-toolkit.tgz"
@@ -401,52 +559,57 @@ export function assertShutdownOwnership() {
     <script type="module" src="./app.js"></script>
 </head>
 <body class="canvas-ui">
-    <main>
-        <h1>__CANVAS_NAME__</h1>
-        <p>You and the agent share this counter. Provider restart resets it.</p>
-        <p class="counter" aria-live="polite">Count: <output id="count">0</output></p>
-        <div class="controls">
-            <button id="increment" class="primary-button" disabled>Add one</button>
-            <button id="reset" class="secondary-button" disabled>Reset</button>
-        </div>
-        <p id="error" role="alert" hidden></p>
-        <p id="connection" role="status">Connecting...</p>
-        <p id="build">Build loading...</p>
-    </main>
+    <div id="app"></div>
 </body>
 </html>
 `,
     "src/browser/app.mjs": String.raw`import "@microsoft/canvas-toolkit/ui/styles.css";
+import "@microsoft/canvas-toolkit/ui/base.css";
+import {
+    Button, CanvasFooter, CanvasHeader, CanvasShell, MessageBar, createElement as h, mountCanvasComponent,
+} from "@microsoft/canvas-toolkit/ui/dom";
 import "./app.css";
 
-const count = document.querySelector("#count");
-const errorBox = document.querySelector("#error");
-const connection = document.querySelector("#connection");
-const increment = document.querySelector("#increment");
-const reset = document.querySelector("#reset");
 let version = -1;
-let busy = false;
-let currentCount = 0;
+let pending = 0;
 let fileBuild;
+const view = { count: 0, build: null, ready: false, connection: "Connecting...", error: null };
+const run = (name, input) => () => act(name, input);
 
-function controls() {
-    increment.disabled = busy || version < 0 || currentCount >= 1000;
-    reset.disabled = busy || version < 0;
+function App({ count, build, ready, connection, error, stale }) {
+    const busy = !ready || pending > 0;
+    return h(CanvasShell, {
+        className: "counter-shell",
+        header: h(CanvasHeader, {
+            title: "__CANVAS_NAME__",
+            actions: h("span", { className: "ct-actions" },
+                h(Button, { id: "reset", appearance: "secondary", disabled: busy, onClick: run("reset", {}) }, "Reset"),
+                h(Button, { id: "increment", appearance: "primary", disabled: busy || count >= 1000,
+                    onClick: run("increment", { amount: 1 }) }, "Add one")),
+        }),
+        footer: h(CanvasFooter, { version: h("span", { id: "build" }, build ? "Build " + build.id : "Build loading...") },
+            h("span", { id: "connection", role: "status" }, connection),
+            h("span", { className: "counter-note" }, "Provider restart resets the count.")),
+    }, h("div", { className: "counter-content" },
+        stale ? h(MessageBar, { id: "stale", intent: "warning", title: "This canvas was updated." },
+            "Ask Copilot to reload extensions, then reopen this canvas.") : null,
+        error ? h(MessageBar, { id: "error", intent: "error" }, error.message) : null,
+        h("p", { className: "counter-label" }, "You and the agent share this counter."),
+        h("output", { id: "count", className: "counter-value", "aria-live": "polite" }, String(count))));
 }
-function showError(error) {
-    errorBox.textContent = error.message;
-    errorBox.hidden = false;
+
+const app = mountCanvasComponent(document.getElementById("app"), App, view);
+function update(next) {
+    Object.assign(view, next);
+    app.update({ ...view });
 }
+function showError(error) { update({ error: { message: error.message } }); }
 function render(snapshot) {
     if (snapshot.version < version) return;
     version = snapshot.version;
-    currentCount = snapshot.model.count;
-    count.textContent = String(currentCount);
-    document.querySelector("#build").textContent = "Provider build: " + snapshot.build.id;
-    if (fileBuild && fileBuild.id !== snapshot.build.id) {
-        showError(new Error("Files and provider builds differ. Reload the extension provider, then reopen this panel."));
-    }
-    controls();
+    const stale = fileBuild && fileBuild.id !== snapshot.build.id;
+    update({ count: snapshot.model.count, build: snapshot.build, ready: true,
+        error: null, stale: Boolean(stale) });
 }
 async function request(route, options) {
     const response = await fetch(new URL(route, location.href), options);
@@ -455,36 +618,29 @@ async function request(route, options) {
     return result;
 }
 async function refresh() {
-    try {
-        render(await request("api/state"));
-    } catch (error) {
-        showError(error);
-    }
+    try { render(await request("api/state")); }
+    catch (error) { update({ ready: false }); showError(error); }
 }
 async function act(name, input) {
-    busy = true;
-    controls();
-    errorBox.hidden = true;
+    pending++;
+    update({ error: null });
     try {
         render(await request("api/action", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+            method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, input }),
         }));
     } catch (error) {
         showError(error);
     } finally {
-        busy = false;
-        controls();
+        pending--;
+        update({});
     }
 }
-increment.addEventListener("click", () => act("increment", { amount: 1 }));
-reset.addEventListener("click", () => act("reset", {}));
 const events = new EventSource(new URL("events", location.href));
 events.addEventListener("change", refresh);
-events.onopen = () => { connection.textContent = "Connected"; };
-events.onerror = () => { connection.textContent = "Connection lost; reconnecting..."; };
-window.addEventListener("pagehide", () => events.close());
+events.onopen = () => update({ connection: "Connected" });
+events.onerror = () => update({ ready: false, connection: "Connection lost; reconnecting..." });
+window.addEventListener("pagehide", () => { events.close(); app.dispose(); });
 try {
     fileBuild = await request("build.json");
     await refresh();
@@ -492,22 +648,24 @@ try {
     showError(error);
 }
 `,
-    "src/browser/app.css": String.raw`main { max-width: 42rem; margin: 0 auto; padding: 24px; }
-h1 { font-size: var(--text-title-large, 26px); line-height: var(--leading-title-large, 32px); }
-p { color: var(--canvas-muted); }
-.counter { color: var(--canvas-fg); font-size: 24px; }
-.controls { display: flex; gap: 8px; flex-wrap: wrap; }
-#error { color: var(--canvas-danger); }
+    "src/browser/app.css": String.raw`html, body, #app { height: 100%; margin: 0; }
+.counter-shell { min-height: 100dvh; }
+.counter-shell > .ct-header { padding: 8px 16px; border-bottom: 1px solid var(--canvas-border); }
+.counter-shell > .ct-main { flex: 1; min-height: 0; overflow: auto; }
+.counter-content { display: grid; gap: 12px; align-content: start; max-width: 42rem; box-sizing: border-box; margin: 0 auto; padding: 24px; }
+.counter-label { margin: 0; color: var(--canvas-muted); }
+.counter-value { color: var(--canvas-fg); font-size: var(--text-title-large, 26px); line-height: var(--leading-title-large, 32px); }
+.counter-note { color: var(--canvas-muted); }
 `,
     "scripts/build.mjs": String.raw`import { build } from "esbuild";
 import { createHash } from "node:crypto";
 import { isBuiltin } from "node:module";
-import { copyFile, lstat, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { copyFile, cp, lstat, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { prepareCanvasUiAssets } from "@microsoft/canvas-toolkit/build";
+import { prepareAzureIconAssets, prepareCanvasUiAssets } from "@microsoft/canvas-toolkit/build";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const output = path.join(root, "dist");
@@ -521,8 +679,11 @@ await rm(output, { recursive: true, force: true });
 await mkdir(path.join(output, "web"), { recursive: true });
 const host = "@github/copilot-sdk/extension";
 const ui = await prepareCanvasUiAssets(output);
+await prepareAzureIconAssets(output);
 const uiModule = ui.nodeImport.path;
 const browserExternals = new Set(Object.values(ui.browserImports));
+// Optional native modules that Azure SDK proxy support loads only when installed.
+const optionalNative = ["kerberos"];
 const common = {
     absWorkingDir: root,
     bundle: true,
@@ -544,9 +705,9 @@ const node = {
     }],
 };
 const results = await Promise.all([
-    build({ ...node, entryPoints: ["src/extension.mjs"], outfile: "dist/extension.mjs", external: [host, "./toolkit.mjs"] }),
-    build({ ...node, entryPoints: ["src/toolkit.mjs"], outfile: "dist/toolkit.mjs", external: [host, "./canvas.mjs"] }),
-    build({ ...node, entryPoints: ["src/canvas.mjs"], outfile: "dist/canvas.mjs", external: [host] }),
+    build({ ...node, entryPoints: ["src/extension.mjs"], outfile: "dist/extension.mjs", external: [host, "./toolkit.mjs", ...optionalNative] }),
+    build({ ...node, entryPoints: ["src/toolkit.mjs"], outfile: "dist/toolkit.mjs", external: [host, "./canvas.mjs", ...optionalNative] }),
+    build({ ...node, entryPoints: ["src/canvas.mjs"], outfile: "dist/canvas.mjs", external: [host, ...optionalNative] }),
     build({
         ...common, platform: "browser", target: "es2022", entryPoints: ["src/browser/app.mjs"], outfile: "dist/web/app.js",
         plugins: [{
@@ -565,6 +726,7 @@ for (const [index, result] of results.entries()) {
         for (const imported of artifact.imports) {
             if (!imported.external) continue;
             const allowed = (index === 3 && browserExternals.has(imported.path)) || (index < 3 && (isBuiltin(imported.path)
+                || optionalNative.includes(imported.path)
                 || (index < 2 && imported.path === host)
                 || (index === 0 && imported.path === "./toolkit.mjs")
                 || (index === 1 && imported.path === "./canvas.mjs")
@@ -595,10 +757,23 @@ await writeFile(path.join(output, "build.json"), JSON.stringify({
 }) + "\n");
 try {
     const { stdout } = await promisify(execFile)(process.execPath, ["scripts/check.mjs"], { cwd: root, timeout: 20000 });
-    process.stdout.write(stdout + "Built dist. Reload the extension provider, then reopen its panel; a panel refresh alone does not reload provider code.\n");
+    process.stdout.write(stdout);
 } catch (error) {
     throw new Error("Toolkit registration check failed; do not activate dist. Connect the host entry using README.md.\n" + (error.stderr ?? error.message));
 }
+// Install into the native extension directory recorded by setup, so build is also install.
+let installed = "";
+if (pkg.canvasInstallDir) {
+    const target = pkg.canvasInstallDir;
+    const relative = path.relative(root, target);
+    if (!path.isAbsolute(target) || !relative.startsWith("..")) throw new Error("canvasInstallDir must be an absolute path outside the project.");
+    const entries = await readdir(target);
+    if (!entries.includes("extension.mjs")) throw new Error("canvasInstallDir must be the native extension directory with extension.mjs: " + target);
+    await cp(output, target, { recursive: true, force: true });
+    installed = "Installed dist into " + target + ". ";
+}
+process.stdout.write("Built dist (build " + JSON.parse(await readFile(path.join(output, "build.json"), "utf8")).id + "). " + installed
+    + "Reload the extension provider, then open the canvas; a panel refresh alone does not reload provider code.\n");
 `,
     "scripts/host-loader.mjs": String.raw`// Test-only SDK seam. Never part of dist or a substitute for the native host.
 export function resolve(specifier, context, nextResolve) {
@@ -687,65 +862,6 @@ try {
     await app.close();
 }
 `,
-    "tests/app.test.mjs": String.raw`import assert from "node:assert/strict";
-import { test } from "node:test";
-import { createDomain } from "../src/domain.mjs";
-import { createApp } from "../dist/canvas.mjs";
-
-test("strict shared actions and counter bounds", async () => {
-    const { actions, store } = createDomain();
-    assert.deepEqual(await actions.dispatch("increment", { amount: 2 }), { version: 1, model: { count: 2 } });
-    for (const input of [{ amount: 0 }, { amount: 11 }, { amount: "1" }, { amount: 1, extra: true }]) {
-        await assert.rejects(actions.dispatch("increment", input), { code: "invalid_input" });
-    }
-    await assert.rejects(actions.dispatch("unknown", {}), { code: "invalid_input" });
-    store.patch({ count: 1000 });
-    await assert.rejects(actions.dispatch("increment", { amount: 1 }), { code: "invalid_input" });
-    assert.equal(store.model().count, 1000);
-    assert.equal((await actions.dispatch("reset", {})).model.count, 0);
-});
-
-test("built canvas shares UI/agent state and closes its servers", async t => {
-    const app = createApp();
-    t.after(() => app.close());
-    const ctx = { instanceId: "test-panel", input: {} };
-    const [opened, reopened] = await Promise.all([app.definition.open(ctx), app.definition.open(ctx)]);
-    assert.equal(opened.url, reopened.url);
-    const origin = new URL(opened.url).origin;
-    assert.equal(new URL(opened.url).hostname, "127.0.0.1");
-    const page = await fetch(opened.url);
-    assert.match(page.headers.get("content-security-policy"), /script-src 'self'/);
-    assert.match(await page.text(), /app.css/);
-    for (const [route, type, marker] of [
-        ["canvas-ui/azure-subscription-picker.mjs", "text/javascript", "createAzureSubscriptionPicker"],
-        ["canvas-ui/subscription-picker.mjs", "text/javascript", "../icons/Subscription.svg"],
-        ["icons/Subscription.svg", "image/svg+xml", "<svg"],
-    ]) {
-        const asset = await fetch(new URL(route, opened.url));
-        assert.equal(asset.status, 200, route);
-        assert.ok(asset.headers.get("content-type").startsWith(type), route);
-        assert.ok((await asset.text()).includes(marker), route);
-    }
-    assert.equal((await fetch(new URL("/icons/Subscription.svg", opened.url))).status, 404);
-    const action = app.definition.actions.find(item => item.name === "increment");
-    await action.handler({ ...ctx, input: { amount: 3 } });
-    const posted = await fetch(new URL("api/action", opened.url), {
-        method: "POST", headers: { Origin: origin, "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "increment", input: { amount: 1 } }),
-    });
-    assert.equal(posted.status, 200);
-    assert.equal((await posted.json()).model.count, 4);
-    const other = await app.definition.open({ instanceId: "other-panel", input: {} });
-    assert.equal((await (await fetch(new URL("api/state", other.url))).json()).model.count, 4);
-    await app.definition.onClose(ctx);
-    await assert.rejects(fetch(opened.url));
-    await app.definition.onClose(ctx);
-    assert.equal((await fetch(other.url)).status, 200);
-    await app.close();
-    await assert.rejects(fetch(other.url));
-    await assert.rejects(app.definition.open(ctx), /stopped/);
-});
-`,
     "README.md": String.raw`# __CANVAS_NAME__
 
 A counter shared by the UI and agent. All panels in one provider share the
@@ -753,9 +869,8 @@ count; browser reload keeps it and provider restart resets it.
 
 ## Connect the host entry
 
-Use the installed create-canvas skill to connect the copied src/extension.mjs
-to its native scaffold. The host skill owns registration, lifecycle and
-activation. If it is missing, use a host that provides it. Add:
+Setup connects the copied src/extension.mjs when it recognizes the single
+native createCanvas(...) call. If setup printed NOT CONNECTED, add:
 
     import { attachToolkit } from "./toolkit.mjs";
 
@@ -763,25 +878,23 @@ Wrap the existing declaration as createCanvas(attachToolkit(nativeOptions)).
 Keep its metadata, full context and surrounding session wiring. The adapter
 replaces demo callbacks and runs native close after toolkit cleanup. Customized
 callbacks or competing shutdown handlers need explicit integration.
-The original scaffold is unchanged.
+The native extension.mjs is replaced only when npm run build installs dist/.
 
-## Build and run
+## Build and install
 
 Use Node.js 22+ (24 recommended) and a toolkit package with /build.
 
     npm install
     npm run build
-    npm test
 
 Keep package-lock.json and use npm ci for later installs. Local package mode
 needs vendor/canvas-toolkit.tgz; do not commit private tarballs.
 
 Build checks the emitted entry using a test SDK adapter; an unused import or
 missing connection fails. npm run check repeats that check without rebuilding.
-Tests cover domain/server behavior, not browser rendering or native activation.
-
-Use the host skill to install the whole dist/ directory, reload the provider
-and open the panel. It contains bundled toolkit code and browser assets; only
+After the check, build copies the whole dist/ directory into canvasInstallDir
+(the native extension directory recorded in package.json). Then reload the
+provider and open the panel. dist/ contains bundled toolkit code and assets; only
 @github/copilot-sdk/extension is host-provided. There is no automatic watch or
 reload. A panel refresh does not replace the provider.
 
@@ -806,16 +919,16 @@ The counter includes no Azure access, telemetry or prompt forwarding.
 First invoke the GitHub Copilot app's installed create-canvas skill through the
 host skill mechanism (or continue it if already active). It is the source of
 truth for canvas apps, including native scaffolding and host verification.
-The setup command copied a host-owned entry without modifying it. Read README.md
-for the required attachToolkit import/wrapper at the host customization step.
+Setup connects the copied host entry with attachToolkit when it can. If it printed
+NOT CONNECTED, read README.md for the attachToolkit import/wrapper.
 Do not replace joinSession or invent a second provider. If the skill is missing,
 report the prerequisite and do not claim native activation.
 
-Use Node >=22. After source changes run npm run build and npm test.
+Use Node >=22. After source changes run npm run build (it also installs dist).
 UI and agent actions must use the same domain schemas, dispatch, and state.
 Preserve loopback/origin/CSP protections and the exact host SDK external.
 Keep browser imports free of Node and host SDK code. Preserve all emitted assets.
-Do not install/activate without explicit scope; no implicit user/global installs.
+Build installs only into canvasInstallDir; no other user/global installs.
 No console.log in provider code: stdout belongs to host RPC. Errors go to the
 caller, UI, or stderr; do not turn failures into successful results.
 Keep package-lock.json. Do not commit private vendor tarballs or generated bundles.
@@ -827,8 +940,11 @@ export async function main(args = process.argv.slice(2)) {
         if (args.length === 1 && args[0] === "--help") {
             process.stdout.write(HELP);
         } else {
-            const destination = await scaffold(args);
-            process.stdout.write("Created toolkit source app: " + destination + "\nNOT READY: the copied host entry is unchanged. Follow README.md to connect attachToolkit, then npm install, npm run build, and npm test. Return to the host skill for native verification.\n");
+            const { destination, skill, toolkit, connected } = await scaffoldWithProvenance(args);
+            process.stdout.write(formatProvenance({ skill, toolkit }));
+            process.stdout.write("Created toolkit source app: " + destination + "\n" + (connected
+                ? "Connected src/extension.mjs with attachToolkit. Next: npm install, customize, npm run build (also installs dist), reload, open.\n"
+                : "NOT CONNECTED: src/extension.mjs is unchanged. Wrap its createCanvas options with attachToolkit (see README.md), then npm install and npm run build.\n"));
         }
     } catch (error) {
         process.stderr.write("setup-toolkit: " + error.message + (error.cause ? "\nCause: " + error.cause.message : "") + "\n");

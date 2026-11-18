@@ -8,23 +8,6 @@
     <script type="module" src="./app.js"></script>
 </head>
 <body class="canvas-ui">
-    <main>
-        <h1>Azure resource groups</h1>
-        <p id="source" class="source">Loading source...</p>
-        <p>A small canvas built from the authoring plugin and toolkit. No automatic login or resource query.</p>
-        <div class="controls">
-            <span id="profile-slot"></span>
-            <button id="scope" class="secondary-button" disabled>Select subscription</button>
-            <span id="list-slot"></span>
-            <span id="cancel-slot"></span>
-        </div>
-        <p id="selection">No subscription selected.</p>
-        <p id="status" role="status">Not loaded</p>
-        <div id="error" hidden></div>
-        <ul id="rows" aria-label="Resource groups"></ul>
-        <p id="connection" role="status">Connecting...</p>
-        <p id="build" class="note">Build loading...</p>
-        <p class="note">Read-only. Maximum 200 rows / 10 pages. Scope and results belong to this panel and reset when it closes or the provider restarts.</p>
-    </main>
+    <div id="app"></div>
 </body>
 </html>

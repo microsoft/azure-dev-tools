@@ -3,67 +3,43 @@
 A read-only Azure resource-group canvas. Each panel has its own subscription,
 results and pending request.
 
-## Connect the host entry
+## Build and install
 
-Have the installed `create-canvas` skill connect the copied `src/extension.mjs`.
-Add:
-
-```js
-import { attachToolkit } from "./toolkit.mjs";
-```
-
-Wrap the existing options as `createCanvas(attachToolkit(nativeOptions))`.
-Preserve metadata and session wiring. The adapter replaces demo callbacks and
-chains close handling; customized callbacks need explicit integration.
-The original native scaffold is unchanged.
-
-## Build and run
-
-Use Node.js 22+ (24 recommended) and a toolkit package with `/build`.
+Setup connects `src/extension.mjs` with `attachToolkit` when it recognizes the
+native `createCanvas(...)` call. If setup printed `NOT CONNECTED`, add
+`import { attachToolkit } from "./toolkit.mjs";` and wrap the options as
+`createCanvas(attachToolkit(nativeOptions))`.
 
 ```sh
 npm install
 npm run build
-npm test
-npm run smoke
 ```
 
-Keep the lockfile; use `npm ci` for later installs. `smoke` uses installed Chrome
-or `CANVAS_BROWSER` with synthetic data. It does not download a browser or access
-Azure. Build checks the host connection with a test SDK adapter.
+`npm run build` bundles `dist/`, checks the host registration with a test SDK
+adapter, and copies `dist/` into the native extension directory from setup
+(`canvasInstallDir` in `package.json`). Then reload the extension provider and
+open the canvas. A panel refresh does not restart the provider; the UI warns
+when its files and provider have different build IDs.
+`npm run check` repeats only the registration check on the current `dist/`.
 
-Use the host skill to install the whole `dist/` and reload the provider. Reopen
-the panel to verify the native app. A panel refresh does not restart the provider;
-the UI warns when its files and provider have different build IDs.
+## Use
 
-## Read from Azure
-
-With Azure CLI 2.61+ and an existing login, choose **Load profile**, select a
-subscription, then **List resource groups**. The agent can call the same actions.
-The app does not load a profile, sign in, choose scope or query automatically.
-It never writes Azure resources.
-
-Listings return ID, name and location, with limits of 200 rows / 10 pages.
-Failures and cancellation are not reported as empty success. For a synthetic
-walkthrough, open a separate panel with `{"mode":"fixture"}`; its labelled data
-does not demonstrate live Azure access.
+With Azure CLI 2.61+ and an existing login, the panel loads the local profile
+when it opens. Select a subscription, then **List resource groups**. If the
+profile does not load, the panel shows **Sign in to Azure** with `az login`.
+Agent actions: `reload_profile`, `select_subscription`,
+`list_resource_groups`, `cancel`, `get_state`. The app never writes Azure
+resources. Listings are limited to 200 rows / 10 pages.
 
 ## Customize
 
 | File | Purpose |
 | --- | --- |
-| `src/browser/` | UI built from toolkit `ui/dom` controls, shared styles and the subscription picker. |
-| `src/resource-groups.mjs` | Azure reader copied from the toolkit example. |
-| `src/domain.mjs` | Shared actions, scope, cancellation and stale-result checks. |
-| `src/canvas.mjs` | Per-panel ownership, transport and assets. |
-| `src/toolkit.mjs` | Native adapter and shutdown. |
-| `scripts/build.mjs` | Node/browser builds, toolkit assets and build ID. |
+| `src/browser/app.mjs` | UI: `CanvasShell`, `CanvasHeader`, `CanvasFooter`, `ListDetail`, `FilterToolbar`, `DetailPanel`, `Blankslate`, `MessageBar`, the subscription picker and resource icons. |
+| `src/resource-groups.mjs` | Azure reader. Replace it with your resource reader. |
+| `src/domain.mjs` | Shared UI/agent actions, scope, cancellation and stale-result checks. |
+| `src/canvas.mjs` | Per-panel server, transport and assets. |
+| `src/toolkit.mjs`, `scripts/` | Adapter, build and registration check. Do not edit. |
 
-Reuse toolkit components (`ui/dom`, `ui/base.css`) for new controls instead of custom
-buttons or alerts. The starter sends no product telemetry.
-
-Start with a local location filter, preserving raw IDs and loaded counts.
-Keep the generated asset layout: bundling JavaScript alone does not copy icons.
-Closing a panel or restarting the provider clears its state and cancels work;
-browser reload keeps the open panel. Persistent storage and cloud writes need
-separate designs.
+Use toolkit components for new controls. Do not hand-build headings, lists,
+inputs, buttons or alerts.

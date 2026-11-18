@@ -1,15 +1,16 @@
-import { enum_, InputError, obj, validate } from "@microsoft/canvas-toolkit/actions";
+import { empty, InputError, validate } from "@microsoft/canvas-toolkit/actions";
 import { readFile } from "node:fs/promises";
+import { azureIconAssets } from "@microsoft/canvas-toolkit/icons";
 import { startCanvasServer } from "@microsoft/canvas-toolkit/server";
 import { canvasUiAssets } from "@microsoft/canvas-toolkit/ui";
 import { contracts, createDomain } from "./domain.mjs";
 
 const buildInfo = JSON.parse(await readFile(new URL("./build.json", import.meta.url), "utf8"));
 
-export function createApp({ makeDomain = createDomain } = {}) {
+export function createApp() {
     const entries = new Map();
     let stopped = false;
-    const inputSchema = obj({ mode: enum_("fixture", "azure") });
+    const inputSchema = empty();
     const dispatch = async (entry, name, input) => {
         try { return { ...await entry.domain.actions.dispatch(name, input), build: buildInfo }; }
         catch (error) {
@@ -20,7 +21,7 @@ export function createApp({ makeDomain = createDomain } = {}) {
     const definition = {
         id: "__CANVAS_NAME__",
         displayName: "__CANVAS_NAME__",
-        description: "Read-only Azure resource groups with explicit profile, subscription and query actions. Synthetic fixtures are opt-in.",
+        description: "Read-only Azure resource groups. Select a subscription, then list resource groups.",
         inputSchema,
         actions: Object.entries(contracts).map(([name, contract]) => ({
             name, description: contract.description, inputSchema: contract.input,
@@ -33,11 +34,9 @@ export function createApp({ makeDomain = createDomain } = {}) {
         async open(ctx) {
             validate(inputSchema, ctx.input ?? {});
             if (stopped) throw new Error("The canvas provider has stopped.");
-            const mode = ctx.input?.mode ?? "azure";
             let entry = entries.get(ctx.instanceId);
-            if (entry && entry.mode !== mode) throw new InputError("Use a separate panel to change between synthetic and Azure sources.");
             if (!entry) {
-                entry = { mode, domain: makeDomain({ mode }) };
+                entry = { domain: createDomain() };
                 const current = entry;
                 entry.pending = startCanvasServer({
                     dispatch: (name, input) => dispatch(current, name, input),
@@ -49,6 +48,8 @@ export function createApp({ makeDomain = createDomain } = {}) {
                         ["app.js", new URL("./web/app.js", import.meta.url)],
                         ["app.css", new URL("./web/app.css", import.meta.url)],
                         ["build.json", new URL("./build.json", import.meta.url)],
+                        // Resource-type SVGs; the build copies them to dist/icons/.
+                        ...azureIconAssets,
                         ...canvasUiAssets,
                     ],
                 });
@@ -57,7 +58,7 @@ export function createApp({ makeDomain = createDomain } = {}) {
             try {
                 const server = await entry.pending;
                 if (entries.get(ctx.instanceId) !== entry) throw new Error("The panel closed while opening.");
-                return { title: mode === "fixture" ? "__CANVAS_NAME__ - synthetic demo" : "__CANVAS_NAME__ - Azure", url: server.url,
+                return { title: "__CANVAS_NAME__", url: server.url,
                     status: "Build " + buildInfo.id };
             } catch (error) {
                 if (entries.get(ctx.instanceId) === entry) {

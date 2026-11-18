@@ -3,14 +3,20 @@
   "version": "0.1.0",
   "files": {
     "LICENSE": "d25deed12d803f6c973597348627b1939e2d19bbc28fda83c93ea0cde44702da",
-    "README.md": "63b940887b422af5da156b3ece522ec90afd26bd9e5b8271aad2fe60735ed814",
+    "README.md": "8a2aa7f5992c03cbb29ebadea1fb3ccc8de164b2f9d2cfe7230d4e7f9d8431d9",
     "auth.md": "b22b317cd93b5fb40636fbaccba2750501faf41b54bcf9c6bb971c5355c9e23b",
     "examples/README.md": "70d8d6683e31c01ce8538d339f676901ac1332710dc19ff8afbfa443b0ae399b",
     "examples/custom-fetch-client.mjs": "18ea90a17fb7d39104f343b3a53079dfed536bdd9a6dafc71321de5158be61bb",
+    "examples/page-templates/README.md": "a320531e515e1ddb2f674b7311cd918337921e6774b9ea2839f14ac878b902d8",
+    "examples/page-templates/simple-home.css": "16e6e6f840f7ad13b41327837494ed75e8c7c8b773594010b47b9ee1000abf2a",
+    "examples/page-templates/simple-home.mjs": "477aa2169faf1fd02601ffebfba56f2165ae304bfdb4762877088bd61ac3cae3",
     "examples/resource-groups.mjs": "3d81ea6de1551da83f008251f204e06e736e9655aed450765b4f416a834d1eb8",
     "examples/run-read-only.mjs": "5809596d28119f393975235a44b5784d95a82354eb56d84c2adcbba0f2ab34ce",
     "examples/sdk-client.mjs": "e9adf9797984f6b23f2f7b0807898a551f2ca5ab122f5f644033e705e2efa1cc",
-    "quickstart.md": "90d339293305a4131381db2170bda0b68fd3dba63a78259f21d373b096bfae5e",
-    "ui-components.md": "c1c94cf568e5fdef3013b81aeb63e9b7aa1d2efa983f19677f3642f7ebacf0a9"
+    "quickstart.md": "b5c2a5a7b71267dfad5f61aa81a772fa77406763eccece8a8292f7b1a17d2622",
+    "src/ui/hosts/github-app/design.md": "647d57c51d13f4da00948df4a3bede7bdad26fc0b649c6310aa7ba3f6a61becf",
+    "src/ui/hosts/github-app/theming.md": "beb5c62b8edb5f5fe6caa11244e8da44287870495424b6e39f01834472410e73",
+    "src/ui/hosts/index.md": "55972db4f012163d5278c81b4645a4b411ac93507b61997a8c357a599310cf96",
+    "ui-components.md": "95ae742157488ed432454223354a1781c4fb1003892b2fe431a2b4816203863a"
   }
 }

@@ -11,16 +11,16 @@ activation; the companion adds toolkit setup.
 
 - A canvas-capable GitHub Copilot host with its `create-canvas` skill.
 - Node.js 22+ (24 recommended) and npm.
-- The exact published `@microsoft/canvas-toolkit@0.1.0-preview.2` with
-  `@microsoft/canvas-toolkit/build`, or an approved compatible local `.tgz`.
-  If the npm version or `/build` export is unavailable, stop; a local tarball
-  is a separately labeled development path. See [package setup](README.md#setup-and-exports).
+- An exact compatible published version of `@microsoft/canvas-toolkit` with
+  the `@microsoft/canvas-toolkit/build` export, or an approved compatible local
+  `.tgz`. Confirm the exact version before setup. If that version or export is
+  unavailable, stop; a local tarball is a separately labeled development path.
+  See [package setup](README.md#setup-and-exports).
 - For live reads, Azure CLI 2.61+ on the provider's PATH and permission to
   read resource groups in your chosen subscription.
 
-Install the companion from the released private `microsoft/azure-dev-tools`
-distribution after the 0.1.1 package is published (native App/CLI installation
-of that patch has not yet been verified):
+Install the companion from the released `microsoft/azure-dev-tools`
+distribution:
 
 ```sh
 copilot plugin install microsoft/azure-dev-tools:plugins/canvas-authoring
@@ -69,11 +69,13 @@ refreshing only the panel will not reload the provider.
 
 If needed, sign in explicitly in a terminal with `az login`. In the panel:
 
-1. Choose **Load profile**.
+1. Wait for the panel to load your Azure CLI profile. If it fails, run
+   `az login` and choose **Retry**.
 2. Select a subscription.
 3. Choose **List resource groups**.
 
-Opening the app does not sign in, select a default subscription or query Azure.
+Opening the app reads local profile metadata only. It does not sign in, select
+a default subscription or query Azure.
 Profile metadata is not proof of resource access: a read may still fail because
 of permissions or network access. Errors, cancellation and empty results are
 shown separately.

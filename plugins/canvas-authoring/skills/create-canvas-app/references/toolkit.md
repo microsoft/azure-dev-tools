@@ -38,16 +38,34 @@ An unavailable version must fail installation, not trigger a source fallback.
 
 ## Reuse the public APIs
 
+For signatures and one-line examples, read the
+[toolkit API cheat sheet](api-cheatsheet.md) first.
+
 | API | Guidance |
 | --- | --- |
 | `@microsoft/canvas-toolkit/actions` | [Validate inputs once](toolkit/README.md#canvas-skeleton); UI requests and host actions call the same dispatch. |
 | `@microsoft/canvas-toolkit/state` | The optional store is in-memory, not durable persistence. Choose ownership through the host lifecycle. |
 | `@microsoft/canvas-toolkit/server` | [Serve the app](toolkit/README.md#canvas-skeleton) through the shared loopback transport, with an explicit asset allowlist. |
 | `@microsoft/canvas-toolkit/ui/styles.css` | [Use shared styles](toolkit/README.md#styling-and-themes) and link the emitted CSS from HTML. |
-| `@microsoft/canvas-toolkit/ui/dom` | Mount toolkit controls (`Button`, `MessageBar`, `ActionGroup`) in plain-JavaScript views with `mountCanvasComponent`; load `ui/styles.css`, then `ui/base.css`. Use `ui/react` in React apps. See the [component guide](toolkit/ui-components.md). |
+| `@microsoft/canvas-toolkit/ui/dom` | Mount toolkit controls in plain-JavaScript views with `mountCanvasComponent`; load `ui/styles.css`, then `ui/base.css`. Use `ui/react` in React apps. Use the component for each need in the table below; see the [component guide](toolkit/ui-components.md). |
+| `@microsoft/canvas-toolkit/ui/azure-subscription-picker` | `createAzureSubscriptionPicker` for subscription selection. Its trigger must be a button. Pass `refreshOnFocus: true`; do not add a "Reload profile" button. |
 | `@microsoft/canvas-toolkit/ui/theme` | `readCanvasTheme` and `observeCanvasTheme` for renderers that cannot use CSS tokens. Otherwise rely on `--canvas-*` tokens. |
 | `@microsoft/canvas-toolkit/telemetry` | Product-usage helpers. The starters omit them: the public collector is release-owned and always on. Add usage metadata and instrumentation only for a registered product canvas. |
 | Azure auth/subscriptions | [Bind explicit scope](toolkit/auth.md) and keep credentials in Node. These helpers are optional for non-Azure apps. |
+
+### Components for common needs
+
+| Need | Component |
+| --- | --- |
+| Page frame, header, footer | `CanvasShell`, `CanvasHeader`, `CanvasFooter` |
+| Resource list and details | `ListDetail`, `DetailPanel`, `KeyValueList`, `Badge` |
+| Filter, empty state, status | `FilterToolbar`, `Blankslate`, `MessageBar`, `Spinner` |
+| Actions and typed-name confirm | `Button`, `Dialog`, `FormField`, `TextInput` |
+| Azure resource-type icon | `iconForType`, `azureIconAssets` (`@microsoft/canvas-toolkit/icons`) |
+
+Do not hand-build these parts with raw `<h1>`, `<ul>`, `<input>`, or status
+`<p>` elements. For Azure lifecycle calls, see
+[Azure resource operations](azure-operations.md).
 
 `effect: "write"` describes an action; it does not authorize a cloud mutation.
 Keep errors visible and discard results from cancelled or invalidated contexts.
@@ -63,6 +81,7 @@ UI files and supply bundler paths. Keep these settings when customizing:
 | Node provider | Emit at the `dist/` root. Keep `@github/copilot-sdk/extension` external, along with Node built-ins and explicitly emitted local modules. Bundle other used npm code. |
 | Browser entry | Serve at the canvas URL root. No Node or host SDK imports; link compiled CSS separately. |
 | Shared UI | Preserve the helper's `nodeImport` filesystem path and `browserImports` URL paths. Mount the full `canvasUiAssets` map through the server. |
+| Azure icons | The build calls `prepareAzureIconAssets` to copy `dist/icons/*.svg`. Mount `...azureIconAssets` through the server. |
 | App assets | Copy HTML and custom assets into `dist/` and add their server routes. The helper only copies toolkit UI assets. |
 
 Do not externalize all dependencies or flatten asset-owning modules: esbuild

@@ -1,0 +1,14 @@
+.simple-home { max-width: 888px; box-sizing: border-box; margin: 0 auto; padding: 24px; color: var(--canvas-fg); }
+.simple-home-start { display: grid; gap: 24px; container: simple-home / inline-size; }
+.simple-home-start > *, .simple-home-tasks > * { min-width: 0; }
+.simple-home-introduction h2 { margin: 0; font-size: var(--text-title-size, 20px); line-height: var(--text-title-line-height, 28px); font-weight: var(--font-weight-semibold, 600); }
+.simple-home-introduction p { margin: 8px 0 0; color: var(--canvas-muted); font-size: var(--canvas-body); line-height: 20px; font-weight: 400; }
+.simple-home-tasks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.simple-home .simple-home-task.simple-home-task { min-height: 88px; height: 100%; }
+.simple-home-recent { margin-top: 24px; }
+@container simple-home (min-width: 520px) {
+    .simple-home-tasks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container simple-home (min-width: 760px) {
+    .simple-home-tasks { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
