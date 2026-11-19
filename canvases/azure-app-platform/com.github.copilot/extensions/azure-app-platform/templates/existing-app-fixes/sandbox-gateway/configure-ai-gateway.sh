@@ -3,7 +3,7 @@ set -euo pipefail
 umask 077
 
 unset UV_FROZEN UV_LOCKED UV_OFFLINE UV_NO_SYNC UV_EXTRA_INDEX_URL
-export UV_INDEX_URL="${UV_INDEX_URL:-https://packagefeedproxy.microsoft.io/pypi/simple/}"
+export UV_INDEX_URL="${UV_INDEX_URL:-https://pypi.org/simple/}"
 export UV_DEFAULT_INDEX="${UV_DEFAULT_INDEX:-$UV_INDEX_URL}"
 export PIP_INDEX_URL="${PIP_INDEX_URL:-$UV_INDEX_URL}"
 
@@ -359,7 +359,7 @@ EOF
 if [ -d "${REPO_ROOT}/src/agent" ]; then
   write_env_file "${REPO_ROOT}/src/agent/.env"
 fi
-if [ -f "${REPO_ROOT}/builder.yaml" ] || [ -f "${REPO_ROOT}/embr.yaml" ] || [ ! -d "${REPO_ROOT}/src/agent" ]; then
+if [ -f "${REPO_ROOT}/builder.yaml" ] || [ ! -d "${REPO_ROOT}/src/agent" ]; then
   write_env_file "${REPO_ROOT}/.env"
 fi
 

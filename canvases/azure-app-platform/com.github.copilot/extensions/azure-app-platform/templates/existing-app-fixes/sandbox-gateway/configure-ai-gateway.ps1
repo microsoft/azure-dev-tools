@@ -7,7 +7,7 @@ param()
 $ErrorActionPreference = 'Stop'
 
 Remove-Item Env:UV_FROZEN, Env:UV_LOCKED, Env:UV_OFFLINE, Env:UV_NO_SYNC, Env:UV_EXTRA_INDEX_URL -ErrorAction SilentlyContinue
-$env:UV_INDEX_URL = if ($env:UV_INDEX_URL) { $env:UV_INDEX_URL } else { 'https://packagefeedproxy.microsoft.io/pypi/simple/' }
+$env:UV_INDEX_URL = if ($env:UV_INDEX_URL) { $env:UV_INDEX_URL } else { 'https://pypi.org/simple/' }
 $env:UV_DEFAULT_INDEX = $env:UV_INDEX_URL
 $env:PIP_INDEX_URL = if ($env:PIP_INDEX_URL) { $env:PIP_INDEX_URL } else { $env:UV_INDEX_URL }
 
@@ -335,7 +335,7 @@ ACA_SUBSCRIPTION="$resolvedAcaSub"
             [System.Text.UTF8Encoding]::new($false)
         )
     }
-    if ((Test-Path (Join-Path $RepoRoot 'builder.yaml')) -or (Test-Path (Join-Path $RepoRoot 'embr.yaml')) -or -not (Test-Path (Join-Path $RepoRoot 'src\agent'))) {
+    if ((Test-Path (Join-Path $RepoRoot 'builder.yaml')) -or -not (Test-Path (Join-Path $RepoRoot 'src\agent'))) {
         [System.IO.File]::WriteAllText(
             $rootEnvPath,
             $agentEnvContent,

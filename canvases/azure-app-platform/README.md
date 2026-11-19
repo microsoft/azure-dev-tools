@@ -15,8 +15,12 @@ copilot plugin marketplace add github/awesome-copilot
 copilot plugin install azure-app-platform@awesome-copilot
 ```
 
-Reopen Copilot and start a new chat. The plugin includes its templates and
-browser assets; no `npm install` or build step is needed.
+Reopen Copilot and start a new chat. Browser assets are included. Gallery
+templates download from a pinned Git commit when you create an app and are
+cached for later use. The first download needs Git and network access; no
+`npm install` or build step is needed. The Empty Starter App is also included,
+so it works offline. To download the templates again, ask Copilot to clear the
+Azure App Platform template cache.
 
 ## Try it
 
