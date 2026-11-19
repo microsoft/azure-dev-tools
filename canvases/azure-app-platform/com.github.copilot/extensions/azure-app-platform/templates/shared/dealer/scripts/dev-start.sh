@@ -21,6 +21,7 @@ SKIP_SKILLS=0
 SKIP_AGENT=0
 SKIP_WEB=0
 KEEP_EXISTING=0
+FORCE_CLEAN="${FORCE_CLEAN:-0}"
 
 usage() {
   cat <<'EOF'
@@ -34,6 +35,7 @@ Options:
   --skip-agent    Do not start the deal-finder agent
   --skip-web      Do not start the Next.js web app
   --keep-existing Reuse live processes already tracked for this workspace
+  --clean         Force clean reinstall of npm and Python virtual environments
   -h, --help      Show this help
 EOF
 }
@@ -44,6 +46,7 @@ while (($#)); do
     --skip-agent) SKIP_AGENT=1 ;;
     --skip-web) SKIP_WEB=1 ;;
     --keep-existing) KEEP_EXISTING=1 ;;
+    --clean|-Clean) FORCE_CLEAN=1 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -100,7 +103,7 @@ mkdir -p "$LOG_DIR"
 if ((KEEP_EXISTING == 0)); then
   echo "[setup] stopping this workspace's tracked processes so startup order is deterministic..."
   "$SCRIPT_DIR/dev-stop.sh"
-  sleep 2
+  sleep 0.3
   : >"$STATE_FILE"
 elif [[ ! -f "$STATE_FILE" ]]; then
   : >"$STATE_FILE"
@@ -178,7 +181,7 @@ wait_port() {
       tail_logs "$name"
       return 1
     fi
-    sleep 0.5
+    sleep 0.15
   done
   echo "[$name] FAILED to listen on port $port within ${timeout}s" >&2
   tail_logs "$name"
@@ -361,6 +364,9 @@ NODE
       fail_and_stop "[$name] could not update local.settings.json for the selected Azurite ports."
     fi
 
+    if [[ "$FORCE_CLEAN" == "1" && -d "$skill_dir/.venv" ]]; then
+      rm -rf "$skill_dir/.venv"
+    fi
     start_tracked "$name" "$port" "$skill_dir" uv run func start --port "$port" ||
       fail_and_stop "[$name] could not start on port $port."
   done
@@ -377,6 +383,9 @@ if ((SKIP_AGENT == 0)); then
   agent_dir="$REPO_ROOT/src/agent"
   [[ -f "$agent_dir/.env" ]] ||
     fail_and_stop "src/agent/.env is missing. New git worktrees do not inherit gitignored Azure state or environment files. Copy .azure and the .env/local.settings.json files from an already-provisioned sibling worktree, or run 'azd provision' in infra-ai-gateway for this worktree."
+  if [[ "$FORCE_CLEAN" == "1" && -d "$agent_dir/.venv" ]]; then
+    rm -rf "$agent_dir/.venv"
+  fi
   start_tracked agent "$AGENT_PORT" "$agent_dir" env \
     -u OTEL_EXPORTER_OTLP_ENDPOINT \
     -u OTEL_EXPORTER_OTLP_PROTOCOL \
@@ -393,11 +402,17 @@ if ((SKIP_WEB == 0)); then
     fail_and_stop "npm was not found on PATH. Install Node.js/npm, then rerun this script."
   }
   web_dir="$REPO_ROOT/src/web"
-  echo "[web] installing/syncing npm dependencies..."
-  (
-    cd "$web_dir"
-    npm install --no-audit --no-fund
-  ) || fail_and_stop "The web app's npm dependencies failed to install. The local stack was stopped."
+  if [[ "$FORCE_CLEAN" == "1" ]]; then
+    echo "[web] --clean requested; removing node_modules and .next..."
+    rm -rf "$web_dir/node_modules" "$web_dir/.next"
+  fi
+  if [[ ! -d "$web_dir/node_modules/next" || "$FORCE_CLEAN" == "1" ]]; then
+    echo "[web] installing/syncing npm dependencies..."
+    (
+      cd "$web_dir"
+      npm install --prefer-offline --no-audit --no-fund
+    ) || fail_and_stop "The web app's npm dependencies failed to install. The local stack was stopped."
+  fi
   start_tracked web "$WEB_PORT" "$web_dir" env \
     AGENT_URL="http://127.0.0.1:$AGENT_PORT" npm run dev -- --port "$WEB_PORT" ||
     fail_and_stop "The web app could not start on port $WEB_PORT."

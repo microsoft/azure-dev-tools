@@ -1,13 +1,14 @@
 [CmdletBinding()]
-param([switch]$Help, [switch]$SkipSkill)
+param([switch]$Help, [switch]$SkipSkill, [switch]$Clean)
 $ErrorActionPreference = "Stop"
 
 if ($Help) {
-  Write-Output "Usage: ./scripts/dev-start.ps1 [-SkipSkill]"
+  Write-Output "Usage: ./scripts/dev-start.ps1 [-SkipSkill] [-Clean]"
   exit 0
 }
 
 $Root = Split-Path -Parent $PSScriptRoot
+$ForceClean = $Clean.IsPresent -or ($env:FORCE_CLEAN -eq "1")
 $RunDir = Join-Path $Root ".dev-run"
 . (Join-Path $PSScriptRoot "load-ports.ps1")
 Import-AppPorts $Root
@@ -25,26 +26,71 @@ $env:UV_DEFAULT_INDEX = $env:UV_INDEX_URL
 $env:PIP_INDEX_URL = if ($env:PIP_INDEX_URL) { $env:PIP_INDEX_URL } else { $env:UV_INDEX_URL }
 
 function Wait-Port($Name, $Port, $Process) {
-  for ($i = 0; $i -lt 120; $i++) {
+  for ($i = 0; $i -lt 200; $i++) {
     if ($Process.HasExited) { throw "$Name exited before opening port $Port" }
     if (Test-NetConnection 127.0.0.1 -Port $Port -InformationLevel Quiet -WarningAction SilentlyContinue) {
       Write-Host "[$Name] READY on port $Port"
       return
     }
-    Start-Sleep -Milliseconds 250
+    Start-Sleep -Milliseconds 150
   }
   throw "$Name timed out opening port $Port"
 }
 
-if (-not (Test-Path (Join-Path $Root "node_modules"))) {
-  Push-Location $Root
-  try { npm install --ignore-scripts --no-audit --no-fund } finally { Pop-Location }
+if ($ForceClean) {
+  Write-Host "Cleaning node_modules and dist (-Clean)..."
+  foreach ($dir in @("node_modules", "dist")) {
+    $target = Join-Path $Root $dir
+    if (Test-Path $target) {
+      Remove-Item -Recurse -Force $target
+    }
+  }
 }
-Push-Location $Root
-try { npm run build } finally { Pop-Location }
+
+if (-not (Test-Path (Join-Path $Root "node_modules/vite"))) {
+  Push-Location $Root
+  try { npm install --prefer-offline --ignore-scripts --no-audit --no-fund } finally { Pop-Location }
+}
+$DistIndex = Join-Path $Root "dist/index.html"
+$NeedsBuild = $ForceClean -or (-not (Test-Path $DistIndex))
+if (-not $NeedsBuild) {
+  $DistTime = (Get-Item $DistIndex).LastWriteTimeUtc
+  foreach ($srcRel in @("index.html", "src/main.ts", "vite.config.mjs")) {
+    $srcPath = Join-Path $Root $srcRel
+    if ((Test-Path $srcPath) -and ((Get-Item $srcPath).LastWriteTimeUtc -gt $DistTime)) {
+      $NeedsBuild = $true
+    }
+  }
+}
+if ($NeedsBuild) {
+  Push-Location $Root
+  try { npm run build } finally { Pop-Location }
+}
 
 $processes = @()
 try {
+  if (-not $SkipSkill -and (Test-Path (Join-Path $Root "src/skills"))) {
+    $SkillIndex = 0
+    foreach ($SkillDir in (Get-ChildItem -Path (Join-Path $Root "src/skills") -Directory)) {
+      if (-not (Test-Path (Join-Path $SkillDir.FullName "function_app.py"))) { continue }
+      $CurrentSkillPort = $SkillPort + $SkillIndex
+      $SkillIndex++
+      if ((Get-Command uv -ErrorAction SilentlyContinue) -and (Get-Command func -ErrorAction SilentlyContinue)) {
+        if ($ForceClean -and (Test-Path (Join-Path $SkillDir.FullName ".venv"))) {
+          Remove-Item -Recurse -Force (Join-Path $SkillDir.FullName ".venv")
+        }
+        $skillArgs = if (Test-Path (Join-Path $SkillDir.FullName "pyproject.toml")) {
+          @("run", "func", "start", "--port", "$CurrentSkillPort")
+        } else {
+          @("run", "--with-requirements", "requirements.txt", "func", "start", "--port", "$CurrentSkillPort")
+        }
+        $skill = Start-Process uv -ArgumentList $skillArgs -WorkingDirectory $SkillDir.FullName -WindowStyle Hidden -PassThru
+        $processes += @{ name = $SkillDir.Name; port = $CurrentSkillPort; pid = $skill.Id }
+        Wait-Port $SkillDir.Name $CurrentSkillPort $skill
+      }
+    }
+  }
+
   $AgentDir = $null
   if (Test-Path (Join-Path $Root "src/agent/main.py")) {
     $AgentDir = Join-Path $Root "src/agent"
@@ -54,23 +100,12 @@ try {
   }
   if ($AgentDir) {
     if (-not (Get-Command uv -ErrorAction SilentlyContinue)) { throw "uv is required to run the backend agent." }
+    if ($ForceClean -and (Test-Path (Join-Path $AgentDir ".venv"))) {
+      Remove-Item -Recurse -Force (Join-Path $AgentDir ".venv")
+    }
     $agent = Start-Process uv -ArgumentList "run", "main.py" -WorkingDirectory $AgentDir -WindowStyle Hidden -PassThru
     $processes += @{ name = "agent"; port = $AgentPort; pid = $agent.Id }
     Wait-Port "agent" $AgentPort $agent
-  }
-
-  if (-not $SkipSkill -and (Test-Path (Join-Path $Root "src/skills"))) {
-    $SkillIndex = 0
-    foreach ($SkillDir in (Get-ChildItem -Path (Join-Path $Root "src/skills") -Directory)) {
-      if (-not (Test-Path (Join-Path $SkillDir.FullName "function_app.py"))) { continue }
-      $CurrentSkillPort = $SkillPort + $SkillIndex
-      $SkillIndex++
-      if ((Get-Command uv -ErrorAction SilentlyContinue) -and (Get-Command func -ErrorAction SilentlyContinue)) {
-        $skill = Start-Process uv -ArgumentList "run", "--with-requirements", "requirements.txt", "func", "start", "--port", "$CurrentSkillPort" -WorkingDirectory $SkillDir.FullName -WindowStyle Hidden -PassThru
-        $processes += @{ name = $SkillDir.Name; port = $CurrentSkillPort; pid = $skill.Id }
-        Wait-Port $SkillDir.Name $CurrentSkillPort $skill
-      }
-    }
   }
 
   $npxCmd = if ($IsWindows) { "npx.cmd" } else { "npx" }

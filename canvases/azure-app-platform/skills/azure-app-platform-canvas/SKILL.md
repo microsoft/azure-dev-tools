@@ -20,6 +20,8 @@ When this skill is selected:
 4. Use `discover_platform` for the nine-tier implementation inventory,
    `trace_app` for a source-derived App Map, and `run_doctor` for
    compatibility readiness diagnostics.
+   Use `clear_template_cache` only when the user asks to download repository
+   templates again; the next Create fetches them again.
 5. Use `activate_tier` for tier work. It directly opens or focuses a registered
    preferred studio; otherwise it returns implementations or a non-mutating scaffold
    recipe. Specialist studios remain authoritative for their tiers.

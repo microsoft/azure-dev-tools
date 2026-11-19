@@ -1,7 +1,8 @@
-param([switch]$SkipSkill)
+param([switch]$SkipSkill, [switch]$Clean)
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
+$ForceClean = $Clean.IsPresent -or ($env:FORCE_CLEAN -eq "1")
 $RunDir = Join-Path $Root ".dev-run"
 . (Join-Path $PSScriptRoot "load-ports.ps1")
 Import-AppPorts $Root
@@ -19,13 +20,13 @@ $env:UV_DEFAULT_INDEX = $env:UV_INDEX_URL
 $env:PIP_INDEX_URL = if ($env:PIP_INDEX_URL) { $env:PIP_INDEX_URL } else { $env:UV_INDEX_URL }
 
 function Wait-Port($Name, $Port, $Process) {
-  for ($i = 0; $i -lt 120; $i++) {
+  for ($i = 0; $i -lt 200; $i++) {
     if ($Process.HasExited) { throw "$Name exited before opening port $Port" }
     if (Test-NetConnection 127.0.0.1 -Port $Port -InformationLevel Quiet -WarningAction SilentlyContinue) {
       Write-Host "[$Name] READY on port $Port"
       return
     }
-    Start-Sleep -Milliseconds 250
+    Start-Sleep -Milliseconds 150
   }
   throw "$Name timed out opening port $Port"
 }
@@ -33,17 +34,30 @@ function Wait-Port($Name, $Port, $Process) {
 $processes = @()
 try {
   if (-not (Get-Command uv -ErrorAction SilentlyContinue)) { throw "uv is required." }
-  $agent = Start-Process uv -ArgumentList "run", "main.py" -WorkingDirectory (Join-Path $Root "src/agent") -WindowStyle Hidden -PassThru
-  $processes += @{ name = "agent"; port = $AgentPort; pid = $agent.Id }
-  $web = Start-Process npm.cmd -ArgumentList "run", "dev" -WorkingDirectory (Join-Path $Root "src/web") -WindowStyle Hidden -PassThru
-  $processes += @{ name = "web"; port = $WebPort; pid = $web.Id }
-  Wait-Port "agent" $AgentPort $agent
-  Wait-Port "web" $WebPort $web
-  if (-not $SkipSkill -and (Get-Command uv -ErrorAction SilentlyContinue) -and (Get-Command func -ErrorAction SilentlyContinue)) {
-    $skill = Start-Process uv -ArgumentList "run", "--with-requirements", "requirements.txt", "func", "start", "--port", "$SkillPort" -WorkingDirectory (Join-Path $Root "src/skills/__SKILL_NAME__") -WindowStyle Hidden -PassThru
+  $SkillDir = Join-Path $Root "src/skills/__SKILL_NAME__"
+  if (-not $SkipSkill -and (Test-Path $SkillDir) -and (Get-Command uv -ErrorAction SilentlyContinue) -and (Get-Command func -ErrorAction SilentlyContinue)) {
+    if ($ForceClean -and (Test-Path (Join-Path $SkillDir ".venv"))) {
+      Remove-Item -Recurse -Force (Join-Path $SkillDir ".venv")
+    }
+    $skillArgs = if (Test-Path (Join-Path $SkillDir "pyproject.toml")) {
+      @("run", "func", "start", "--port", "$SkillPort")
+    } else {
+      @("run", "--with-requirements", "requirements.txt", "func", "start", "--port", "$SkillPort")
+    }
+    $skill = Start-Process uv -ArgumentList $skillArgs -WorkingDirectory $SkillDir -WindowStyle Hidden -PassThru
     $processes += @{ name = "skill"; port = $SkillPort; pid = $skill.Id }
     Wait-Port "skill" $SkillPort $skill
   }
+  $AgentDir = Join-Path $Root "src/agent"
+  if ($ForceClean -and (Test-Path (Join-Path $AgentDir ".venv"))) {
+    Remove-Item -Recurse -Force (Join-Path $AgentDir ".venv")
+  }
+  $agent = Start-Process uv -ArgumentList "run", "main.py" -WorkingDirectory $AgentDir -WindowStyle Hidden -PassThru
+  $processes += @{ name = "agent"; port = $AgentPort; pid = $agent.Id }
+  Wait-Port "agent" $AgentPort $agent
+  $web = Start-Process npm.cmd -ArgumentList "run", "dev" -WorkingDirectory (Join-Path $Root "src/web") -WindowStyle Hidden -PassThru
+  $processes += @{ name = "web"; port = $WebPort; pid = $web.Id }
+  Wait-Port "web" $WebPort $web
   $processes | ConvertTo-Json | Set-Content (Join-Path $RunDir "processes.json")
   Write-Host "__APP_NAME__ started: web http://localhost:$WebPort, agent http://localhost:$AgentPort"
 } catch {

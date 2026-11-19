@@ -44,10 +44,12 @@ param(
     [switch]$SkipSkills,
     [switch]$SkipAgent,
     [switch]$SkipWeb,
-    [switch]$KeepExisting
+    [switch]$KeepExisting,
+    [switch]$Clean
 )
 
 $ErrorActionPreference = 'Stop'
+$ForceClean = $Clean.IsPresent -or ($env:FORCE_CLEAN -eq '1')
 
 $DealerScriptRoot = if ($env:DEALER_SCRIPT_DIR) { $env:DEALER_SCRIPT_DIR } else { $PSScriptRoot }
 $RepoRoot = if ($env:DEALER_REPO_ROOT) { $env:DEALER_REPO_ROOT } else { Split-Path -Parent $DealerScriptRoot }
@@ -122,7 +124,7 @@ if (-not $KeepExisting) {
     # taskkill is asynchronous with respect to child handle cleanup. Give
     # Node/Functions workers a moment to release ports and log handles before
     # recreating the stack.
-    Start-Sleep -Seconds 2
+    Start-Sleep -Milliseconds 300
 }
 
 # Skills to start, in the order they're listed.
@@ -233,7 +235,7 @@ function Wait-PortListening {
             }
             return $false
         }
-        Start-Sleep -Milliseconds 500
+        Start-Sleep -Milliseconds 150
     }
 
     Write-Host ("[{0}] FAILED to listen on port {1} within {2}s" -f $Name, $Port, $TimeoutSeconds) -ForegroundColor Red
@@ -460,6 +462,9 @@ if (-not $SkipSkills) {
 
 if (-not $SkipAgent) {
     $agentDir = Join-Path $RepoRoot 'src\agent'
+    if ($ForceClean -and (Test-Path (Join-Path $agentDir '.venv'))) {
+        Remove-Item -Recurse -Force (Join-Path $agentDir '.venv')
+    }
     if (-not (Test-Path (Join-Path $agentDir '.env'))) {
         & (Join-Path $DealerScriptRoot 'dev-stop.ps1')
         throw "src/agent/.env is missing. New git worktrees do not inherit gitignored Azure state or environment files. Copy .azure and the .env/local.settings.json files from an already-provisioned sibling worktree, or run 'azd provision' in infra-ai-gateway for this worktree."
@@ -498,18 +503,28 @@ if (-not $SkipWeb) {
         & (Join-Path $DealerScriptRoot 'dev-stop.ps1')
         throw "npm.cmd was not found on PATH. Install Node.js/npm, then rerun this script."
     }
-    Write-Host "[web] installing/syncing npm dependencies..." -ForegroundColor DarkCyan
-    Push-Location $webDir
-    try {
-        & $npmCommand.Source install --no-audit --no-fund
-        $npmExitCode = $LASTEXITCODE
-    } finally {
-        Pop-Location
+    if ($ForceClean) {
+        Write-Host "[web] -Clean requested; removing node_modules and .next..." -ForegroundColor DarkCyan
+        foreach ($cleanDir in @((Join-Path $webDir 'node_modules'), (Join-Path $webDir '.next'))) {
+            if (Test-Path $cleanDir) {
+                Remove-Item -Recurse -Force $cleanDir
+            }
+        }
     }
-    if ($npmExitCode -ne 0) {
-        Save-ProcessState
-        & (Join-Path $DealerScriptRoot 'dev-stop.ps1')
-        throw "The web app's npm dependencies failed to install. The local stack was stopped."
+    if (-not (Test-Path (Join-Path $webDir 'node_modules\next')) -or $ForceClean) {
+        Write-Host "[web] installing/syncing npm dependencies..." -ForegroundColor DarkCyan
+        Push-Location $webDir
+        try {
+            & $npmCommand.Source install --prefer-offline --no-audit --no-fund
+            $npmExitCode = $LASTEXITCODE
+        } finally {
+            Pop-Location
+        }
+        if ($npmExitCode -ne 0) {
+            Save-ProcessState
+            & (Join-Path $DealerScriptRoot 'dev-stop.ps1')
+            throw "The web app's npm dependencies failed to install. The local stack was stopped."
+        }
     }
     $previousAgentUrl = [Environment]::GetEnvironmentVariable('AGENT_URL', 'Process')
     [Environment]::SetEnvironmentVariable('AGENT_URL', "http://127.0.0.1:$AgentPort", 'Process')

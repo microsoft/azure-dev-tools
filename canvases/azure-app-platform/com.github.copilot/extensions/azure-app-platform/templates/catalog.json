@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/Azure-Samples/azure-app-platform-templates",
+  "commit": "5f6976b85e6f85eb8a10c3141ddbbe2770aacf8e",
+  "templates": [
+    {
+      "id": "builtin-dealership-e2e-v1",
+      "kind": "sample",
+      "path": "templates/dealership-e2e",
+      "name": "Dealership E2E Reference Sample",
+      "description": "Start with a complete, runnable reference app for the dealer workflow.",
+      "capabilityIds": [
+        "web",
+        "agent",
+        "gateway",
+        "skills",
+        "sandbox",
+        "connectors",
+        "workflows",
+        "sre",
+        "data"
+      ],
+      "readyToRun": true,
+      "preservesDomain": true,
+      "startup": {
+        "start": "./scripts/dev-start.sh --skip-skills --skip-agent",
+        "fullStart": "./scripts/dev-start.sh",
+        "stop": "./scripts/dev-stop.sh",
+        "startArgs": [
+          "--skip-skills",
+          "--skip-agent"
+        ],
+        "startPowerShellArgs": [
+          "-SkipSkills",
+          "-SkipAgent"
+        ],
+        "requiresGatewayForFullStart": true,
+        "entrypoints": [
+          {
+            "name": "web",
+            "port": 3000
+          },
+          {
+            "name": "agent",
+            "port": 8088
+          },
+          {
+            "name": "inventory-search",
+            "port": 7071,
+            "kind": "function"
+          },
+          {
+            "name": "trade-in-value",
+            "port": 7072,
+            "kind": "function"
+          },
+          {
+            "name": "rate-sheet",
+            "port": 7073,
+            "kind": "function"
+          },
+          {
+            "name": "deal-doc",
+            "port": 7074,
+            "kind": "function"
+          },
+          {
+            "name": "azurite",
+            "port": 10000
+          },
+          {
+            "name": "azurite-queue",
+            "port": 10001
+          },
+          {
+            "name": "azurite-table",
+            "port": 10002
+          }
+        ],
+        "startEntrypoints": [
+          {
+            "name": "web",
+            "port": 3000
+          }
+        ],
+        "reservedPorts": [
+          3000,
+          8088,
+          7071,
+          7072,
+          7073,
+          7074,
+          10000,
+          10001,
+          10002
+        ]
+      },
+      "requiredPaths": [
+        "README.md",
+        "TESTING.md",
+        "azure.yaml",
+        "azure-app.yaml",
+        "scripts/dev-start.sh",
+        "scripts/dev-stop.sh",
+        "scripts/dev-start.ps1",
+        "scripts/dev-stop.ps1",
+        "scripts/load-ports.sh",
+        "scripts/load-ports.ps1",
+        "src/agent/agent.yaml",
+        "src/agent/main.py",
+        "src/agent/local_ports.py",
+        "src/web/package.json",
+        "src/web/builder.yaml",
+        "src/skills/inventory-search/local.settings.json.example",
+        "src/skills/trade-in-value/local.settings.json.example",
+        "src/skills/rate-sheet/local.settings.json.example",
+        "src/skills/deal-doc/local.settings.json.example",
+        "src/sandbox/prequal/Dockerfile",
+        "src/workflows/loan-approval/function_app.py"
+      ]
+    }
+  ]
+}
