@@ -5,7 +5,7 @@ const require = __canvasCreateRequire(import.meta.url);
 import { createServer } from "node:http";
 import { spawn as spawn2 } from "node:child_process";
 import { chmod, cp as cp3, mkdir as mkdir6, readdir as readdir6, readFile as readFile10, rename as rename6, rm as rm8, writeFile as writeFile4 } from "node:fs/promises";
-import { createHash as createHash8, randomUUID as randomUUID7, timingSafeEqual } from "node:crypto";
+import { createHash as createHash8, randomBytes, randomUUID as randomUUID7, timingSafeEqual } from "node:crypto";
 import net from "node:net";
 import path13 from "node:path";
 import { fileURLToPath as fileURLToPath3 } from "node:url";
@@ -165,11 +165,11 @@ var COMMAND_CSS = `.btn {
   .deploy-status strong { color: var(--ink); }
   .deploy-status a { color: var(--accent2); text-decoration: none; }
   .deploy-status a:hover { text-decoration: underline; }`;
-function commandClientScript() {
+function commandClientScript({ scopedPanel = false } = {}) {
   return `
     (function () {
       function postJson(url, body) {
-        return fetch(url, {
+        ${scopedPanel ? "body = body ?? {};\n        " : ""}return fetch(${scopedPanel ? "'.' + url" : "url"}, {
           method: 'POST',
           headers: body ? { 'Content-Type': 'application/json' } : undefined,
           body: body ? JSON.stringify(body) : undefined
@@ -1361,7 +1361,7 @@ function contract(canvasId, host, versions, actions, controls) {
 var FUNCTION_STUDIO_USAGE_CONTRACT = contract(
   "azure-functions-hosted-skills",
   "copilot_app",
-  ["0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.5.4", "0.5.5", "0.5.6"],
+  ["0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.5.4", "0.5.5", "0.5.6", "0.5.7"],
   {
     installation_status: usage("app.installation_status.read", "integration", "excluded"),
     set_trigger: usage("trigger.select", "authoring"),
@@ -1417,6 +1417,7 @@ var FUNCTION_STUDIO_USAGE_CONTRACT = contract(
     "subscription-picker-close": "button",
     "subscription-picker-search": "input",
     "subscription-picker-bulk": "button",
+    "subscription-picker-show-more": "button",
     "subscription-picker-item": "input",
     "subscription-picker-choose": "button",
     "subscription-picker-continue": "button",
@@ -1554,7 +1555,7 @@ function retainedHostedSkillsClient() {
   let state;
   const esc = (v) => String(v == null ? '' : v).replace(/[&<>"]/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' })[c]);
   const post = async (url, body = {}) => {
-    const response = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const response = await fetch('.' + url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
     const result = await response.json();
     $('status').textContent = result.message || (result.ok ? '' : 'Request failed.');
     return result;
@@ -1752,7 +1753,7 @@ function retainedHostedSkillsClient() {
   $('invoke').addEventListener('click', async () => { try { await flushInstructions(); } catch { return; } await post('/invoke', { prompt: $('trigger-test-input').value || '' }); });
   $('clear-invocations').addEventListener('click', () => post('/clear'));
   $('deployment-preflight').addEventListener('click', () => post('/deployment/prepare'));
-  const events = new EventSource('/events');
+  const events = new EventSource('./events');
   events.addEventListener('state', (event) => render(JSON.parse(event.data)));
   events.onerror = () => { $('status').textContent = 'Waiting for runtime state…'; };
 })();`;
@@ -2513,7 +2514,7 @@ ${withLoadTest ? `    <div class="panel" id="load-test-panel" style="display:non
   </div>
 
 ${withFullClient ? `<script>
-${commandClientScript()}
+${commandClientScript({ scopedPanel: true })}
 </script>
 ` : ""}${withFullClient ? `<script type="module">
   const toolkitSubscriptionsEnabled = ${JSON.stringify(withToolkitSubscriptions)};
@@ -2590,8 +2591,8 @@ ${commandClientScript()}
     closeList();
     return html;
   }
-  function postJson(url, body) {
-    return fetch(url, { method: 'POST', headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined })
+  function postJson(url, body = {}) {
+    return fetch('.' + url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       .then((r) => r.json());
   }
   const statusEl = document.getElementById('status');
@@ -3560,7 +3561,7 @@ ${commandClientScript()}
     }
   }
 
-  const es = new EventSource('/events');
+  const es = new EventSource('./events');
   es.addEventListener('state', (e) => render(JSON.parse(e.data)));
   setInterval(() => { if (latest) renderInvoke(latest); }, 500);
 
@@ -4112,7 +4113,7 @@ ${commandClientScript()}
     root: document,
     enabled: ${usageMetricsEnabled === true},
     controls: ${JSON.stringify(FUNCTION_STUDIO_USAGE_CONTROLS)},
-    send: (payload) => fetch('/metrics/interaction', {
+    send: (payload) => fetch('./metrics/interaction', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -4304,11 +4305,335 @@ function resolveFunctionStudioBuildInfo({ version, revision }) {
 }
 
 // canvases/azure-functions-hosted-skills/src/copilot-sdk-bridge.mjs
-import { randomUUID } from "node:crypto";
-import { mkdir as mkdir2, readFile as readFile3, rm as rm2, stat as stat2 } from "node:fs/promises";
-import { homedir as homedir3 } from "node:os";
-import path4 from "node:path";
+import { randomUUID as randomUUID3 } from "node:crypto";
+import { mkdir as mkdir4, readFile as readFile5, rm as rm4, stat as stat2 } from "node:fs/promises";
+import { homedir as homedir4 } from "node:os";
+import path6 from "node:path";
 import { CopilotClient, RuntimeConnection } from "@github/copilot-sdk";
+
+// canvases/azure-functions-hosted-skills/src/state-migration.mjs
+import { createHash as createHash2, randomUUID as randomUUID2 } from "node:crypto";
+import { link, lstat as lstat4, mkdir as mkdir3, open as open2, readFile as readFile4, realpath as realpath2, rename as rename3, rm as rm3 } from "node:fs/promises";
+import path5 from "node:path";
+import { homedir as homedir3, tmpdir } from "node:os";
+
+// canvases/azure-functions-hosted-skills/src/state-lock.mjs
+import { randomUUID } from "node:crypto";
+import { lstat as lstat3, mkdir as mkdir2, open, readFile as readFile3, rename as rename2, rm as rm2 } from "node:fs/promises";
+import path4 from "node:path";
+async function acquireStateLock(file, { timeoutMs = 12e4, pollMs = 50 } = {}) {
+  const lockPath = `${file}.lock`;
+  await mkdir2(path4.dirname(lockPath), { recursive: true, mode: 448 });
+  const token = randomUUID();
+  const started = Date.now();
+  let ownerClassification = "incomplete";
+  while (true) {
+    try {
+      const handle = await open(lockPath, "wx", 384);
+      try {
+        await handle.writeFile(`${JSON.stringify({ pid: process.pid, token })}
+`);
+        await handle.sync();
+      } finally {
+        await handle.close();
+      }
+      let released = false;
+      return async () => {
+        if (released) return;
+        released = true;
+        const current = JSON.parse(await readFile3(lockPath, "utf8"));
+        if (current.token === token) await rm2(lockPath);
+      };
+    } catch (error) {
+      if (error?.code !== "EEXIST") throw error;
+      const gate = `${lockPath}.recovery`;
+      let recovery;
+      let retired = false;
+      try {
+        recovery = await open(gate, "wx", 384);
+        const item = await lstat3(lockPath);
+        if (item.isSymbolicLink()) throw new Error(`Unsafe state lock: ${lockPath}`);
+        ownerClassification = "incomplete";
+        let owner;
+        try {
+          owner = JSON.parse(await readFile3(lockPath, "utf8"));
+        } catch (error2) {
+          if (error2?.code === "ENOENT") throw error2;
+        }
+        if (Number.isInteger(owner?.pid) && owner.pid > 0) {
+          try {
+            process.kill(owner.pid, 0);
+            ownerClassification = "live";
+          } catch (error2) {
+            if (error2?.code === "ESRCH") {
+              const retiredPath = `${lockPath}.${token}.retired`;
+              await rename2(lockPath, retiredPath);
+              await rm2(retiredPath);
+              retired = true;
+            } else ownerClassification = "live";
+          }
+        }
+      } catch (error2) {
+        if (!["EEXIST", "ENOENT"].includes(error2?.code)) throw error2;
+      } finally {
+        if (recovery) {
+          await recovery.close();
+          await rm2(gate, { force: true });
+        }
+      }
+      if (retired) continue;
+      if (Date.now() - started >= timeoutMs) {
+        if (ownerClassification === "live") {
+          throw new Error(`Timed out waiting for the canonical canvas state owner: ${lockPath}. Another session or canvas owns Studio state. Close it and retry.`);
+        }
+        throw new Error(`Timed out waiting for the canonical canvas state owner: ${lockPath}. An incomplete lock requires explicit recovery.`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, pollMs));
+    }
+  }
+}
+
+// canvases/azure-functions-hosted-skills/src/state-migration.mjs
+var STATE_COMPONENT = "azure-functions-hosted-skills";
+var STATE_PRODUCT = "azure-functions-hosted-skills";
+var LEGACY_STATE_COMPONENT = "intelligent-function-app-studio";
+var LEGACY_PREVIEW_STATE_COMPONENTS = Object.freeze([
+  "azure-functions-hosted-skills-preview",
+  "azure-functions-hosted-skills-preview-12"
+]);
+function studioStateEnvironment({ env = process.env, homeDirectory = homedir3, pathApi = path5 } = {}) {
+  const override = env.FUNCTION_STUDIO_STATE_HOME;
+  if (override !== void 0 && (!override || !pathApi.isAbsolute(override))) {
+    throw new Error("FUNCTION_STUDIO_STATE_HOME must be an absolute fixture/state home directory.");
+  }
+  const home = override || homeDirectory();
+  return {
+    home,
+    // An explicit state-home fence includes ownership records. Do not let an
+    // inherited COPILOT_HOME escape it into the user's real extension state.
+    copilotHome: override ? pathApi.join(home, ".copilot") : env.COPILOT_HOME || pathApi.join(home, ".copilot")
+  };
+}
+function stateDigest(value) {
+  return createHash2("sha256").update(value).digest("hex");
+}
+function instanceStateSegment(instanceId) {
+  const value = String(instanceId || "instance");
+  const safe = value.replace(/[^A-Za-z0-9._-]/g, "-").slice(0, 80);
+  if (safe === value && safe !== "." && safe !== ".." && !safe.endsWith(".") && !/^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(safe)) return safe;
+  return `instance-${stateDigest(value).slice(0, 32)}`;
+}
+function studioStatePaths({ home, copilotHome, instanceId, pathApi = path5 } = {}) {
+  if (home === void 0) {
+    const environment = studioStateEnvironment({ pathApi });
+    home = environment.home;
+    copilotHome ??= environment.copilotHome;
+  }
+  copilotHome ??= pathApi.join(home, ".copilot");
+  const segment2 = instanceStateSegment(instanceId);
+  const raw = String(instanceId || "instance");
+  const legacySegment = raw.replace(/[^A-Za-z0-9._-]/g, "-").slice(0, 80) || "instance";
+  const legacyRoots = segment2 === legacySegment ? [
+    pathApi.join(home, `.${LEGACY_STATE_COMPONENT}`, legacySegment),
+    pathApi.join(copilotHome, "extensions", LEGACY_STATE_COMPONENT, "state", legacySegment),
+    pathApi.join(copilotHome, "extensions", LEGACY_STATE_COMPONENT, "artifacts", legacySegment),
+    ...LEGACY_PREVIEW_STATE_COMPONENTS.flatMap((identity) => [
+      pathApi.join(home, `.${identity}`, identity, legacySegment),
+      pathApi.join(copilotHome, "extensions", identity, "state", identity, legacySegment),
+      pathApi.join(copilotHome, "extensions", identity, "state", legacySegment)
+    ])
+  ] : [];
+  return {
+    home,
+    copilotHome,
+    root: pathApi.join(home, `.${STATE_PRODUCT}`, STATE_COMPONENT, segment2),
+    legacyRoots,
+    ambiguousLegacyRoot: segment2 !== legacySegment && ![".", ".."].includes(legacySegment) ? pathApi.join(home, `.${LEGACY_STATE_COMPONENT}`, legacySegment) : null,
+    owner: { component: STATE_COMPONENT, instanceId: raw }
+  };
+}
+function normalizeWindowsExtendedPath(value, { platform = process.platform } = {}) {
+  if (platform !== "win32" || typeof value !== "string") return value;
+  if (/^\\\\\?\\UNC\\/i.test(value)) return `\\\\${value.slice(8)}`;
+  if (/^\\\\\?\\[A-Za-z]:(?:\\|$)/.test(value)) return value.slice(4);
+  return value;
+}
+function windowsExtendedPathSpellings(value, { platform = process.platform } = {}) {
+  if (platform !== "win32" || typeof value !== "string") return [];
+  if (/^[A-Za-z]:\\/.test(value)) return [`\\\\?\\${value}`];
+  if (/^\\\\[^\\?.][^\\]*\\/.test(value)) return [`\\\\?\\UNC\\${value.slice(2)}`];
+  return [];
+}
+async function assertSafeStatePath(file, { trustedRoot } = {}) {
+  const resolved = path5.resolve(normalizeWindowsExtendedPath(file));
+  trustedRoot = normalizeWindowsExtendedPath(trustedRoot);
+  const contains = (root) => {
+    const relative2 = path5.relative(root, resolved);
+    return !path5.isAbsolute(relative2) && relative2 !== ".." && !relative2.startsWith(`..${path5.sep}`);
+  };
+  const base = trustedRoot ? path5.resolve(trustedRoot) : [
+    studioStateEnvironment().home,
+    homedir3(),
+    tmpdir(),
+    process.cwd()
+  ].map((root) => path5.resolve(normalizeWindowsExtendedPath(root))).filter(contains).sort((a, b) => b.length - a.length)[0] || path5.parse(resolved).root;
+  if (!contains(base)) throw new Error(`State path is outside its trusted base: ${file}`);
+  let cursor;
+  try {
+    cursor = await realpath2(base);
+  } catch (error) {
+    if (error?.code === "ENOENT") return;
+    throw error;
+  }
+  const relative = path5.relative(base, resolved);
+  const physicalFile = path5.join(cursor, relative);
+  const parts = relative ? relative.split(path5.sep) : [""];
+  for (const part of parts) {
+    cursor = path5.join(cursor, part);
+    try {
+      const item = await lstat4(cursor);
+      if (item.isSymbolicLink()) throw new Error(`State ownership rejected a symbolic link: ${cursor}`);
+      if (cursor === physicalFile && typeof process.getuid === "function" && item.uid !== process.getuid()) {
+        throw new Error(`State ownership rejected a file owned by another user: ${cursor}`);
+      }
+    } catch (error) {
+      if (error?.code === "ENOENT") return;
+      throw error;
+    }
+  }
+}
+async function readStateText(file) {
+  await assertSafeStatePath(file);
+  try {
+    const item = await lstat4(file);
+    if (!item.isFile() || item.size > 8 * 1024 * 1024) throw new Error(`Invalid or oversized state file: ${file}`);
+    return await readFile4(file, "utf8");
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
+}
+async function atomicStateWrite(file, value, { exclusive = false } = {}) {
+  await assertSafeStatePath(file);
+  await mkdir3(path5.dirname(file), { recursive: true, mode: 448 });
+  const temporary = `${file}.${randomUUID2()}.pending`;
+  const handle = await open2(temporary, "wx", 384);
+  try {
+    await handle.writeFile(value);
+    await handle.sync();
+    await handle.close();
+    if (exclusive) await link(temporary, file);
+    else await rename3(temporary, file);
+  } finally {
+    await handle.close();
+    await rm3(temporary, { force: true });
+  }
+}
+async function withStateLock(file, callback) {
+  await assertSafeStatePath(file);
+  await assertSafeStatePath(`${file}.lock`);
+  const release = await acquireStateLock(file);
+  try {
+    return await callback();
+  } finally {
+    await release();
+  }
+}
+var jsonText = (value) => `${JSON.stringify(value, null, 2)}
+`;
+var sameOwner = (left, right) => JSON.stringify(left) === JSON.stringify(right);
+async function migrateStateRecord({
+  destination,
+  sources = [],
+  schema,
+  owner,
+  validate,
+  lockHeld = false,
+  decode = JSON.parse,
+  encode = jsonText,
+  afterPublish,
+  isSourceAllowed = (source) => sources.includes(source)
+}) {
+  const perform = async () => {
+    const markerPath = `${destination}.migration.json`;
+    const markerRaw = await readStateText(markerPath);
+    let marker = markerRaw === null ? null : JSON.parse(markerRaw);
+    if (marker && (marker.version !== 1 || marker.component !== STATE_COMPONENT || marker.schema !== schema || marker.destination !== destination || !sameOwner(marker.owner, owner) || !isSourceAllowed(marker.source) || !["copying", "complete"].includes(marker.status) || !/^[a-f0-9]{64}$/.test(marker.sourceHash) || !/^[a-f0-9]{64}$/.test(marker.destinationHash))) throw new Error(`Invalid migration ownership receipt: ${markerPath}`);
+    let canonical = await readStateText(destination);
+    if (marker) {
+      const original = await readStateText(marker.source);
+      if (original !== null && stateDigest(original) !== marker.sourceHash) {
+        throw new Error(`Legacy state changed after migration; reconcile explicitly: ${marker.source}`);
+      }
+      if (canonical === null && marker.status === "complete") {
+        return null;
+      }
+      if (canonical !== null && marker.status === "copying") {
+        if (stateDigest(canonical) !== marker.destinationHash) {
+          throw new Error(`Interrupted migration conflicts with canonical state: ${destination}`);
+        }
+        await validate(decode(canonical), { source: destination, canonical: true });
+        marker = { ...marker, status: "complete" };
+        await atomicStateWrite(markerPath, jsonText(marker));
+      }
+    }
+    if (canonical !== null) {
+      return { value: await validate(decode(canonical), { source: destination, canonical: true }), revision: stateDigest(canonical) };
+    }
+    const candidates = [];
+    for (const source of /* @__PURE__ */ new Set([...sources, ...marker ? [marker.source] : []])) {
+      const raw = await readStateText(source);
+      if (raw === null) continue;
+      const value = await validate(decode(raw), { source, canonical: false });
+      candidates.push({ source, raw, encoded: encode(value), value });
+    }
+    if (!candidates.length) {
+      if (marker) throw new Error(`Interrupted migration source is missing: ${marker.source}`);
+      return null;
+    }
+    if (candidates.some((item) => item.encoded !== candidates[0].encoded)) {
+      throw new Error(`Divergent legacy state requires explicit reconciliation: ${destination}`);
+    }
+    const selected = marker ? candidates.find((item) => item.source === marker.source) : candidates[0];
+    if (!selected || marker && stateDigest(selected.encoded) !== marker.destinationHash) {
+      throw new Error(`Interrupted migration source no longer matches: ${destination}`);
+    }
+    marker = {
+      version: 1,
+      component: STATE_COMPONENT,
+      schema,
+      owner,
+      source: selected.source,
+      destination,
+      sourceHash: stateDigest(selected.raw),
+      destinationHash: stateDigest(selected.encoded),
+      status: "copying"
+    };
+    await atomicStateWrite(markerPath, jsonText(marker));
+    if (await readStateText(selected.source) !== selected.raw) {
+      throw new Error(`Legacy state changed during migration: ${selected.source}`);
+    }
+    await atomicStateWrite(destination, selected.encoded, { exclusive: true });
+    if (afterPublish) await afterPublish();
+    await atomicStateWrite(markerPath, jsonText({ ...marker, status: "complete" }));
+    canonical = selected.encoded;
+    return { value: selected.value, revision: stateDigest(canonical) };
+  };
+  return lockHeld ? perform() : withStateLock(destination, perform);
+}
+async function writeStateRecord({ destination, value, revision, validate }) {
+  return withStateLock(destination, async () => {
+    const current = await readStateText(destination);
+    if ((current === null ? null : stateDigest(current)) !== revision) {
+      throw new Error(`State changed in another canvas instance; reopen before saving: ${destination}`);
+    }
+    const encoded = jsonText(await validate(value, { source: destination, canonical: true }));
+    await atomicStateWrite(destination, encoded);
+    return stateDigest(encoded);
+  });
+}
+
+// canvases/azure-functions-hosted-skills/src/copilot-sdk-bridge.mjs
 var DEFAULT_REQUEST_TIMEOUT_MS = 6e4;
 var DEFAULT_SESSION_TTL_MS = 15 * 6e4;
 var DEFAULT_MAX_SESSIONS = 8;
@@ -4331,19 +4656,20 @@ async function requireRegularFile(files, inspectFile = stat2) {
 async function resolveHostCopilotCliPath({
   environment = process.env,
   platform = process.platform,
-  homeDirectory = homedir3(),
-  readText = (file) => readFile3(file, "utf8"),
+  homeDirectory = homedir4(),
+  readText = (file) => readFile5(file, "utf8"),
   inspectFile = stat2
 } = {}) {
-  const pathApi = platform === "win32" ? path4.win32 : path4.posix;
-  const explicit = String(environment.COPILOT_CLI_PATH || "").trim();
+  const pathApi = platform === "win32" ? path6.win32 : path6.posix;
+  const hostPath = (value) => normalizeWindowsExtendedPath(String(value || "").trim(), { platform });
+  const explicit = hostPath(environment.COPILOT_CLI_PATH);
   if (explicit) {
     if (!pathApi.isAbsolute(explicit)) {
       throw new CopilotSdkBridgeError("COPILOT_CLI_PATH must be an absolute path.", 503);
     }
     return requireRegularFile([explicit], inspectFile);
   }
-  const sdkRoot = String(environment.COPILOT_SDK_PATH || "").trim();
+  const sdkRoot = hostPath(environment.COPILOT_SDK_PATH);
   if (!sdkRoot) return "";
   if (!pathApi.isAbsolute(sdkRoot)) {
     throw new CopilotSdkBridgeError("COPILOT_SDK_PATH must be an absolute path.", 503);
@@ -4361,11 +4687,28 @@ async function resolveHostCopilotCliPath({
   if (!version || !/^[0-9A-Za-z.-]+$/.test(version)) {
     throw new CopilotSdkBridgeError("GitHub Copilot App exposed an invalid CLI version.", 503);
   }
-  const cacheBase = platform === "win32" ? String(environment.LOCALAPPDATA || pathApi.join(homeDirectory, "AppData", "Local")) : platform === "darwin" ? pathApi.join(homeDirectory, "Library", "Caches") : String(environment.XDG_CACHE_HOME || pathApi.join(homeDirectory, ".cache"));
+  const cacheBase = platform === "win32" ? hostPath(environment.LOCALAPPDATA) || pathApi.join(homeDirectory, "AppData", "Local") : platform === "darwin" ? pathApi.join(homeDirectory, "Library", "Caches") : String(environment.XDG_CACHE_HOME || pathApi.join(homeDirectory, ".cache"));
   const executable = platform === "win32" ? "copilot.exe" : "copilot";
   return requireRegularFile(
-    [version, `copilot-sdk-runtime-${version}`].map((directory) => pathApi.join(cacheBase, "github-copilot-sdk", "cli", directory, executable)),
+    ["copilot-sdk", "github-copilot-sdk"].flatMap((cache) => [version, `copilot-sdk-runtime-${version}`].map((directory) => pathApi.join(cacheBase, cache, "cli", directory, executable))),
     inspectFile
+  );
+}
+function usesCurrentSdkOptions(runtimeConnection = RuntimeConnection) {
+  return typeof runtimeConnection?.forSpawnedStdio === "function";
+}
+function definedEntries(values) {
+  return Object.fromEntries(Object.entries(values).filter(([, value]) => value !== void 0));
+}
+function createRuntimeConnection(cliPath, runtimeConnection = RuntimeConnection, runtimeOptions = {}) {
+  const options = { path: cliPath, args: ["--no-auto-update"] };
+  if (usesCurrentSdkOptions(runtimeConnection)) {
+    return runtimeConnection.forSpawnedStdio({ ...options, ...definedEntries(runtimeOptions) });
+  }
+  if (typeof runtimeConnection?.forStdio === "function") return runtimeConnection.forStdio(options);
+  throw new CopilotSdkBridgeError(
+    "The GitHub Copilot SDK does not support a stdio runtime connection (forSpawnedStdio or forStdio).",
+    503
   );
 }
 var CopilotSdkBridgeError = class extends Error {
@@ -4600,7 +4943,7 @@ function toolResultsForPending(messages, pending, handled) {
 }
 function chatCompletion(modelId, message, finishReason) {
   return {
-    id: `chatcmpl-${randomUUID()}`,
+    id: `chatcmpl-${randomUUID3()}`,
     object: "chat.completion",
     created: Math.floor(Date.now() / 1e3),
     model: modelId,
@@ -4641,10 +4984,8 @@ var CopilotSdkBridge = class {
     workingDirectory,
     createClient = (options) => new CopilotClient(options),
     resolveCliPath = resolveHostCopilotCliPath,
-    createConnection = (cliPath) => RuntimeConnection.forStdio({
-      path: cliPath,
-      args: ["--no-auto-update"]
-    }),
+    runtimeConnection = RuntimeConnection,
+    createConnection = (cliPath, runtimeOptions) => createRuntimeConnection(cliPath, runtimeConnection, runtimeOptions),
     requestTimeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
     sessionTtlMs = DEFAULT_SESSION_TTL_MS,
     maxSessions = DEFAULT_MAX_SESSIONS
@@ -4653,6 +4994,8 @@ var CopilotSdkBridge = class {
     this.workingDirectory = workingDirectory;
     this.createClient = createClient;
     this.resolveCliPath = resolveCliPath;
+    this.runtimeConnection = runtimeConnection;
+    this.currentSdkOptions = usesCurrentSdkOptions(runtimeConnection);
     this.createConnection = createConnection;
     this.requestTimeoutMs = requestTimeoutMs;
     this.sessionTtlMs = sessionTtlMs;
@@ -4670,17 +5013,9 @@ var CopilotSdkBridge = class {
     if (this.client) return this.client;
     if (!this.clientPromise) {
       this.clientPromise = (async () => {
-        await mkdir2(this.baseDirectory, { recursive: true });
+        await mkdir4(this.baseDirectory, { recursive: true });
         const cliPath = await this.resolveCliPath();
-        const options = {
-          mode: "empty",
-          baseDirectory: this.baseDirectory,
-          workingDirectory: this.workingDirectory,
-          useLoggedInUser: true,
-          logLevel: "error",
-          ...cliPath ? { connection: this.createConnection(cliPath) } : {}
-        };
-        const client = this.createClient(options);
+        const client = this.createClient(this.clientOptions(cliPath));
         try {
           await client.start();
           this.client = client;
@@ -4697,6 +5032,25 @@ var CopilotSdkBridge = class {
       });
     }
     return this.clientPromise;
+  }
+  clientOptions(cliPath) {
+    if (!this.currentSdkOptions) {
+      return {
+        mode: "empty",
+        baseDirectory: this.baseDirectory,
+        workingDirectory: this.workingDirectory,
+        useLoggedInUser: true,
+        logLevel: "error",
+        ...cliPath ? { connection: this.createConnection(cliPath) } : {}
+      };
+    }
+    const runtime = cliPath ? this.createConnection(cliPath, { baseDirectory: this.baseDirectory, workingDirectory: this.workingDirectory }) : typeof this.runtimeConnection.forDefault === "function" ? this.runtimeConnection.forDefault({ baseDirectory: this.baseDirectory }) : this.runtimeConnection.forInProcess({ baseDirectory: this.baseDirectory });
+    return {
+      mode: "empty",
+      runtime,
+      github: { useLoggedInUser: true },
+      observability: { logLevel: "error" }
+    };
   }
   async listModels({ force = false } = {}) {
     return (await this.ensureClient({ force })).listModels();
@@ -4716,6 +5070,30 @@ var CopilotSdkBridge = class {
     this.preparedModelId = normalized;
   }
   sessionConfig(modelId, tools, availableToolNames = tools.map((tool) => tool.name)) {
+    const onPermissionRequest = async () => ({
+      kind: "reject",
+      feedback: "Permissions are disabled in the local Copilot bridge."
+    });
+    const systemMessage = {
+      mode: "replace",
+      content: "You are the inference engine for one local Azure Functions Hosted Skills request. Use only the supplied conversation and declared function tools. Do not inspect host files, repositories, sessions, extensions, canvases, skills, or network resources."
+    };
+    if (this.currentSdkOptions) {
+      return {
+        clientName: "azure-functions-hosted-skills",
+        model: modelId,
+        workingDirectory: this.workingDirectory,
+        enableConfigDiscovery: false,
+        skills: { enabled: false },
+        state: { enableCrossSessionStore: false },
+        git: { enableHostGitOperations: false },
+        canvases: { requestRenderer: false },
+        extensions: { enabled: false },
+        tools: { definitions: tools, availableTools: availableToolNames },
+        permissions: { onRequest: onPermissionRequest },
+        systemMessage
+      };
+    }
     return {
       clientName: "azure-functions-hosted-skills",
       model: modelId,
@@ -4728,14 +5106,8 @@ var CopilotSdkBridge = class {
       requestExtensions: false,
       tools,
       availableTools: availableToolNames,
-      onPermissionRequest: async () => ({
-        kind: "reject",
-        feedback: "Permissions are disabled in the local Copilot bridge."
-      }),
-      systemMessage: {
-        mode: "replace",
-        content: "You are the inference engine for one local Azure Functions Hosted Skills request. Use only the supplied conversation and declared function tools. Do not inspect host files, repositories, sessions, extensions, canvases, skills, or network resources."
-      }
+      onPermissionRequest,
+      systemMessage
     };
   }
   async pruneExpiredContexts() {
@@ -4783,7 +5155,7 @@ var CopilotSdkBridge = class {
   }
   async updateAvailableTools(context, availableToolNames) {
     if (context.availableToolNames.length === availableToolNames.length && context.availableToolNames.every((name, index) => name === availableToolNames[index])) return;
-    const updated = await context.session.rpc.options.update({ availableTools: availableToolNames });
+    const updated = await context.session.rpc.options.update(this.currentSdkOptions ? { tools: { availableTools: availableToolNames } } : { availableTools: availableToolNames });
     if (!updated?.success) {
       throw new CopilotSdkBridgeError("GitHub Copilot could not update the available function tools.", 502);
     }
@@ -4819,7 +5191,7 @@ var CopilotSdkBridge = class {
         );
         return;
       }
-      const bridgeToolCallId = randomUUID();
+      const bridgeToolCallId = randomUUID3();
       context.pending.set(bridgeToolCallId, {
         requestId: event.data.requestId,
         toolCallId: event.data.toolCallId,
@@ -5132,7 +5504,7 @@ After receiving the tool result, produce the complete final response incorporati
     if (this.closed) return;
     this.closed = true;
     await this.closeClient();
-    await rm2(this.baseDirectory, { recursive: true, force: true });
+    await rm4(this.baseDirectory, { recursive: true, force: true });
   }
 };
 var copilotSdkBridgeTestHooks = Object.freeze({
@@ -5637,7 +6009,7 @@ function doctorRequiresAzure({ target = "local", modelSource = "copilot" } = {},
 }
 
 // packages/studio-runtime/src/ai-gateway-arm.mjs
-import { createHash as createHash2 } from "node:crypto";
+import { createHash as createHash3 } from "node:crypto";
 
 // packages/studio-runtime/src/arm-rest.mjs
 var ARM_RESOURCE = "https://management.azure.com/";
@@ -5768,7 +6140,7 @@ async function retrieveRuntimeKey(arm, subscription, gatewayId, keyName = "defau
 }
 
 // canvases/azure-functions-hosted-skills/src/azure-subscriptions.mjs
-import { createHash as createHash3 } from "node:crypto";
+import { createHash as createHash4 } from "node:crypto";
 
 // packages/canvas-toolkit/src/subscriptions.mjs
 var GUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
@@ -5838,7 +6210,7 @@ function committedSubscriptionId(scope) {
 function subscriptionAccountBinding(scope) {
   if (scope?.accountBinding) return scope.accountBinding;
   const selectedKey = scope?.selectedKeys?.[0];
-  return selectedKey ? createHash3("sha256").update(selectedKey).digest("hex") : "";
+  return selectedKey ? createHash4("sha256").update(selectedKey).digest("hex") : "";
 }
 function subscriptionScopeIdentity(scope) {
   return JSON.stringify([
@@ -5978,9 +6350,9 @@ function hydrateAzureSubscriptionInventory(azure, { force = false, loadApps = tr
 }
 
 // packages/function-app-core/src/python-environment.mjs
-import path5 from "node:path";
+import path7 from "node:path";
 function pythonVirtualEnvironment(agentDir, platform = process.platform) {
-  const pathApi = platform === "win32" ? path5.win32 : path5.posix;
+  const pathApi = platform === "win32" ? path7.win32 : path7.posix;
   const directory = pathApi.join(agentDir, ".venv");
   const binDirectory = pathApi.join(directory, platform === "win32" ? "Scripts" : "bin");
   return {
@@ -6141,317 +6513,6 @@ function defaultHttpRequestDraft() {
 import { createHash as createHash5, randomUUID as randomUUID4 } from "node:crypto";
 import { cp as cp2, link as link2, lstat as lstat5, mkdir as mkdir5, open as open3, readFile as readFile6, readdir as readdir3, readlink, realpath as realpath3, rename as rename4, rm as rm5, stat as stat3 } from "node:fs/promises";
 import path8 from "node:path";
-
-// canvases/azure-functions-hosted-skills/src/state-migration.mjs
-import { createHash as createHash4, randomUUID as randomUUID3 } from "node:crypto";
-import { link, lstat as lstat4, mkdir as mkdir4, open as open2, readFile as readFile5, realpath as realpath2, rename as rename3, rm as rm4 } from "node:fs/promises";
-import path7 from "node:path";
-import { homedir as homedir4, tmpdir } from "node:os";
-
-// canvases/azure-functions-hosted-skills/src/state-lock.mjs
-import { randomUUID as randomUUID2 } from "node:crypto";
-import { lstat as lstat3, mkdir as mkdir3, open, readFile as readFile4, rename as rename2, rm as rm3 } from "node:fs/promises";
-import path6 from "node:path";
-async function acquireStateLock(file, { timeoutMs = 12e4, pollMs = 50 } = {}) {
-  const lockPath = `${file}.lock`;
-  await mkdir3(path6.dirname(lockPath), { recursive: true, mode: 448 });
-  const token = randomUUID2();
-  const started = Date.now();
-  let ownerClassification = "incomplete";
-  while (true) {
-    try {
-      const handle = await open(lockPath, "wx", 384);
-      try {
-        await handle.writeFile(`${JSON.stringify({ pid: process.pid, token })}
-`);
-        await handle.sync();
-      } finally {
-        await handle.close();
-      }
-      let released = false;
-      return async () => {
-        if (released) return;
-        released = true;
-        const current = JSON.parse(await readFile4(lockPath, "utf8"));
-        if (current.token === token) await rm3(lockPath);
-      };
-    } catch (error) {
-      if (error?.code !== "EEXIST") throw error;
-      const gate = `${lockPath}.recovery`;
-      let recovery;
-      let retired = false;
-      try {
-        recovery = await open(gate, "wx", 384);
-        const item = await lstat3(lockPath);
-        if (item.isSymbolicLink()) throw new Error(`Unsafe state lock: ${lockPath}`);
-        ownerClassification = "incomplete";
-        let owner;
-        try {
-          owner = JSON.parse(await readFile4(lockPath, "utf8"));
-        } catch (error2) {
-          if (error2?.code === "ENOENT") throw error2;
-        }
-        if (Number.isInteger(owner?.pid) && owner.pid > 0) {
-          try {
-            process.kill(owner.pid, 0);
-            ownerClassification = "live";
-          } catch (error2) {
-            if (error2?.code === "ESRCH") {
-              const retiredPath = `${lockPath}.${token}.retired`;
-              await rename2(lockPath, retiredPath);
-              await rm3(retiredPath);
-              retired = true;
-            } else ownerClassification = "live";
-          }
-        }
-      } catch (error2) {
-        if (!["EEXIST", "ENOENT"].includes(error2?.code)) throw error2;
-      } finally {
-        if (recovery) {
-          await recovery.close();
-          await rm3(gate, { force: true });
-        }
-      }
-      if (retired) continue;
-      if (Date.now() - started >= timeoutMs) {
-        if (ownerClassification === "live") {
-          throw new Error(`Timed out waiting for the canonical canvas state owner: ${lockPath}. Another session or canvas owns Studio state. Close it and retry.`);
-        }
-        throw new Error(`Timed out waiting for the canonical canvas state owner: ${lockPath}. An incomplete lock requires explicit recovery.`);
-      }
-      await new Promise((resolve) => setTimeout(resolve, pollMs));
-    }
-  }
-}
-
-// canvases/azure-functions-hosted-skills/src/state-migration.mjs
-var STATE_COMPONENT = "azure-functions-hosted-skills";
-var STATE_PRODUCT = "azure-functions-hosted-skills";
-var LEGACY_STATE_COMPONENT = "intelligent-function-app-studio";
-var LEGACY_PREVIEW_STATE_COMPONENTS = Object.freeze([
-  "azure-functions-hosted-skills-preview",
-  "azure-functions-hosted-skills-preview-12"
-]);
-function studioStateEnvironment({ env = process.env, homeDirectory = homedir4, pathApi = path7 } = {}) {
-  const override = env.FUNCTION_STUDIO_STATE_HOME;
-  if (override !== void 0 && (!override || !pathApi.isAbsolute(override))) {
-    throw new Error("FUNCTION_STUDIO_STATE_HOME must be an absolute fixture/state home directory.");
-  }
-  const home = override || homeDirectory();
-  return {
-    home,
-    // An explicit state-home fence includes ownership records. Do not let an
-    // inherited COPILOT_HOME escape it into the user's real extension state.
-    copilotHome: override ? pathApi.join(home, ".copilot") : env.COPILOT_HOME || pathApi.join(home, ".copilot")
-  };
-}
-function stateDigest(value) {
-  return createHash4("sha256").update(value).digest("hex");
-}
-function instanceStateSegment(instanceId) {
-  const value = String(instanceId || "instance");
-  const safe = value.replace(/[^A-Za-z0-9._-]/g, "-").slice(0, 80);
-  if (safe === value && safe !== "." && safe !== ".." && !safe.endsWith(".") && !/^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(safe)) return safe;
-  return `instance-${stateDigest(value).slice(0, 32)}`;
-}
-function studioStatePaths({ home, copilotHome, instanceId, pathApi = path7 } = {}) {
-  if (home === void 0) {
-    const environment = studioStateEnvironment({ pathApi });
-    home = environment.home;
-    copilotHome ??= environment.copilotHome;
-  }
-  copilotHome ??= pathApi.join(home, ".copilot");
-  const segment2 = instanceStateSegment(instanceId);
-  const raw = String(instanceId || "instance");
-  const legacySegment = raw.replace(/[^A-Za-z0-9._-]/g, "-").slice(0, 80) || "instance";
-  const legacyRoots = segment2 === legacySegment ? [
-    pathApi.join(home, `.${LEGACY_STATE_COMPONENT}`, legacySegment),
-    pathApi.join(copilotHome, "extensions", LEGACY_STATE_COMPONENT, "state", legacySegment),
-    pathApi.join(copilotHome, "extensions", LEGACY_STATE_COMPONENT, "artifacts", legacySegment),
-    ...LEGACY_PREVIEW_STATE_COMPONENTS.flatMap((identity) => [
-      pathApi.join(home, `.${identity}`, identity, legacySegment),
-      pathApi.join(copilotHome, "extensions", identity, "state", identity, legacySegment),
-      pathApi.join(copilotHome, "extensions", identity, "state", legacySegment)
-    ])
-  ] : [];
-  return {
-    home,
-    copilotHome,
-    root: pathApi.join(home, `.${STATE_PRODUCT}`, STATE_COMPONENT, segment2),
-    legacyRoots,
-    ambiguousLegacyRoot: segment2 !== legacySegment && ![".", ".."].includes(legacySegment) ? pathApi.join(home, `.${LEGACY_STATE_COMPONENT}`, legacySegment) : null,
-    owner: { component: STATE_COMPONENT, instanceId: raw }
-  };
-}
-async function assertSafeStatePath(file, { trustedRoot } = {}) {
-  const resolved = path7.resolve(file);
-  const contains = (root) => {
-    const relative2 = path7.relative(root, resolved);
-    return !path7.isAbsolute(relative2) && relative2 !== ".." && !relative2.startsWith(`..${path7.sep}`);
-  };
-  const base = trustedRoot ? path7.resolve(trustedRoot) : [
-    studioStateEnvironment().home,
-    homedir4(),
-    tmpdir(),
-    process.cwd()
-  ].map((root) => path7.resolve(root)).filter(contains).sort((a, b) => b.length - a.length)[0] || path7.parse(resolved).root;
-  if (!contains(base)) throw new Error(`State path is outside its trusted base: ${file}`);
-  let cursor;
-  try {
-    cursor = await realpath2(base);
-  } catch (error) {
-    if (error?.code === "ENOENT") return;
-    throw error;
-  }
-  const relative = path7.relative(base, resolved);
-  const physicalFile = path7.join(cursor, relative);
-  const parts = relative ? relative.split(path7.sep) : [""];
-  for (const part of parts) {
-    cursor = path7.join(cursor, part);
-    try {
-      const item = await lstat4(cursor);
-      if (item.isSymbolicLink()) throw new Error(`State ownership rejected a symbolic link: ${cursor}`);
-      if (cursor === physicalFile && typeof process.getuid === "function" && item.uid !== process.getuid()) {
-        throw new Error(`State ownership rejected a file owned by another user: ${cursor}`);
-      }
-    } catch (error) {
-      if (error?.code === "ENOENT") return;
-      throw error;
-    }
-  }
-}
-async function readStateText(file) {
-  await assertSafeStatePath(file);
-  try {
-    const item = await lstat4(file);
-    if (!item.isFile() || item.size > 8 * 1024 * 1024) throw new Error(`Invalid or oversized state file: ${file}`);
-    return await readFile5(file, "utf8");
-  } catch (error) {
-    if (error?.code === "ENOENT") return null;
-    throw error;
-  }
-}
-async function atomicStateWrite(file, value, { exclusive = false } = {}) {
-  await assertSafeStatePath(file);
-  await mkdir4(path7.dirname(file), { recursive: true, mode: 448 });
-  const temporary = `${file}.${randomUUID3()}.pending`;
-  const handle = await open2(temporary, "wx", 384);
-  try {
-    await handle.writeFile(value);
-    await handle.sync();
-    await handle.close();
-    if (exclusive) await link(temporary, file);
-    else await rename3(temporary, file);
-  } finally {
-    await handle.close();
-    await rm4(temporary, { force: true });
-  }
-}
-async function withStateLock(file, callback) {
-  await assertSafeStatePath(file);
-  await assertSafeStatePath(`${file}.lock`);
-  const release = await acquireStateLock(file);
-  try {
-    return await callback();
-  } finally {
-    await release();
-  }
-}
-var jsonText = (value) => `${JSON.stringify(value, null, 2)}
-`;
-var sameOwner = (left, right) => JSON.stringify(left) === JSON.stringify(right);
-async function migrateStateRecord({
-  destination,
-  sources = [],
-  schema,
-  owner,
-  validate,
-  lockHeld = false,
-  decode = JSON.parse,
-  encode = jsonText,
-  afterPublish,
-  isSourceAllowed = (source) => sources.includes(source)
-}) {
-  const perform = async () => {
-    const markerPath = `${destination}.migration.json`;
-    const markerRaw = await readStateText(markerPath);
-    let marker = markerRaw === null ? null : JSON.parse(markerRaw);
-    if (marker && (marker.version !== 1 || marker.component !== STATE_COMPONENT || marker.schema !== schema || marker.destination !== destination || !sameOwner(marker.owner, owner) || !isSourceAllowed(marker.source) || !["copying", "complete"].includes(marker.status) || !/^[a-f0-9]{64}$/.test(marker.sourceHash) || !/^[a-f0-9]{64}$/.test(marker.destinationHash))) throw new Error(`Invalid migration ownership receipt: ${markerPath}`);
-    let canonical = await readStateText(destination);
-    if (marker) {
-      const original = await readStateText(marker.source);
-      if (original !== null && stateDigest(original) !== marker.sourceHash) {
-        throw new Error(`Legacy state changed after migration; reconcile explicitly: ${marker.source}`);
-      }
-      if (canonical === null && marker.status === "complete") {
-        return null;
-      }
-      if (canonical !== null && marker.status === "copying") {
-        if (stateDigest(canonical) !== marker.destinationHash) {
-          throw new Error(`Interrupted migration conflicts with canonical state: ${destination}`);
-        }
-        await validate(decode(canonical), { source: destination, canonical: true });
-        marker = { ...marker, status: "complete" };
-        await atomicStateWrite(markerPath, jsonText(marker));
-      }
-    }
-    if (canonical !== null) {
-      return { value: await validate(decode(canonical), { source: destination, canonical: true }), revision: stateDigest(canonical) };
-    }
-    const candidates = [];
-    for (const source of /* @__PURE__ */ new Set([...sources, ...marker ? [marker.source] : []])) {
-      const raw = await readStateText(source);
-      if (raw === null) continue;
-      const value = await validate(decode(raw), { source, canonical: false });
-      candidates.push({ source, raw, encoded: encode(value), value });
-    }
-    if (!candidates.length) {
-      if (marker) throw new Error(`Interrupted migration source is missing: ${marker.source}`);
-      return null;
-    }
-    if (candidates.some((item) => item.encoded !== candidates[0].encoded)) {
-      throw new Error(`Divergent legacy state requires explicit reconciliation: ${destination}`);
-    }
-    const selected = marker ? candidates.find((item) => item.source === marker.source) : candidates[0];
-    if (!selected || marker && stateDigest(selected.encoded) !== marker.destinationHash) {
-      throw new Error(`Interrupted migration source no longer matches: ${destination}`);
-    }
-    marker = {
-      version: 1,
-      component: STATE_COMPONENT,
-      schema,
-      owner,
-      source: selected.source,
-      destination,
-      sourceHash: stateDigest(selected.raw),
-      destinationHash: stateDigest(selected.encoded),
-      status: "copying"
-    };
-    await atomicStateWrite(markerPath, jsonText(marker));
-    if (await readStateText(selected.source) !== selected.raw) {
-      throw new Error(`Legacy state changed during migration: ${selected.source}`);
-    }
-    await atomicStateWrite(destination, selected.encoded, { exclusive: true });
-    if (afterPublish) await afterPublish();
-    await atomicStateWrite(markerPath, jsonText({ ...marker, status: "complete" }));
-    canonical = selected.encoded;
-    return { value: selected.value, revision: stateDigest(canonical) };
-  };
-  return lockHeld ? perform() : withStateLock(destination, perform);
-}
-async function writeStateRecord({ destination, value, revision, validate }) {
-  return withStateLock(destination, async () => {
-    const current = await readStateText(destination);
-    if ((current === null ? null : stateDigest(current)) !== revision) {
-      throw new Error(`State changed in another canvas instance; reopen before saving: ${destination}`);
-    }
-    const encoded = jsonText(await validate(value, { source: destination, canonical: true }));
-    await atomicStateWrite(destination, encoded);
-    return stateDigest(encoded);
-  });
-}
-
-// canvases/azure-functions-hosted-skills/src/source-workspace.mjs
 var DEFAULT_CURRENT_SUBDIR = path8.join("functions", "daily-repo-digest");
 var MANIFEST_VERSION = 2;
 var SUPPORTED_MANIFEST_VERSIONS = /* @__PURE__ */ new Set([1, MANIFEST_VERSION]);
@@ -6500,6 +6561,7 @@ function normalizedRelativePath(relativePath) {
   return normalized;
 }
 function resolveCurrentWorkspaceDestination(workingDirectory, relativePath = DEFAULT_CURRENT_SUBDIR) {
+  workingDirectory = normalizeWindowsExtendedPath(workingDirectory);
   if (!workingDirectory || !path8.isAbsolute(workingDirectory)) {
     throw new Error("The current chat does not expose an absolute worktree path. Use an isolated workspace instead.");
   }
@@ -6513,7 +6575,8 @@ function resolveCurrentWorkspaceDestination(workingDirectory, relativePath = DEF
   return { root, relative, destination };
 }
 function attachedInputPath(inputPath, workingDirectory) {
-  const raw = String(inputPath || "").trim();
+  const raw = normalizeWindowsExtendedPath(String(inputPath || "").trim());
+  workingDirectory = normalizeWindowsExtendedPath(workingDirectory);
   if (!raw) throw new Error("Enter an existing app folder path.");
   if (path8.isAbsolute(raw) || path8.win32.isAbsolute(raw)) return path8.resolve(raw);
   if (!workingDirectory || !path8.isAbsolute(workingDirectory)) {
@@ -6750,8 +6813,9 @@ async function createOwnershipManifest({
   state = "ready",
   generationId = randomUUID4()
 }) {
-  const resolvedRoot = path8.resolve(root);
-  const resolvedWorkspace = path8.resolve(workspaceRoot);
+  const resolvedRoot = path8.resolve(normalizeWindowsExtendedPath(root));
+  const resolvedWorkspace = path8.resolve(normalizeWindowsExtendedPath(workspaceRoot));
+  baselineRoot = normalizeWindowsExtendedPath(baselineRoot);
   const safe = resolveCurrentWorkspaceDestination(resolvedWorkspace, relativePath);
   if (safe.destination !== resolvedRoot) throw new Error("Generated workspace ownership does not match its declared worktree path.");
   if (!["baseline", "preserve"].includes(removalPolicy)) {
@@ -6813,6 +6877,16 @@ function validateOwnershipManifest(manifest) {
   if (!SUPPORTED_MANIFEST_VERSIONS.has(manifest?.version) || !manifest.root || !manifest.workspaceRoot || !manifest.relativePath || !Array.isArray(manifest.baseline) || invalidV2 || manifest.removalPolicy && !["baseline", "preserve"].includes(manifest.removalPolicy) || manifest.state && !["pending", "ready", "moving"].includes(manifest.state)) {
     throw new Error("Generated workspace ownership manifest is invalid.");
   }
+  manifest = {
+    ...manifest,
+    root: normalizeWindowsExtendedPath(manifest.root),
+    workspaceRoot: normalizeWindowsExtendedPath(manifest.workspaceRoot),
+    ...manifest.move ? { move: {
+      ...manifest.move,
+      sourceRoot: normalizeWindowsExtendedPath(manifest.move.sourceRoot),
+      destinationRoot: normalizeWindowsExtendedPath(manifest.move.destinationRoot)
+    } } : {}
+  };
   const selected = resolveCurrentWorkspaceDestination(manifest.workspaceRoot, manifest.relativePath);
   if (!path8.isAbsolute(manifest.root) || selected.destination !== path8.resolve(manifest.root)) {
     throw new Error("Generated workspace ownership does not match its worktree path.");
@@ -6834,6 +6908,7 @@ async function migrateSourceOwnership({
   templateId,
   lockHeld = false
 }) {
+  workspaceRoot = normalizeWindowsExtendedPath(workspaceRoot);
   const owner = workspaceRoot ? { component: STATE_COMPONENT, workspaceRoot: path8.resolve(workspaceRoot) } : { component: STATE_COMPONENT, sessionId: String(sessionId || ""), instanceId: String(instanceId || "") };
   const allowedDirectories = new Set(sources.map((file) => path8.dirname(file)));
   const isSourceAllowed = (file) => typeof file === "string" && allowedDirectories.has(path8.dirname(file)) && /^[a-f0-9]{24}\.json$/.test(path8.basename(file));
@@ -10211,7 +10286,7 @@ var CANONICAL_RENDERER_PROFILE = createHostedSkillsRendererProfile({
   features: FULL_HOSTED_SKILLS_FEATURE_PROFILE
 });
 var renderHtml = (options) => renderHostedSkillsHtml(CANONICAL_RENDERER_PROFILE, options);
-var RUNTIME_VERSION = "0.1.0b17";
+var RUNTIME_VERSION = "0.1.0b16";
 var UV_DOCS_URL = "https://docs.astral.sh/uv/getting-started/installation/";
 var PYTHON_DOCS_URL = "https://www.python.org/downloads/";
 var PYTHON_OVERRIDE_ENV = "INTELLIGENT_FUNCTION_APP_STUDIO_PYTHON";
@@ -13669,7 +13744,7 @@ async function writeCopilotModelBinding(entry, model) {
   return writeModelBindingSettings(entry, {
     AZURE_FUNCTIONS_AGENTS_PROVIDER: "copilot",
     AZURE_FUNCTIONS_AGENTS_MODEL: model.id,
-    COPILOT_SESSION_OPENAI_BASE_URL: new URL("copilot/v1", entry.url).toString(),
+    COPILOT_SESSION_OPENAI_BASE_URL: new URL("/copilot/v1", entry.url).toString(),
     COPILOT_SESSION_API_KEY: entry.copilotBridgeToken,
     ...githubRequirement(entry) && entry.githubContext.repository ? {
       GITHUB_REPOSITORY: entry.githubContext.repository,
@@ -14395,10 +14470,14 @@ function legacySourceOwnershipManifestPaths(entry) {
     sourceManifestPath(copilotHome, entry.sessionId, entry.instanceId)
   ];
   if (entry.sourceWorkspace.workingDirectory) {
-    files.unshift(
-      sourceManifestPath(copilotHome, "workspace", path13.resolve(entry.sourceWorkspace.workingDirectory), { legacy: true }),
-      ...LEGACY_PREVIEW_STATE_COMPONENTS.map((identity) => sourceManifestPath(copilotHome, "workspace", path13.resolve(entry.sourceWorkspace.workingDirectory), { identity }))
-    );
+    const workspace = path13.resolve(entry.sourceWorkspace.workingDirectory);
+    for (const spelling of [workspace, ...windowsExtendedPathSpellings(workspace)]) {
+      files.unshift(
+        sourceManifestPath(copilotHome, "workspace", spelling, { legacy: true }),
+        ...LEGACY_PREVIEW_STATE_COMPONENTS.map((identity) => sourceManifestPath(copilotHome, "workspace", spelling, { identity })),
+        sourceManifestPath(copilotHome, "workspace", spelling)
+      );
+    }
   }
   return [...new Set(files)].filter((file) => file !== entry.sourceWorkspace.manifestPath);
 }
@@ -14530,6 +14609,7 @@ async function hydrateSourceWorkspace(entry, { sessionId, workingDirectory } = {
   entry.sourceWorkspace.error = "";
   entry.sourceWorkspace.migrationBlocked = true;
   entry.sessionId = String(sessionId || entry.sessionId || "");
+  workingDirectory = normalizeWindowsExtendedPath(workingDirectory);
   entry.sourceWorkspace.workingDirectory = workingDirectory && path13.isAbsolute(workingDirectory) ? path13.resolve(workingDirectory) : "";
   entry.sourceWorkspace.manifestPath = sourceOwnershipManifestPath(entry);
   let releaseOwnershipLock = null;
@@ -17654,21 +17734,33 @@ Use plan mode. Do not run or deploy the app yet.
   const messageId = await session.send(prompt);
   return { ok: true, pending: true, messageId, ...info, message: entry.openStatus };
 }
-function readJsonBody(req, maxLen = 16e3) {
-  return new Promise((resolve) => {
-    let body = "";
-    req.on("data", (chunk) => {
-      body += chunk;
-      if (body.length > maxLen) req.destroy();
-    });
-    req.on("end", () => {
-      try {
-        resolve(JSON.parse(body || "{}"));
-      } catch {
-        resolve({});
-      }
-    });
-  });
+function isJsonRequest(req) {
+  return /^application\/json(?:\s*;|$)/i.test(req.headers["content-type"] ?? "");
+}
+function panelRequestError(statusCode, message) {
+  return Object.assign(new Error(message), { statusCode });
+}
+async function readPanelJson(req, maxBytes) {
+  if (Number(req.headers["content-length"]) > maxBytes) {
+    throw panelRequestError(413, "Request body is too large.");
+  }
+  const chunks = [];
+  let bytes = 0;
+  for await (const chunk of req.iterator({ destroyOnReturn: false })) {
+    bytes += chunk.length;
+    if (bytes > maxBytes) throw panelRequestError(413, "Request body is too large.");
+    chunks.push(chunk);
+  }
+  let body;
+  try {
+    body = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks)));
+  } catch {
+    throw panelRequestError(400, "Invalid JSON request.");
+  }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw panelRequestError(400, "Expected a JSON object.");
+  }
+  return body;
 }
 async function readRequestBody(req, maxBytes = COPILOT_PROXY_REQUEST_MAX_BYTES) {
   const chunks = [];
@@ -17691,6 +17783,16 @@ async function forwardCopilotInference(entry, req, res) {
     res.end(req.method === "POST" ? "Not found" : "Method not allowed");
     return;
   }
+  const authorization = String(req.headers.authorization || "");
+  const credential = authorization.startsWith("Bearer ") ? authorization.slice("Bearer ".length).trim() : "";
+  if (!constantTimeCredentialMatches(credential, entry.copilotBridgeToken)) {
+    res.writeHead(401, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: { message: "Invalid local Copilot session bridge credential." } }));
+    return;
+  }
+  if (!isJsonRequest(req)) {
+    throw new CopilotSdkBridgeError("Expected application/json.", 415);
+  }
   req.setTimeout(COPILOT_PROXY_TIMEOUT_MS, () => {
     req.destroy(new Error("Copilot inference request timed out."));
   });
@@ -17699,13 +17801,6 @@ async function forwardCopilotInference(entry, req, res) {
   }
   if (entry.local.status !== "running") {
     throw new CopilotSdkBridgeError("The local Functions runtime is not running.", 409);
-  }
-  const authorization = String(req.headers.authorization || "");
-  const credential = authorization.startsWith("Bearer ") ? authorization.slice("Bearer ".length).trim() : "";
-  if (!constantTimeCredentialMatches(credential, entry.copilotBridgeToken)) {
-    res.writeHead(401, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: { message: "Invalid local Copilot session bridge credential." } }));
-    return;
   }
   const raw = await readRequestBody(req);
   let payload;
@@ -17742,23 +17837,26 @@ async function startServer(entry, {
   prepareInvocationImpl = prepareInvocation,
   invokeLocalImpl = invokeLocal,
   invokeAzureImpl = invokeAzure,
-  htmlHeaders = {},
-  corsOrigin = ""
+  htmlHeaders = {}
 } = {}) {
   await initializeEntryRuntimeState(entry);
   const usageMetrics = entry.usageMetrics;
+  const panelToken = randomBytes(24).toString("hex");
   const server = createServer((req, res) => {
-    if (corsOrigin) {
-      res.setHeader("Access-Control-Allow-Origin", corsOrigin);
-      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-      res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-      if (req.method === "OPTIONS") {
-        res.writeHead(204);
-        res.end();
-        return;
-      }
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Referrer-Policy", "no-referrer");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+    const host = `127.0.0.1:${req.socket.localPort}`;
+    if (req.headers.host !== host) {
+      res.writeHead(403).end();
+      return;
     }
     if (req.url?.startsWith("/copilot/v1/")) {
+      if (req.headers.origin !== void 0) {
+        res.writeHead(403).end();
+        return;
+      }
       forwardCopilotInference(entry, req, res).catch((error) => {
         if (res.headersSent) {
           res.destroy(error);
@@ -17773,7 +17871,39 @@ async function startServer(entry, {
       });
       return;
     }
-    const asset = req.method === "GET" && hostedSkillsAssets.get(req.url?.slice(1));
+    const token = req.url?.split("/", 2)[1];
+    if (!req.url?.startsWith("/") || !constantTimeCredentialMatches(token, panelToken)) {
+      res.writeHead(404).end();
+      return;
+    }
+    const requestOrigin = req.headers.origin;
+    if ((requestOrigin !== void 0 || req.method === "POST") && requestOrigin !== `http://${host}`) {
+      res.writeHead(403).end();
+      return;
+    }
+    const route = req.url.slice(panelToken.length + 1);
+    const dispatch = async () => {
+      let body;
+      if (req.method === "POST") {
+        if (!isJsonRequest(req)) throw panelRequestError(415, "Expected application/json.");
+        body = await readPanelJson(req, route === "/metrics/interaction" ? 1024 : 16e3);
+      }
+      return handlePanelRequest(req, res, route, body);
+    };
+    dispatch().catch((error) => {
+      if (res.destroyed || res.writableEnded) return;
+      if (res.headersSent) {
+        res.destroy();
+        return;
+      }
+      if (!req.complete) res.setHeader("Connection", "close");
+      res.writeHead(error.statusCode ?? 500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: false, message: error.statusCode ? error.message : "Could not complete the panel request." }));
+    });
+  });
+  async function handlePanelRequest(req, res, route, payload) {
+    const withBody = async (handler) => handler(payload);
+    const asset = req.method === "GET" && hostedSkillsAssets.get(route?.slice(1));
     if (asset) {
       readFile10(asset[0]).then((content) => {
         res.writeHead(200, { "Content-Type": asset[1] });
@@ -17784,18 +17914,18 @@ async function startServer(entry, {
       });
       return;
     }
-    if (req.method === "GET" && req.url === "/") {
+    if (req.method === "GET" && route === "/") {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", ...htmlHeaders });
       res.end(renderHtml({ usageMetricsEnabled: usageMetrics.enabled }));
       return;
     }
-    if (req.method === "GET" && req.url === "/events") {
+    if (req.method === "GET" && route === "/events") {
       if (entry.server !== server) {
         res.writeHead(204, { Connection: "close" });
         res.end();
         return;
       }
-      res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" });
+      res.writeHead(200, { "Content-Type": "text/event-stream", Connection: "keep-alive" });
       res.write(`event: state
 data: ${JSON.stringify(snapshot(entry))}
 
@@ -17804,12 +17934,12 @@ data: ${JSON.stringify(snapshot(entry))}
       req.on("close", () => entry.clients.delete(res));
       return;
     }
-    if (req.method === "POST" && req.url === "/metrics/interaction") {
-      readJsonBody(req, 1024).then((body) => responseJson(res, { ok: true, accepted: usageMetrics.trackUiInteraction(body) })).catch(() => responseJson(res, { ok: false, accepted: false, message: "Invalid usage interaction." }));
+    if (req.method === "POST" && route === "/metrics/interaction") {
+      withBody((body) => responseJson(res, { ok: true, accepted: usageMetrics.trackUiInteraction(body) })).catch(() => responseJson(res, { ok: false, accepted: false, message: "Invalid usage interaction." }));
       return;
     }
-    if (req.method === "POST" && req.url === "/source/select") {
-      readJsonBody(req).then((body) => {
+    if (req.method === "POST" && route === "/source/select") {
+      withBody((body) => {
         if (entry.sourceWorkspace.materialized) {
           throw new Error("Move or remove the generated app before changing its source location.");
         }
@@ -17834,8 +17964,8 @@ data: ${JSON.stringify(snapshot(entry))}
       }).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/source/create") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/source/create") {
+      withBody(async (body) => {
         if (entry.sourceWorkspace.sourceMode === "attached") {
           throw new Error("Return to the generated app before creating or reopening generated source.");
         }
@@ -17851,8 +17981,8 @@ data: ${JSON.stringify(snapshot(entry))}
       }).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/source/attach") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/source/attach") {
+      withBody(async (body) => {
         if (body.unsavedChanges === true) {
           throw new Error("Save or discard the unsaved Skill instructions before switching apps.");
         }
@@ -17865,8 +17995,8 @@ data: ${JSON.stringify(snapshot(entry))}
       }).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/source/return-generated") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/source/return-generated") {
+      withBody(async (body) => {
         if (body.unsavedChanges === true) {
           throw new Error("Save or discard the unsaved Skill instructions before switching apps.");
         }
@@ -17879,8 +18009,8 @@ data: ${JSON.stringify(snapshot(entry))}
       }).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/source/move-current") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/source/move-current") {
+      withBody(async (body) => {
         if (body.confirm !== true) throw new Error("Confirm the new local function path before moving files.");
         await moveCurrentSourceWorkspace(entry, body.relativePath);
         startLocalEnvironment(entry).catch((error) => {
@@ -17895,16 +18025,16 @@ data: ${JSON.stringify(snapshot(entry))}
       }).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/source/remove") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/source/remove") {
+      withBody(async (body) => {
         if (body.confirm !== true) throw new Error("Confirm removal before deleting generated files.");
         await removeCurrentSourceWorkspace(entry);
         responseJson(res, { ok: true, message: entry.openStatus });
       }).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/select-trigger") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/select-trigger") {
+      withBody(async (body) => {
         const id = String(body.trigger || "");
         const t = TRIGGER_TYPES.find((x) => x.id === id);
         if (!t || t.nyi) throw new Error(`Trigger ${id || "(missing)"} is not implemented.`);
@@ -17913,8 +18043,8 @@ data: ${JSON.stringify(snapshot(entry))}
       }).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/timer-schedule") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/timer-schedule") {
+      withBody(async (body) => {
         if (entry.target !== "local") throw new Error("Timer schedule editing is available for the local function.");
         await setTimerSchedule(entry, body);
         responseJson(res, {
@@ -17933,8 +18063,8 @@ data: ${JSON.stringify(snapshot(entry))}
       });
       return;
     }
-    if (req.method === "POST" && req.url === "/select-target") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/select-target") {
+      withBody(async (body) => {
         const target = body.target === "azure" ? "azure" : "local";
         entry.target = target;
         broadcast(entry, "state", snapshot(entry));
@@ -17958,19 +18088,20 @@ data: ${JSON.stringify(snapshot(entry))}
       });
       return;
     }
-    if (req.method === "POST" && req.url === "/prompt") {
-      readJsonBody(req).then(async (body) => {
-        try {
-          assertWorkspaceMutationAllowed(entry, "Editing skill instructions");
-          await saveInstructions(entry, String(body.prompt ?? ""), String(body.revision || ""));
-          responseJson(res, { ok: true, prompt: entry.prompt, revision: entry.instructionRevision });
-        } catch (error) {
-          responseJson(res, { ok: false, message: shortError(error) });
-        }
-      });
+    if (req.method === "POST" && route === "/prompt") {
+      if (typeof payload.prompt !== "string" || typeof payload.revision !== "string" || !/^[a-f0-9]{64}$/.test(payload.revision) || Object.keys(payload).length !== 2) {
+        throw panelRequestError(400, "Expected skill instructions and their current revision.");
+      }
+      try {
+        assertWorkspaceMutationAllowed(entry, "Editing skill instructions");
+        await saveInstructions(entry, payload.prompt, payload.revision);
+        responseJson(res, { ok: true, prompt: entry.prompt, revision: entry.instructionRevision });
+      } catch (error) {
+        responseJson(res, { ok: false, message: shortError(error) });
+      }
       return;
     }
-    if (req.method === "POST" && req.url === "/source/refresh") {
+    if (req.method === "POST" && route === "/source/refresh") {
       refreshWorkspaceFromDisk(entry, { restartIfRunning: true }).then((result) => responseJson(res, {
         ok: true,
         restarted: result.restarted,
@@ -17978,8 +18109,8 @@ data: ${JSON.stringify(snapshot(entry))}
       })).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/hosted-skill/select") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/hosted-skill/select") {
+      withBody(async (body) => {
         const relativePath = String(body.relativePath || "");
         await refreshWorkspaceFromDisk(entry, {
           restartIfRunning: false,
@@ -17999,15 +18130,15 @@ data: ${JSON.stringify(snapshot(entry))}
       }).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/http-prompt") {
-      readJsonBody(req).then((body) => {
+    if (req.method === "POST" && route === "/http-prompt") {
+      withBody((body) => {
         entry.httpPrompt = String(body.prompt || "").trim() || DEFAULT_HTTP_PROMPT;
         broadcast(entry, "state", snapshot(entry));
         responseJson(res, { ok: true, httpPrompt: entry.httpPrompt });
       });
       return;
     }
-    if (req.method === "POST" && req.url === "/local/start") {
+    if (req.method === "POST" && route === "/local/start") {
       if (entry.target !== "local") {
         responseJson(res, { ok: false, message: "Select Local Function App first." });
         return;
@@ -18022,25 +18153,25 @@ data: ${JSON.stringify(snapshot(entry))}
       materializePendingTrigger(entry).then(() => startLocalBootstrap(entry, { userInitiated: true })).then(() => responseJson(res, { ok: true, port: entry.local.port })).catch((error) => responseJson(res, { ok: false, message: shortError(error) || String(error?.message || error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/local/stop") {
+    if (req.method === "POST" && route === "/local/stop") {
       stopLocalByUser(entry).then(() => responseJson(res, { ok: true })).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/doctor/run") {
+    if (req.method === "POST" && route === "/doctor/run") {
       if (entry.doctorRunning) {
         responseJson(res, { ok: false, message: "Doctor is already running." });
         return;
       }
       entry.doctorRunning = true;
       broadcast(entry, "state", snapshot(entry));
-      readJsonBody(req).then((body) => runDoctor(entry, { workflow: body.workflow })).then((doctor) => responseJson(res, { ok: true, ready: doctor.ready, doctor })).catch((error) => responseJson(res, { ok: false, message: shortError(error) || String(error?.message || error) })).finally(() => {
+      withBody((body) => runDoctor(entry, { workflow: body.workflow })).then((doctor) => responseJson(res, { ok: true, ready: doctor.ready, doctor })).catch((error) => responseJson(res, { ok: false, message: shortError(error) || String(error?.message || error) })).finally(() => {
         entry.doctorRunning = false;
         broadcast(entry, "state", snapshot(entry));
       });
       return;
     }
-    if (req.method === "POST" && req.url === "/http-request/draft") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/http-request/draft") {
+      withBody(async (body) => {
         try {
           const parsed = await saveHttpRequestDraft(entry, body);
           responseJson(res, {
@@ -18058,8 +18189,8 @@ data: ${JSON.stringify(snapshot(entry))}
       });
       return;
     }
-    if (req.method === "POST" && req.url === "/trigger-payload/draft") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/trigger-payload/draft") {
+      withBody(async (body) => {
         try {
           const trigger = String(body.trigger || "");
           const draft = await saveTriggerPayloadDraft(entry, trigger, body.value);
@@ -18071,8 +18202,8 @@ data: ${JSON.stringify(snapshot(entry))}
       });
       return;
     }
-    if (req.method === "POST" && req.url === "/invoke") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/invoke") {
+      withBody(async (body) => {
         try {
           const httpRequestDraft = entry.target === "local" && (entry.trigger === "http" || entry.trigger === "timer") ? body.httpRequest : entry.trigger === "http" ? body.httpRequest : void 0;
           if (httpRequestDraft) await saveHttpRequestDraft(entry, httpRequestDraft);
@@ -18085,7 +18216,7 @@ data: ${JSON.stringify(snapshot(entry))}
       });
       return;
     }
-    if (req.method === "POST" && req.url === "/invoke/cancel") {
+    if (req.method === "POST" && route === "/invoke/cancel") {
       (async () => {
         const running = entry.invocations.filter((event) => event.phase === "running");
         if (!running.length) return { ok: false, message: "No invocation is currently running." };
@@ -18106,13 +18237,13 @@ data: ${JSON.stringify(snapshot(entry))}
       })().then((result) => responseJson(res, result)).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/clear") {
+    if (req.method === "POST" && route === "/clear") {
       const retainedAwaiting = clearSettledInvocations(entry);
       responseJson(res, { ok: true, retainedAwaiting });
       return;
     }
-    if (req.method === "POST" && req.url === "/models/select-source") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/models/select-source") {
+      withBody(async (body) => {
         if (entry.sourceWorkspace.sourceMode === "attached") {
           throw new Error("Existing apps keep their developer-owned model configuration. Update local.settings.json in the app, then Refresh.");
         }
@@ -18147,8 +18278,8 @@ data: ${JSON.stringify(snapshot(entry))}
       }).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/models/select-choice") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/models/select-choice") {
+      withBody(async (body) => {
         if (entry.sourceWorkspace.sourceMode === "attached") {
           throw new Error("Existing apps keep their developer-owned model configuration. Update local.settings.json in the app, then Refresh.");
         }
@@ -18169,8 +18300,8 @@ data: ${JSON.stringify(snapshot(entry))}
       }).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/models/select-subscription") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/models/select-subscription") {
+      withBody(async (body) => {
         if (entry.modelBinding.source === "copilot") {
           throw new Error("GitHub Copilot local mode does not use an Azure subscription.");
         }
@@ -18222,7 +18353,7 @@ data: ${JSON.stringify(snapshot(entry))}
       }).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/models/refresh") {
+    if (req.method === "POST" && route === "/models/refresh") {
       if (entry.modelBinding.source === "copilot") {
         discoverCopilotModels(entry, { force: true }).then((applied) => {
           if (!applied) throw new Error(entry.modelBinding.error || "A newer model selection replaced this request.");
@@ -18257,8 +18388,8 @@ data: ${JSON.stringify(snapshot(entry))}
       }).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/models/apply") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/models/apply") {
+      withBody(async (body) => {
         const source = normalizeModelProvider(body.source);
         if (source === "copilot") {
           await applyCopilotModelSelection(entry, String(body.modelId || ""));
@@ -18278,7 +18409,7 @@ data: ${JSON.stringify(snapshot(entry))}
       });
       return;
     }
-    if (req.method === "POST" && req.url === "/models/create-plan") {
+    if (req.method === "POST" && route === "/models/create-plan") {
       buildModelCreationPlan(entry).then((plan) => {
         entry.modelCreate = { ...entry.modelCreate, planned: true, ok: null, message: "", ...plan };
         broadcast(entry, "state", snapshot(entry));
@@ -18286,8 +18417,8 @@ data: ${JSON.stringify(snapshot(entry))}
       }).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/models/create") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/models/create") {
+      withBody(async (body) => {
         if (body.confirm !== true) {
           const plan = await buildModelCreationPlan(entry);
           responseJson(res, { ok: false, message: "Confirmation required before creating models.", plan });
@@ -18298,8 +18429,8 @@ data: ${JSON.stringify(snapshot(entry))}
       }).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/az/select-subscription") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/az/select-subscription") {
+      withBody(async (body) => {
         try {
           if (subscriptionProviderMode === "toolkit") {
             const applied = await applyToolkitSubscriptionScope(entry, "azure", body.scope);
@@ -18314,7 +18445,7 @@ data: ${JSON.stringify(snapshot(entry))}
       });
       return;
     }
-    if (req.method === "POST" && req.url === "/subscriptions/refresh") {
+    if (req.method === "POST" && route === "/subscriptions/refresh") {
       ensureAzureSubscriptions(entry, { force: true, loadApps: false }).then(() => responseJson(res, {
         accounts: entry.subscriptionPicker.accounts,
         revision: entry.subscriptionPicker.revision,
@@ -18322,8 +18453,8 @@ data: ${JSON.stringify(snapshot(entry))}
       })).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/az/select-app") {
-      readJsonBody(req).then(async (body) => {
+    if (req.method === "POST" && route === "/az/select-app") {
+      withBody(async (body) => {
         try {
           await selectFunctionApp(entry, String(body.resourceId || ""));
           responseJson(res, { ok: true });
@@ -18333,8 +18464,8 @@ data: ${JSON.stringify(snapshot(entry))}
       });
       return;
     }
-    if (req.method === "POST" && req.url === "/az/select-function") {
-      readJsonBody(req).then((body) => {
+    if (req.method === "POST" && route === "/az/select-function") {
+      withBody((body) => {
         try {
           const fn = selectAzureFunction(entry, String(body.functionName || ""));
           responseJson(res, { ok: true, function: fn });
@@ -18344,11 +18475,11 @@ data: ${JSON.stringify(snapshot(entry))}
       });
       return;
     }
-    if (req.method === "POST" && req.url === "/az/refresh-apps") {
+    if (req.method === "POST" && route === "/az/refresh-apps") {
       loadFunctionApps(entry).then(() => responseJson(res, { ok: true }));
       return;
     }
-    if (req.method === "POST" && req.url === "/app-insights/open") {
+    if (req.method === "POST" && route === "/app-insights/open") {
       resolveAppInsights(entry).then((ai) => {
         if (!ai) {
           responseJson(res, { ok: false, message: entry.azure.appInsightsError || "No Application Insights resource found." });
@@ -18358,7 +18489,7 @@ data: ${JSON.stringify(snapshot(entry))}
       }).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/telemetry/start") {
+    if (req.method === "POST" && route === "/telemetry/start") {
       (async () => {
         try {
           await resolveAppInsights(entry);
@@ -18371,13 +18502,13 @@ data: ${JSON.stringify(snapshot(entry))}
       })();
       return;
     }
-    if (req.method === "POST" && req.url === "/telemetry/stop") {
+    if (req.method === "POST" && route === "/telemetry/stop") {
       stopLiveTelemetry(entry);
       responseJson(res, { ok: true });
       return;
     }
-    if (req.method === "POST" && req.url === "/load-test/start") {
-      readJsonBody(req).then(
+    if (req.method === "POST" && route === "/load-test/start") {
+      withBody(
         (body) => startLoadTest(entry, {
           target: body.target,
           durationSec: Number(body.durationSec),
@@ -18387,12 +18518,12 @@ data: ${JSON.stringify(snapshot(entry))}
       ).then(() => responseJson(res, { ok: true })).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/load-test/stop") {
+    if (req.method === "POST" && route === "/load-test/stop") {
       stopLoadTest(entry);
       responseJson(res, { ok: true });
       return;
     }
-    if (req.method === "POST" && req.url === "/open-vscode") {
+    if (req.method === "POST" && route === "/open-vscode") {
       (async () => {
         await materializePendingTrigger(entry);
         const dir = await refreshTemplateFromDisk(entry).then(() => requireTemplateDir(entry));
@@ -18408,7 +18539,7 @@ data: ${JSON.stringify(snapshot(entry))}
       })().then((result) => responseJson(res, result)).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/edit-instructions-vscode") {
+    if (req.method === "POST" && route === "/edit-instructions-vscode") {
       (async () => {
         await materializePendingTrigger(entry);
         await refreshTemplateFromDisk(entry);
@@ -18431,7 +18562,7 @@ data: ${JSON.stringify(snapshot(entry))}
       })().then((result) => responseJson(res, result)).catch((error) => responseJson(res, { ok: false, message: shortError(error) }));
       return;
     }
-    if (req.method === "POST" && req.url === "/register-app-project") {
+    if (req.method === "POST" && route === "/register-app-project") {
       if (entry.target !== "local") {
         responseJson(res, { ok: false, message: "Select Local Function App first." });
         return;
@@ -18454,7 +18585,7 @@ data: ${JSON.stringify(snapshot(entry))}
       });
       return;
     }
-    if (req.method === "POST" && req.url === "/deploy-azure") {
+    if (req.method === "POST" && route === "/deploy-azure") {
       if (entry.target !== "local") {
         responseJson(res, { ok: false, message: "Select Local Function App first." });
         return;
@@ -18463,7 +18594,7 @@ data: ${JSON.stringify(snapshot(entry))}
       (async () => {
         const deploymentIntent = snapshotDeploymentProviderIntent(entry.modelBinding);
         const sourceDir = requireTemplateDir(entry);
-        const request = await readJsonBody(req);
+        const request = payload;
         if (!entry.sourceWorkspace.materialized) {
           throw new Error("Create the generated app before deploying it to Azure.");
         }
@@ -18618,7 +18749,7 @@ data: ${JSON.stringify(snapshot(entry))}
       });
       return;
     }
-    if (req.method === "POST" && req.url === "/deploy-azure/cancel") {
+    if (req.method === "POST" && route === "/deploy-azure/cancel") {
       if (!entry.azdOperation.active || entry.azdOperation.kind !== "deploy" || !entry.deployment.cancel) {
         responseJson(res, { ok: false, message: "No Azure deployment is currently running." });
         return;
@@ -18635,7 +18766,7 @@ data: ${JSON.stringify(snapshot(entry))}
     }
     res.writeHead(404);
     res.end("Not found");
-  });
+  }
   const preferred = await preferredCanvasServerConfig(entry);
   if (preferred.token) entry.copilotBridgeToken = preferred.token;
   const listenOnPort = (candidatePort) => new Promise((resolve, reject) => {
@@ -18662,7 +18793,7 @@ data: ${JSON.stringify(snapshot(entry))}
   }
   const { port } = server.address();
   entry.server = server;
-  entry.url = `http://127.0.0.1:${port}/`;
+  entry.url = `http://127.0.0.1:${port}/${panelToken}/`;
   return entry;
 }
 async function preferredCanvasServerConfig(entry) {

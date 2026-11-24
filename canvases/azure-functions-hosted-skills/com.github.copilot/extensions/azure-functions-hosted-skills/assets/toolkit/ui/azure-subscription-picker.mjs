@@ -33,9 +33,11 @@ function pickerAccounts(accounts) {
 }
 function createAzureSubscriptionPicker({
   document = globalThis.document,
+  window: view = document?.defaultView ?? globalThis.window,
   transport,
   onApply,
   statusMount,
+  refreshOnFocus = false,
   ...options
 } = {}) {
   if (typeof transport !== "function") throw new TypeError("A subscription refresh transport is required.");
@@ -77,15 +79,33 @@ function createAzureSubscriptionPicker({
         selectedKeys: items.map((item) => item.key)
       });
     },
-    onRefresh: async () => {
-      const started = version;
-      const snapshot = await transport();
-      if (destroyed) return;
-      if (!snapshot || !Array.isArray(snapshot.accounts)) throw new Error("The subscription service returned an invalid response.");
-      if (snapshot.revision !== void 0 && snapshot.revision < revision || snapshot.revision === void 0 && version !== started) return;
-      setState({ accounts: snapshot.accounts, error: snapshot.error, ...snapshot.revision === void 0 ? {} : { revision: snapshot.revision } });
-    }
+    onRefresh: () => refreshFromTransport()
   });
+  async function refreshFromTransport() {
+    const started = version;
+    const snapshot = await transport();
+    if (destroyed) return;
+    if (!snapshot || !Array.isArray(snapshot.accounts)) throw new Error("The subscription service returned an invalid response.");
+    if (snapshot.revision !== void 0 && snapshot.revision < revision || snapshot.revision === void 0 && version !== started) return;
+    setState({ accounts: snapshot.accounts, error: snapshot.error, ...snapshot.revision === void 0 ? {} : { revision: snapshot.revision } });
+  }
+  let focusTimer;
+  let focusRefresh;
+  const debounceMs = typeof refreshOnFocus === "object" && refreshOnFocus ? refreshOnFocus.debounceMs ?? 500 : 500;
+  const scheduleFocusRefresh = () => {
+    if (destroyed || document.visibilityState === "hidden") return;
+    clearTimeout(focusTimer);
+    focusTimer = setTimeout(() => {
+      if (destroyed || focusRefresh || state.loading || state.refreshDisabledReason || picker.isOpen) return;
+      focusRefresh = refreshFromTransport().catch((error) => setState({ error: { code: error?.code, message: error?.message || "Refresh failed." } })).finally(() => {
+        focusRefresh = void 0;
+      });
+    }, debounceMs);
+  };
+  if (refreshOnFocus) {
+    view?.addEventListener?.("focus", scheduleFocusRefresh);
+    document.addEventListener?.("visibilitychange", scheduleFocusRefresh);
+  }
   function setState(update) {
     if (destroyed) return;
     if (update.revision !== void 0 && update.revision < revision) return;
@@ -138,6 +158,9 @@ function createAzureSubscriptionPicker({
     },
     destroy() {
       destroyed = true;
+      clearTimeout(focusTimer);
+      view?.removeEventListener?.("focus", scheduleFocusRefresh);
+      document.removeEventListener?.("visibilitychange", scheduleFocusRefresh);
       picker.destroy();
       status.remove();
     }
