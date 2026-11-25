@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "format": "plugin",
   "name": "azure-functions-hosted-skills",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "mutableDocumentation": true,
   "publicationRepository": "microsoft/azure-dev-tools",
   "plugin": {
@@ -65,6 +65,7 @@
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/navigation.mjs",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/profiles/coreai-azure.css",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/profiles/github-app.css",
+    "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/resource-picker.mjs",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/styles.css",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/subscription-picker.css",
     "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/subscription-picker.mjs",
@@ -109,8 +110,8 @@
   },
   "build": {
     "esbuild": "0.25.12",
-    "lockSha256": "bef015806c72749d75de2bfd780c4df8971f0c25442a6248288bf51346bf6a0b",
-    "inputSha256": "819b290d31c5d0e4e09a1d871dcf7ad745d83e301f400a53b2641bb320477441"
+    "lockSha256": "41988c3c69150ef7c5e3ce1caa0fa4d51b0a1e6d31f4ee42fe03dc22514a1d96",
+    "inputSha256": "80c9e36b083169876a209622bab4fbad5f84e142463907b58a0199861ca54eb0"
   },
   "dependencies": [
     {
@@ -343,6 +344,10 @@
       "platform": "browser"
     },
     {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/resource-picker.mjs",
+      "platform": "browser"
+    },
+    {
       "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/subscription-picker.mjs",
       "platform": "browser"
     },
@@ -494,6 +499,11 @@
       "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/profiles/github-app.css",
       "route": "canvas-ui/profiles/github-app.css",
       "mime": "text/css; charset=utf-8"
+    },
+    {
+      "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/resource-picker.mjs",
+      "route": "canvas-ui/resource-picker.mjs",
+      "mime": "text/javascript; charset=utf-8"
     },
     {
       "file": "com.github.copilot/extensions/azure-functions-hosted-skills/assets/toolkit/ui/styles.css",

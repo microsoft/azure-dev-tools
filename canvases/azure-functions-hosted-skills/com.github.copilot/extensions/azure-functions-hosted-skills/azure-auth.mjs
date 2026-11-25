@@ -70,6 +70,7 @@ var init_auth_errors = __esm({
           code: this.code,
           message: this.message,
           ...this.remedy ? { remedy: this.remedy } : {},
+          ...this.status !== void 0 ? { status: this.status } : {},
           ...this.diagnostic ? { diagnostic: { ...this.diagnostic } } : {}
         };
       }
